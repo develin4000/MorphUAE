@@ -1,0 +1,1871 @@
+/*
+  * UAE - The Un*x Amiga Emulator
+  *
+  * Amiga interface
+  *
+  * Copyright 1996,1997,1998 Samuel Devulder.
+  * Copyright 2003-2007 Richard Drummond
+  *
+  * MorphOS (MUI) Magic User Interface - MorphUAE
+  * Copyright 2025-2026 Stefan Blixth, OnyxSoft
+  *
+  * Camera SVG Vector :
+  * (c) Diemen Design
+  * https://www.svgrepo.com/svg/443599/camera
+  *
+  * Joystick SVG Vector
+  * (c) Bootstrap
+  * https://www.svgrepo.com/svg/344949/joystick
+  *
+  * Arrow Clockwise SVG Vector
+  * (c) Bootstrap
+  * https://www.svgrepo.com/svg/344397/arrow-clockwise
+  *
+  * Arrows Fullscreen SVG Vector
+  * (c) Bootstrap
+  * https://www.svgrepo.com/svg/344427/arrows-fullscreen
+  *
+  */
+
+#include "sysconfig.h"
+#include "sysdeps.h"
+
+//#define DEBUG
+#define USEDEBUG
+
+
+/****************************************************************************/
+
+#include <exec/execbase.h>
+#include <exec/memory.h>
+
+#include <dos/dos.h>
+#include <dos/dosextens.h>
+
+#include <graphics/gfxbase.h>
+#include <graphics/displayinfo.h>
+
+#include <libraries/asl.h>
+#include <intuition/pointerclass.h>
+#include <libraries/gadtools.h>
+
+/****************************************************************************/
+
+# include <proto/intuition.h>
+# include <proto/graphics.h>
+# include <proto/layers.h>
+# include <proto/exec.h>
+# include <proto/dos.h>
+# include <proto/asl.h>
+# include <proto/muimaster.h>
+# include <libraries/mui.h>
+# include <proto/utility.h>
+# include <proto/icon.h>
+
+#include <proto/cybergraphics.h>
+#include <cybergraphx/cybergraphics.h>
+
+/****************************************************************************/
+
+#include <ctype.h>
+#include <signal.h>
+
+/****************************************************************************/
+
+#include "uae.h"
+#include "options.h"
+#include "custom.h"
+#include "xwin.h"
+#include "drawing.h"
+#include "inputdevice.h"
+#include "keyboard.h"
+#include "keybuf.h"
+#include "gui.h"
+#include "debug.h"
+#include "hotkeys.h"
+#include "version.h"
+
+// MCC Classes
+#include <mui/Rawimage_mcc.h>
+#include <LEDmcc.h>
+//#include <Settings_mcc.h>
+#include <gfx-icons.h>
+
+/****************************************************************************/
+
+extern xcolnr xcolors[4096];
+
+/****************************************************************************/
+/*
+ * prototypes & global vars
+ */
+
+struct IntuitionBase *IntuitionBase = NULL;
+struct GfxBase       *GfxBase = NULL;
+struct Library       *LayersBase = NULL;
+struct Library       *AslBase = NULL;
+struct Library       *CyberGfxBase = NULL;
+struct Library       *MUIMasterBase = NULL;
+
+struct vidbuf_description *tmp_gfxinfo;
+int tmp_line_no;
+int tmp_first_line;
+int tmp_last_line;
+
+static int init_colors(void);
+static int dummy_lock (struct vidbuf_description *gfxinfo);
+static void dummy_unlock (struct vidbuf_description *gfxinfo);
+static void flush_clear_screen_gfxlib (struct vidbuf_description *gfxinfo);
+static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_line, int last_line);
+
+static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no);
+static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line);
+
+//BEGIN MUI-Test
+
+#ifdef USEDEBUG
+   #include <clib/debug_protos.h>
+   #define debug_print(args...) { KPrintF((CONST_STRPTR)args); }
+#else
+   #define debug_print(...)
+#endif
+
+#define NOPROF __attribute__((no_instrument_function))
+
+#define MUI_HOOK(n, y, z) \
+   static LONG n##_GATE(void); \
+   static LONG n##_GATE2(struct Hook *h, y, z); \
+   static const struct EmulLibEntry n = { TRAP_LIB, 0, (void (*)(void))n##_GATE }; \
+   static LONG NOPROF n##_GATE(void) { return (n##_GATE2((void *)REG_A0, (void *)REG_A2, (void *)REG_A1)); } \
+   static const struct Hook n##_hook = { { 0, 0}, (void *)&n, (void *)&n##_GATE2 }; \
+   static LONG n##_GATE2(struct Hook *h, y, z)
+
+#ifndef MUIA_Window_Frontdrop
+   #define MUIA_Window_Frontdrop 0x80426411
+#endif
+
+
+/* Compiler specific stuff */
+
+#define REG(x)
+
+#ifndef DISPATCHER
+#define DISPATCHER(Name) \
+static ULONG Name##_Dispatcher(void); \
+struct EmulLibEntry GATE ##Name##_Dispatcher = { TRAP_LIB, 0, (void (*)(void)) Name##_Dispatcher }; \
+static ULONG Name##_Dispatcher(void) { struct IClass *cl=(struct IClass*)REG_A0; Msg msg=(Msg)REG_A1; Object *obj=(Object*)REG_A2;
+#define DISPATCHER_REF(Name) &GATE##Name##_Dispatcher
+#define DISPATCHER_END }
+#endif
+
+#ifndef MAKE_ID
+ #define MAKE_ID(a,b,c,d) ((ULONG) (a)<<24 | (ULONG) (b)<<16 | (ULONG) (c)<<8 | (ULONG) (d))
+#endif
+
+// Global variables and defines...
+// Size and Style defines...
+
+static Object *app             = NULL;  // MUI-Application object
+static Object *win_main        = NULL;  // MUI-Window object
+static Object *obj_rendermcc   = NULL;  // Render object
+struct Object *btn_settings    = NULL;
+struct Object *btn_camera      = NULL;
+struct Object *btn_reset       = NULL;
+struct Object *btn_eject       = NULL;
+struct Object *btn_fullscreen  = NULL;
+struct Object *grp_toolbar     = NULL;
+struct Object *ctm_reset       = NULL;
+struct Object *ctm_eject       = NULL;
+
+#define DEFAULT_GFX_WIDTH 640
+#define DEFAULT_GFX_HEIGHT 512
+
+
+struct RenderData
+{
+   BOOL Active;
+   BOOL InitOK;
+   BOOL showpointer;
+   BOOL FullScreen;
+   BOOL ToolBar;
+   struct Window *window;
+   struct Screen *screen, *ogscreen;
+   ULONG modeid;
+
+   /* Events */
+   struct MUI_EventHandlerNode eh;
+
+   struct BitMap *BitMap;
+   uae_u8 *Buffer;
+   int XOffset,YOffset;
+   unsigned long render_state;
+   WORD   WinWidth;
+   WORD   WinHeight;
+   WORD   ScrWidth;
+   WORD   ScrHeight;
+   int    Depth;
+   WORD   MouseX;
+   WORD   MouseY;
+   WORD   OldX;
+   WORD   OldY;
+};
+
+
+#define SERIALNUMBER            (1)
+#define TAGBASE_DEVELIN         (TAG_USER | (SERIALNUMBER<<16))
+#define MUIV_HKTriggerQuit      (TAGBASE_DEVELIN | 0x0001)
+#define MUIV_HKTriggerResetS    (TAGBASE_DEVELIN | 0x0002)
+#define MUIV_HKTriggerResetH    (TAGBASE_DEVELIN | 0x0003)
+
+#define MUIA_Initializing_Gfx   (TAGBASE_DEVELIN | 0x0004)
+#define MUIA_Cleanup_Gfx        (TAGBASE_DEVELIN | 0x0005)
+#define MUIA_Pointer_State      (TAGBASE_DEVELIN | 0x0006)
+#define MUIA_Render_State       (TAGBASE_DEVELIN | 0x0007)
+
+// Initial setup...
+#define MUIV_TestTrigger        (TAGBASE_DEVELIN | 0x0008)
+#define MUIV_InitGraphics       (TAGBASE_DEVELIN | 0x0009)
+#define MUIV_InitColours        (TAGBASE_DEVELIN | 0x000a)
+#define MUIV_CleanupGraphics    (TAGBASE_DEVELIN | 0x000b)
+
+// Mouse pointers...
+#define MUIV_ShowPointer        (TAGBASE_DEVELIN | 0x000c)
+#define MUIV_HidePointer        (TAGBASE_DEVELIN | 0x000d)
+
+// Render flushes...
+#define MUIV_FlushLineCGX       (TAGBASE_DEVELIN | 0x000e)
+#define MUIV_FlushBlockCGX      (TAGBASE_DEVELIN | 0x000f)
+//#define MUIV_FlushLineOverlay   (TAGBASE_DEVELIN | 0x0010)
+//#define MUIV_FlushBlockOverlay  (TAGBASE_DEVELIN | 0x0011)
+#define MUIV_FlushClearScreen   (TAGBASE_DEVELIN | 0x0012)
+
+#define MUIA_Floppy_Hotkey     (TAGBASE_DEVELIN | 0x0013)
+
+#define MUIV_HKTriggerFloppy0  0 //(TAGBASE_DEVELIN | 0x0014) //202
+#define MUIV_HKTriggerFloppy1  1 //(TAGBASE_DEVELIN | 0x0015) // 203
+#define MUIV_HKTriggerFloppy2  2 //(TAGBASE_DEVELIN | 0x0016) // 204
+#define MUIV_HKTriggerFloppy3  3 //(TAGBASE_DEVELIN | 0x0017) // 205
+#define MUIV_HKTriggerEjectAll 4
+
+#define MUIA_Reset_Type        (TAGBASE_DEVELIN | 0x0019)
+#define MUIV_Reset_Soft        0
+#define MUIV_Reset_Hard        1
+
+#define MUIA_Display_Type      (TAGBASE_DEVELIN | 0x001c)
+#define MUIV_Display_Window    0
+#define MUIV_Display_Screen    1
+#define MUIV_Display_Toggle    2
+
+#define MUIA_Toolbar_Active    (TAGBASE_DEVELIN | 0x0020)
+#define MUIV_Toolbar_Off       0
+#define MUIV_Toolbar_On        1
+#define MUIV_Toolbar_Toggle    2
+
+
+
+// Global variable...
+static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
+
+#define swapw(x) ( (((x)&0x00FF)<<8)+(((x)&0xFF00)>>8) )
+
+MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
+{
+   struct WBArg *ap;
+   struct AppMessage *amsg = *x;
+   int i;
+   static char buf[256];
+   char *b=buf;
+
+   for (ap=amsg->am_ArgList,i=0;i<amsg->am_NumArgs;i++,ap++)
+   {
+      NameFromLock(ap->wa_Lock,buf,sizeof(buf));
+      AddPart(buf,ap->wa_Name,sizeof(buf));
+      strcpy (changed_prefs.df[0], b); // Attach image to DF0: as default...
+   }
+
+   return(0);
+}
+
+/*=----------------------------- openfile() ----------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+void insertimagefile(UBYTE unit)
+{
+   struct Library *AslBase = NULL;
+   struct FileRequester *freq;
+   char tmpstr[100];
+   static char buf[256];
+   char *b=buf;
+   
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if ((AslBase = OpenLibrary("asl.library", 37L)))
+   {
+         sprintf(tmpstr, "Insert image on DF%d", unit);
+         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)",/* ASLFR_InitialDrawer, get_last_floppy_dir(),*/ TAG_DONE}; // "Insert image on DFx"
+
+         if ((freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags)))
+         {
+            if (AslRequest(freq, NULL))
+            {
+               if (strcmp(freq->fr_File, "") != 0)
+               {
+                  strcpy(buf, freq->fr_Drawer);
+                  AddPart(buf, freq->fr_File, sizeof(buf));
+                  strcpy (changed_prefs.df[unit], b); 
+               }
+            }
+            
+            FreeAslRequest(freq);
+         }
+
+      CloseLibrary(AslBase);
+      AslBase = NULL;
+   }
+   else
+      debug_print("%s (%d)\n", __func__, __LINE__);
+}
+/*=*/
+
+
+// Render MCC
+
+/*=----------------------------- Render_New() --------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
+{
+   struct RenderData *data;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   obj = DoSuperNew(cl, obj,
+                    InnerSpacing(0, 0),
+                    MUIA_Frame,        MUIV_Frame_None,
+                    MUIA_Background,   MUII_WindowBack,
+                    MUIA_FillArea,     FALSE,
+                    MUIA_DoubleBuffer, FALSE,
+                    TAG_MORE,          msg->ops_AttrList);
+
+   if (!obj)
+      return(0);
+
+   data = (struct RenderData *)INST_DATA(cl, obj);
+
+   data->screen = NULL;
+   data->ogscreen = NULL;
+   data->modeid = 0;
+   data->window = NULL;
+   data->Active = FALSE;
+   data->InitOK = FALSE;
+   data->showpointer = TRUE;
+   data->FullScreen = FALSE;
+   data->ToolBar = TRUE;
+
+   data->BitMap = NULL;
+   data->Buffer = NULL;
+   data->XOffset = 0;
+   data->YOffset = 0;
+   data->render_state = MUIV_FlushClearScreen;
+
+   data->WinWidth = 640;
+   data->WinHeight = 512;
+   data->ScrWidth = 640;
+   data->ScrHeight = 512;
+   data->Depth = 24;
+   data->MouseX = 0;
+   data->MouseY = 0;
+   data->OldX = 0;
+   data->OldY = 0;
+   
+   return((ULONG)obj);
+}
+/*=*/
+
+/*=----------------------------- Render_Dispose() ----------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   data->Active = FALSE;
+
+   // The below action might need to be moved to the set-dispatcher and called with MUIV_CleanupGraphics
+   if (data->Buffer)
+   {
+      FreeVec(data->Buffer);
+      data->Buffer = NULL;
+   }
+
+   if (data->BitMap)
+   {
+      WaitBlit();
+      FreeBitMap(data->BitMap);
+      data->BitMap = NULL;
+   }
+
+   return(DoSuperMethodA(cl, obj, msg));
+}
+/*=*/
+
+/*=----------------------------- Render_Set() --------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   struct TagItem *TagList = NULL;
+   struct TagItem *tag = NULL;
+   struct RastPort *rp = _rp(obj);
+   int redbits,  greenbits,  bluebits;
+   int redshift, greenshift, blueshift;
+   int byte_swap = FALSE;
+   int pixfmt;
+   int found = TRUE;
+   int dcnt;
+
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if(msg -> ops_AttrList)
+   {
+      for(TagList = msg -> ops_AttrList; tag = NextTagItem(&TagList);)
+      {
+         switch (tag->ti_Tag)
+         {
+            case MUIA_Render_State :
+               data->render_state = tag->ti_Data;
+               MUI_Redraw(obj_rendermcc, MADF_DRAWOBJECT);
+               break;
+
+            case MUIA_Pointer_State :
+               //debug_print("%s (%d) - X1=%d, Y1=%d, X2=%d, Y2=%d\n", __func__, __LINE__, _mleft(obj), _mtop(obj), _mwidth(obj), _mheight(obj));
+
+               if (tag->ti_Data == MUIV_ShowPointer)
+               {
+                  if (!data->showpointer)
+                  {
+                     debug_print("%s (%d)\n", __func__, __LINE__);
+                     SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_NORMAL, WM_ObtainEvents, TRUE, TAG_DONE);
+                     data->showpointer = TRUE;
+                  }
+               }
+               else if (tag->ti_Data == MUIV_HidePointer)
+               {
+                  if (data->showpointer)
+                  {
+                     debug_print("%s (%d)\n", __func__, __LINE__);
+                     SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_DOT, WM_ObtainEvents, TRUE, TAG_DONE);
+                     data->showpointer = FALSE;
+                  }
+               }  break;
+
+            case MUIA_Floppy_Hotkey :
+               if (tag->ti_Data == MUIV_HKTriggerEjectAll)
+                  for (dcnt=0; dcnt < MUIV_HKTriggerEjectAll; dcnt++)
+                     strcpy(changed_prefs.df[dcnt], "");
+               else 
+                  insertimagefile(tag->ti_Data); 
+               break;
+
+            case MUIA_Reset_Type :
+               debug_print("%s (%d)\n", __func__, __LINE__);
+               uae_reset (tag->ti_Data);
+               break;
+
+            case MUIA_Display_Type :
+               set(win_main, MUIA_Window_Open, FALSE);
+               if (data->FullScreen)
+               {
+                  CloseScreen(data->screen);
+                  data->screen = data->ogscreen;
+
+                  data->FullScreen = FALSE;
+                  //set(obj_rendermcc, MUIA_Width, data->WinWidth);
+                  //set(obj_rendermcc, MUIA_Height, data-> WinHeight);
+
+                  set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
+                  SetAttrs(win_main,
+                           MUIA_Window_Screen,      data->ogscreen,
+                           MUIA_Window_Borderless,  FALSE,
+                           MUIA_Window_DragBar,     TRUE,
+                           MUIA_Window_CloseGadget, TRUE,
+                           MUIA_Window_DepthGadget, TRUE,
+                           MUIA_Window_SizeGadget,  FALSE,
+                           MUIA_Window_Frontdrop,   FALSE,
+                           MUIA_Window_Title,       "MorphUAE",
+                           //MUIA_Window_Width,       data->WinWidth,
+                           //MUIA_Window_Height,      data-> WinHeight,
+                           TAG_DONE);
+               }
+               else
+               {
+                  data->modeid = BestCModeIDTags(CYBRBIDTG_NominalWidth,  data->WinWidth, CYBRBIDTG_NominalHeight, data->WinHeight, CYBRBIDTG_Depth, data->Depth, TAG_DONE);
+                  debug_print("%s (%d) - ModeID : %d\n", __func__, __LINE__, data->modeid);
+                  if (data->modeid != INVALID_ID)
+                  {
+                     struct Screen *tmpscreen;
+
+                     data->ogscreen = data->screen; // Store the orginal ID
+
+                     tmpscreen = OpenScreenTags(NULL,
+                                                SA_Title,     "MorphUAE Screen",
+                     //                           SA_ShowTitle, FALSE,
+                     //                           SA_Type,      CUSTOMSCREEN,
+                                                SA_LikeWorkbench, TRUE,
+                     //                           SA_DisplayID, data->modeid,
+                     //                           SA_Width,     data->WinWidth,
+                     //                           SA_Height,    data->WinHeight,
+                     //                           SA_Depth,     data->Depth,
+                                                SA_Quiet,     TRUE,
+                                                TAG_DONE);
+                     if (tmpscreen)
+                     {
+                        data->screen = tmpscreen;
+                        data->FullScreen = TRUE;
+                        set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_Off);
+                        SetAttrs(win_main,
+                                 MUIA_Window_Screen,      data->screen,
+                                 MUIA_Window_Borderless,  TRUE,
+                                 MUIA_Window_DragBar,     FALSE,
+                                 MUIA_Window_CloseGadget, FALSE,
+                                 MUIA_Window_DepthGadget, FALSE,
+                                 MUIA_Window_SizeGadget,  FALSE,
+                                 MUIA_Window_Frontdrop,   TRUE,
+                                 MUIA_Window_Title,       NULL,
+                                 TAG_DONE);
+                     }
+                  }
+                  //set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);
+               }
+               set(win_main, MUIA_Window_Open, TRUE);
+               break;
+
+            case MUIA_Toolbar_Active :
+               if (tag->ti_Data == MUIV_Toolbar_On)
+               {
+                  data->ToolBar = TRUE;
+                  set(grp_toolbar, MUIA_ShowMe, TRUE);
+               }
+               else if (tag->ti_Data == MUIV_Toolbar_Off)
+               {
+                  data->ToolBar = FALSE;
+                  set(grp_toolbar, MUIA_ShowMe, FALSE);
+               }
+               else // MUIV_Toolbar_Toggle
+               {
+                  if (!data->FullScreen)
+                     data->ToolBar = !data->ToolBar;
+                  else
+                     data->ToolBar = FALSE;
+
+                  set(grp_toolbar, MUIA_ShowMe, data->ToolBar);
+               }
+
+            case MUIA_Initializing_Gfx :
+               if (tag->ti_Data == MUIV_InitGraphics)
+               {
+                  int bytes_per_row;
+                  int bytes_per_pixel;
+                  APTR buffer;
+
+                  data->InitOK = TRUE;
+
+                  gfxvidinfo.width  = data->WinWidth;  //currprefs.gfx_width_win;
+                  gfxvidinfo.height = data->WinHeight; //currprefs.gfx_height_win;
+
+                  if (gfxvidinfo.width < 320)
+                     gfxvidinfo.width = 320;
+
+                  if (!currprefs.gfx_correct_aspect && (gfxvidinfo.width < 64))
+                     gfxvidinfo.width = 200;
+
+                  gfxvidinfo.width += 7;
+                  gfxvidinfo.width &= ~7;
+
+                  data->BitMap = AllocBitMap (gfxvidinfo.width, 1, 8, BMF_CLEAR | BMF_MINPLANES, rp->BitMap);
+
+                  if (!data->BitMap)
+                  {
+                     write_log ("Unable to allocate BitMap.\n");
+                     data->InitOK = FALSE;
+                  }
+
+                  bytes_per_row   = GetCyberMapAttr (rp->BitMap, CYBRMATTR_XMOD);
+                  bytes_per_pixel = GetCyberMapAttr (rp->BitMap, CYBRMATTR_BPPIX);
+
+                  buffer = AllocVec (bytes_per_row * tmp_gfxinfo->height, MEMF_ANY);
+
+                  if (buffer)
+                  {
+                     tmp_gfxinfo->bufmem      = buffer;
+                     tmp_gfxinfo->pixbytes    = bytes_per_pixel;
+                     tmp_gfxinfo->rowbytes    = bytes_per_row;
+                     tmp_gfxinfo->flush_line  = flush_line_cgx;
+                     tmp_gfxinfo->flush_block = flush_block_cgx;
+                  }
+
+                  data->Buffer = buffer;
+//debug_print("%s (%d) - BPR=%d\n", __func__, __LINE__, tmp_gfxinfo->rowbytes);
+                  if (!data->Buffer)
+                  {
+                     write_log ("Unable to allocate off-screen buffer.\n");
+                     data->InitOK = FALSE;
+                  }
+
+                  gfxvidinfo.flush_clear_screen = flush_clear_screen_gfxlib;
+                  gfxvidinfo.flush_screen       = dummy_flush_screen;
+                  gfxvidinfo.lockscr            = dummy_lock;
+                  gfxvidinfo.unlockscr          = dummy_unlock;
+
+
+                  if (!gfxvidinfo.bufmem)
+                  {
+                     write_log ("MUIGFX: Not enough memory for video bufmem.\n");
+                     data->InitOK = FALSE;
+                  }
+
+                  gfxvidinfo.maxblocklines = MAXBLOCKLINES_MAX;
+
+                  if (!init_colors ())
+                  {
+                     write_log ("MUIGFX: Failed to init colors.\n");
+                     data->InitOK = FALSE;
+                  }
+
+                  if (data->InitOK)
+                  {
+                     reset_drawing ();
+                     //set_default_hotkeys (ami_hotkeys);
+                  }
+
+               }
+               else if (tag->ti_Data == MUIV_InitColours)
+               {
+
+                  pixfmt = GetCyberMapAttr (_rp(obj)->BitMap, (LONG)CYBRMATTR_PIXFMT);
+                  data->Depth = GetCyberMapAttr (_rp(obj)->BitMap, (LONG)CYBRMATTR_DEPTH);
+
+                  switch (pixfmt)
+                  {
+                     case PIXFMT_RGB15PC:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        byte_swap = TRUE;
+                     case PIXFMT_RGB15:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        redbits  = 5;  greenbits  = 5; bluebits  = 5;
+                        redshift = 10; greenshift = 5; blueshift = 0;
+                        break;
+                     case PIXFMT_RGB16PC:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        byte_swap = TRUE;
+                     case PIXFMT_RGB16:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        redbits  = 5;  greenbits  = 6;  bluebits  = 5;
+                        redshift = 11; greenshift = 5;  blueshift = 0;
+                        break;
+                     case PIXFMT_RGBA32:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        redbits  = 8;  greenbits  = 8;  bluebits  = 8;
+                        redshift = 24; greenshift = 16; blueshift = 8;
+                        break;
+                     case PIXFMT_BGRA32: // //RGBA
+                        debug_print("%s (%d) - %d bpp\n", __func__, __LINE__, data->Depth);
+                        redbits  = 8;  greenbits  = 8;  bluebits  = 8;
+                        //redshift = 8;  greenshift = 16; blueshift = 24;
+                        redshift = 16;  greenshift = 8; blueshift = 0;
+                        //byte_swap = TRUE;
+                        break;
+                     case PIXFMT_ARGB32:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        redbits  = 8;  greenbits  = 8;  bluebits  = 8;
+                        redshift = 16; greenshift = 8;  blueshift = 0;
+                        break;
+                     default:
+                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        redbits  = 0;  greenbits  = 0;  bluebits  = 0;
+                        redshift = 0;  greenshift = 0;  blueshift = 0;
+                        found = FALSE;
+                        break;
+                  }
+
+                  if (found)
+                  {
+                     //alloc_colors64k (redbits, greenbits, bluebits, redshift, greenshift, blueshift, 0, 0, 0, byte_swap);
+                     alloc_colors64k (redbits, greenbits, bluebits, redshift, greenshift, blueshift, 8, 24, 0xff, 0);
+                        write_log ("MUIGFX: Using a %d-bit true-colour display.\n", redbits + greenbits + bluebits);
+                  }
+                  else
+                     write_log ("MUIGFX: Unsupported pixel format.\n");
+               }  break;
+
+            case MUIA_Cleanup_Gfx :
+               if (tag->ti_Data == MUIV_CleanupGraphics)
+               {
+                  closepseudodevices ();
+               }  break;
+         }
+      }
+   }
+   return(DoSuperMethodA(cl, obj, (Msg) msg));
+}
+/*=*/
+
+/*=----------------------------- Render_Setup() ------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (!DoSuperMethodA(cl, obj, msg))
+      return(FALSE);
+
+   data->screen = _screen(obj);
+   data->window = _window(obj);
+
+   // IDCMP_DELTAMOVE
+
+   data->eh.ehn_Object = obj;
+   data->eh.ehn_Class  = cl;
+   //data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW|IDCMP_MOUSEMOVE|IDCMP_DELTAMOVE|IDCMP_CLOSEWINDOW|IDCMP_REFRESHWINDOW|IDCMP_NEWSIZE;//|IDCMP_INTUITICKS;
+   data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW|IDCMP_MOUSEMOVE|IDCMP_CLOSEWINDOW|IDCMP_REFRESHWINDOW;//|IDCMP_INTUITICKS;
+   data->eh.ehn_Flags  = MUI_EHF_GUIMODE; // Check this... React if the object is active or not...
+
+   DoMethod(_win(obj), MUIM_Window_AddEventHandler, &data->eh);
+   return(TRUE);
+}
+/*=*/
+
+/*=----------------------------- Render_Cleanup() ----------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Cleanup(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   DoMethod(_win(obj), MUIM_Window_RemEventHandler, &data->eh);
+
+   //if (data->FullScreen)
+   //   CloseScreen(data->screen);
+
+   return(DoSuperMethodA(cl, obj, (Msg)msg));
+}
+/*=*/
+
+static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMinMax *msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   //debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width_win, currprefs.gfx_height_win);
+   //debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width, currprefs.gfx_height);
+   
+   DoSuperMethodA(cl, obj, (Msg)msg);
+   
+   //if ((data.screen = _screen(obj)) != NULL)
+      
+   //if (_screen(obj) != NULL)
+   if ((data->screen = _screen(obj)) != NULL)
+   {
+      debug_print("%s (%d) : FS = %d - %d x %d : %d x %d\n", __func__, __LINE__, data->FullScreen, data->ScrWidth, data->ScrHeight, currprefs.gfx_width_win, currprefs.gfx_height_win);
+      msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
+      msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
+      msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
+      msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
+      msg->MinMaxInfo->MaxWidth  += (data->FullScreen) ? data->ScrWidth : DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
+      msg->MinMaxInfo->MaxHeight += (data->FullScreen) ? data->ScrHeight : DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
+      //msg->MinMaxInfo->MaxWidth  += data->ScrWidth = data->screen->Width;
+      //msg->MinMaxInfo->MaxHeight += data->ScrHeight = data->screen->Height;
+   }
+
+   debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width_win, currprefs.gfx_height_win);
+   debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, data->ScrWidth, data->ScrHeight);
+   
+   return(0);
+}
+
+/*=----------------------------- Render_Draw() -------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   struct RastPort *rp = _rp(obj);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+
+   DoSuperMethodA(cl, obj, (Msg)msg);
+
+   if (data->Active)
+   {
+      if ((msg->flags & MADF_DRAWOBJECT)) // Triggered draw update from function
+      {
+         if (data->render_state == MUIV_FlushClearScreen)
+         {
+            if (_rp(obj))
+               FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), 0x00000000); //render_bottom-render_top, 0x00000000); //0);
+         }
+/*
+count = WritePixelArray(srcRect,SrcX ,SrcY ,SrcMod,RastPort,DestX,
+    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
+                DestY,SizeX,SizeY,SrcFormat)
+                D4:16 D5:16 D6:16    D7
+
+INPUTS
+    srcRect - pointer to an array of pixels from which to fetch the
+              pixel data. The pixel format is specified in SrcFormat
+    (SrcX,SrcY) - starting point in the source rectangle
+    SrcMod - The number of bytes per row in the source rectangle.
+    RastPort -  pointer to a RastPort structure
+    (DestX,DestY) - starting point in the RastPort
+    (SizeX,SizeY) - size of the rectangle that should be transfered
+    SrcFormat - pixel format in the source rectangle
+         
+count = ScalePixelArray(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
+    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
+                DestY,DestW,DestH,SrcFormat)
+                D4:16 D5:16 D6:16    D7
+*/
+//ScalePixelArray(data->Buffer, data->WinWidth, data->WinHeigth, data->WinHeigth*3, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, data->WinWidth, data->WinHeigth, RECTFMT_RAW);
+         else if (data->render_state == MUIV_FlushLineCGX)
+         {
+
+            //debug_print("%s (%d) - LINE\n", __func__, __LINE__);
+            //if (!data->FullScreen)
+               WritePixelArray(data->Buffer, 0, tmp_line_no, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, tmp_gfxinfo->width, 1, RECTFMT_RAW);
+//            else
+//               ScalePixelArray(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, data->WinWidth, data->WinHeight, RECTFMT_RGBA);
+         }
+         else if (data->render_state == MUIV_FlushBlockCGX)
+         {
+            //debug_print("%s (%d) - BLOCK - FL = %d ; RB = %d\n", __func__, __LINE__, tmp_first_line, tmp_gfxinfo->rowbytes);
+            if (!data->FullScreen)
+               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB); //RECTFMT_RAW);
+
+               //ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 1, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff); //RECTFMT_ARGB); //0xFFFFFFFF);
+            else
+               ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 0, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff);//RECTFMT_ARGB); //0xFFFFFFFF);
+         }
+         else
+            //FillPixelArray(rp, render_left, render_top, render_right, render_bottom-render_top, 0x00000000);
+            return(0);
+      }
+   }
+   return(0);
+}
+/*=*/
+
+/*=----------------------------- Render_Hide ---------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   data->Active = FALSE;
+
+   return(DoSuperMethodA(cl, obj, (Msg)msg));
+}
+/*=*/
+
+/*=----------------------------- Render_Show ---------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   data->screen = _screen(obj);
+   data->window = (struct Window *)_window(obj);
+   data->Active = TRUE;
+   data->XOffset = _mleft(obj);
+   data->YOffset = _mtop(obj);
+
+   reset_drawing (); // Test
+
+   return(DoSuperMethodA(cl, obj, (Msg)msg));
+}
+/*=*/
+
+/*=----------------------------- Render_EventHandler() -----------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_HandleEvent *msg)
+{
+   int dmx, dmy, mx, my, classi, code, qualifier;
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
+   #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
+
+   //debug_print("%s (%d)\n", __func__, __LINE__); // IntuiMessage
+
+   if (msg->imsg)
+   {
+      code = msg->imsg->Code;
+      qualifier = msg->imsg->Qualifier;
+      dmx       = msg->imsg->MouseX;
+      dmy       = msg->imsg->MouseY;
+
+      switch(msg->imsg->Class)
+      {
+//         case IDCMP_NEWSIZE:
+//            do_inhibit_frame ((_window(obj)->Flags & WFLG_ZOOMED) ? 1 : 0);
+//            break;
+
+//         case IDCMP_REFRESHWINDOW:
+//            BeginRefresh(_win(obj));      // Do we really need this one ?
+//            flush_block (0, currprefs.gfx_height_win - 1);
+//            EndRefresh (_win(obj), TRUE); // Do we really need this one ?
+//            break;
+
+         case IDCMP_RAWKEY:
+         {
+            int keycode = code & 127;
+            int state   = code & 128 ? 0 : 1;
+
+            if ((qualifier & IEQUALIFIER_REPEAT) == 0)
+               inputdevice_do_keyboard (keycode, state);
+
+         }  break;
+
+         case IDCMP_MOUSEMOVE:
+            data->MouseX = msg->imsg->IDCMPWindow->MouseX; //msg->Window->IDCMPWindow->MouseX;
+            data->MouseY = msg->imsg->IDCMPWindow->MouseY; //IntuiMessage
+         
+            //debug_print("%s (%d) - NEW XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+            //debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
+            if (_isinobject(data->MouseX, data->MouseY))
+            {
+               if(data->showpointer)
+               {
+                  set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
+                  //data->MouseX = data->OldX;
+                  //data->MouseY = data->OldY;
+                  setmousestate (0, 0, data->MouseX, 1); //dmx
+                  setmousestate (0, 1, data->MouseY, 1); //dmy
+               }
+               setmousestate (0, 0, data->MouseX, 1);
+               setmousestate (0, 1, data->MouseY, 1);
+            }
+            else
+            {
+               if(!data->showpointer)
+               {
+                  set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
+                  data->OldX = data->MouseX;
+                  data->OldY = data->MouseY;
+                  setmousestate (0, 0, data->MouseX, 1);
+                  setmousestate (0, 1, data->MouseY, 1);
+                  //debug_print("%s (%d) -OLD -  XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
+               }
+            }
+            break;
+
+         case IDCMP_MOUSEBUTTONS:
+         {
+            data->MouseX = msg->imsg->IDCMPWindow->MouseX;
+            data->MouseY = msg->imsg->IDCMPWindow->MouseY;
+
+            if (_isinobject(data->MouseX, data->MouseY))
+            {
+               switch (code) //(msg->imsg->Code)
+               {
+                  case SELECTDOWN :
+                     setmousebuttonstate (0, 0, 1); break;
+                  case SELECTUP :
+                     setmousebuttonstate (0, 0, 0); break;
+                  case MIDDLEDOWN :
+                     setmousebuttonstate (0, 2, 1); break;
+                  case MIDDLEUP :
+                     setmousebuttonstate (0, 2, 0); break;
+                  case MENUDOWN :
+                     setmousebuttonstate (0, 1, 1); break;
+                  case MENUUP :
+                     setmousebuttonstate (0, 1, 0); break;
+               }
+            }  
+         }  break;
+
+         case IDCMP_ACTIVEWINDOW:
+            inputdevice_acquire ();
+            inputdevice_release_all_keys ();
+            break;
+
+         case IDCMP_INACTIVEWINDOW:
+            inputdevice_unacquire ();
+            break;
+
+         default :
+            //debug_print("%s (%d) - Unknown event class: %x\n", __func__, __LINE__, msg->imsg->Class);
+            break;
+      }
+   }
+   return 0;
+}
+/*=*/
+
+DISPATCHER(Render)
+{
+   switch (msg->MethodID)
+   {
+      case OM_NEW           : return Render_New          (cl, obj, (APTR)msg); break;
+      case OM_DISPOSE       : return Render_Dispose      (cl, obj, (APTR)msg); break;
+      case OM_SET           : return Render_Set          (cl, obj, (APTR)msg); break;
+      case MUIM_Setup       : return Render_Setup        (cl, obj, (APTR)msg); break;
+      case MUIM_Cleanup     : return Render_Cleanup      (cl, obj, (APTR)msg); break;
+      case MUIM_AskMinMax   : return Render_Askminmax    (cl, obj, (APTR)msg); break;
+      case MUIM_Draw        : return Render_Draw         (cl, obj, (APTR)msg); break;
+      case MUIM_Show        : return Render_Show         (cl, obj, (APTR)msg); break;
+      case MUIM_Hide        : return Render_Hide         (cl, obj, (APTR)msg); break;
+      case MUIM_HandleEvent : return Render_EventHandler (cl, obj, (APTR)msg); break;
+   }
+
+   return DoSuperMethodA(cl, obj, msg);
+}
+DISPATCHER_END
+
+void Cleanup_Render(struct MUI_CustomClass *mcc)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (mcc) MUI_DeleteCustomClass(mcc);
+   mcc = NULL;
+}
+
+struct MUI_CustomClass *Init_Render(void)
+{
+   struct MUI_CustomClass *mcc = NULL;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   mcc = MUI_CreateCustomClass(NULL, MUIC_Area, NULL, sizeof(struct RenderData), DISPATCHER_REF(Render));
+   return(mcc);
+}
+
+void update_led_status(int led, int on)
+{
+   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  MUIV_LED_Colour_Off);
+}
+
+//END MUI-Test
+
+/****************************************************************************/
+
+extern void initpseudodevices(void);
+extern void closepseudodevices(void);
+extern int ievent_alive;
+
+
+/*
+ * Dummy buffer locking methods
+ */
+static int dummy_lock (struct vidbuf_description *gfxinfo)
+{
+   return 1;
+}
+
+static void dummy_unlock (struct vidbuf_description *gfxinfo)
+{
+}
+
+static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_line, int last_line)
+{
+}
+
+static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no)
+{
+   tmp_gfxinfo = gfxinfo;
+   tmp_line_no = line_no;
+
+   set(obj_rendermcc, MUIA_Render_State, MUIV_FlushLineCGX);
+}
+
+static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line)
+{
+   tmp_gfxinfo = gfxinfo;
+   tmp_first_line = first_line;
+   tmp_last_line = last_line;
+
+   set(obj_rendermcc, MUIA_Render_State, MUIV_FlushBlockCGX);
+}
+
+static void flush_clear_screen_gfxlib (struct vidbuf_description *gfxinfo)
+{
+   tmp_gfxinfo = gfxinfo;
+
+   set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);
+}
+
+
+/****************************************************************************/
+
+static int init_colors (void)
+{
+   int success = TRUE;  // This really doesn't do anything... TODO...
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   set(obj_rendermcc, MUIA_Initializing_Gfx, MUIV_InitColours);
+   return success;
+}
+
+/****************************************************************************/
+
+// BEGIN - MUI-Test
+
+static int mui_setup_window(void)
+{
+   char *pubscreen = strlen (currprefs.amiga_publicscreen) ? currprefs.amiga_publicscreen : NULL;
+
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   app = ApplicationObject,MUIA_Application_Title          , "MorphUAE",
+                           MUIA_Application_Version        , "1.0",
+                           MUIA_Application_Copyright      , "OnyxSoft",
+                           MUIA_Application_Author         , "Stefan Blixth",
+                           MUIA_Application_Description    , "MorphUAE",
+                           MUIA_Application_Base           , "MorphUAE",
+                           MUIA_Application_UseCommodities , FALSE,
+
+                           SubWindow, win_main = WindowObject,
+                              MUIA_Frame,                 MUIV_Frame_None,
+                              MUIA_Window_Borderless,     FALSE,
+                              MUIA_Window_CloseGadget,    TRUE,
+                              MUIA_Window_DepthGadget,    TRUE,
+                              MUIA_Window_SizeGadget,     FALSE,
+                              MUIA_Window_DragBar,        TRUE,
+                              MUIA_Window_Title,          "MorphUAE",
+                              MUIA_Window_ID,             MAKE_ID('M','U','A','E'),
+                              MUIA_Window_AppWindow,      TRUE,
+                              MUIA_Window_DisableKeys,    MUIKEYF_WINDOW_CLOSE,
+                              //MUIA_Application_DiskObject,  dobj = GetDiskObject("uae"), 
+//SimpleButton
+                              WindowContents, VGroup,
+
+                                 Child, obj_rendermcc = NewObject(render_mcc->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_Background, MUII_WindowBack, TAG_DONE),
+                                 Child, grp_toolbar = HGroup, NoFrame,
+                                    MUIA_InnerTop, 1,
+                                    MUIA_InnerLeft, 2,
+                                    MUIA_InnerRight, 2,
+                                    MUIA_InnerBottom, 2,
+                                    Child, btn_settings = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_tools,
+                                    End,
+
+                                    Child, btn_reset = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_clockwise,
+                                    End,
+/*
+                                    Child, ctm_reset = MenustripObject,
+
+                                       Child, MenuObject,
+                                          Child, MenuitemObject,
+                                             MUIA_UserData, 1,
+                                             MUIA_Menuitem_Title, (IPTR)"Option A",
+                                          End,
+                                          Child, MenuitemObject,
+                                             MUIA_UserData, 2,
+                                             MUIA_Menuitem_Title, (IPTR)"Option B",
+                                          End,
+                                          // Separator
+                                          Child, MenuitemObject,
+                                             MUIA_Menuitem_Title, NM_BARLABEL,
+                                          End,
+                                          Child, MenuitemObject,
+                                             MUIA_UserData, 3,
+                                             MUIA_Menuitem_Title, (IPTR)"Option C",
+                                          End,
+                                       End,
+                                    End,
+*/
+                                    Child, btn_fullscreen = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_fullscreen,
+                                    End,
+
+                                    Child, btn_camera = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_camera,
+                                    End,
+
+                                    //Child, obj_settingsmcc = NewObject(Settings_mcc->mcc_Class, NULL, ButtonFrame, MUIA_Text_Contents, " * ",  MUIA_Weight, 1, TAG_DONE),
+                                    Child, HVSpace,
+                                    Child, btn_eject = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_eject,
+                                    End,
+                                    Child, obj_LEDmcc[0] = NewObject(LED_mcc[0]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
+                                    Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
+                                    Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
+                                    Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
+                                 End,
+                              End,
+                           End,
+                        End;
+
+   if (!app)
+   {
+      write_log ("Could not create MUI application!\n");
+      return 0;
+   }
+
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
+   DoMethod(win_main, MUIM_Notify, MUIA_AppMessage, MUIV_EveryTime, win_main, 3, MUIM_CallHook, &AppMsg_hook, MUIV_TriggerValue);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl lalt r", obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Soft);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl lalt h", obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Hard);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl lalt q", app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
+
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "alt h", obj_rendermcc, 3, MUIM_Set, MUIA_Pointer_State, MUIV_HidePointer);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "alt s", obj_rendermcc, 3, MUIM_Set, MUIA_Pointer_State, MUIV_ShowPointer);
+   
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt 1", obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy0);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt 2", obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy1);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt 3", obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt 4", obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt e", obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
+
+   DoMethod(obj_LEDmcc[0], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy0);
+   DoMethod(obj_LEDmcc[1], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy1);
+   DoMethod(obj_LEDmcc[2], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
+   DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
+
+   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Soft);
+   DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
+
+   DoMethod(btn_fullscreen, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "alt return", obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
+
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt t", obj_rendermcc, 3, MUIM_Set, MUIA_Toolbar_Active, MUIV_Toolbar_Toggle);
+
+/*
+#define MUIA_Toolbar_Active    (TAGBASE_DEVELIN | 0x0020)
+#define MUIV_Toolbar_Off       0
+#define MUIV_Toolbar_On        1
+#define MUIV_Toolbar_Toggle    2
+*/
+   set(win_main, MUIA_Window_Open, TRUE);
+
+   gfxvidinfo.width  = currprefs.gfx_width_win;
+   gfxvidinfo.height = currprefs.gfx_height_win;
+
+   return 1;
+}
+
+// END - MUI-Test
+
+/****************************************************************************/
+
+int graphics_setup (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   IntuitionBase = (void*) OpenLibrary ("intuition.library", 0L);
+   if (!IntuitionBase)
+   {
+      write_log ("No intuition.library ?\n");
+      return 0;
+   } 
+
+   GfxBase = (void*) OpenLibrary ("graphics.library", 0L);
+   if (!GfxBase)
+   {
+      write_log ("No graphics.library ?\n");
+      return 0;
+   }
+
+   LayersBase = OpenLibrary ("layers.library", 0L);
+   if (!LayersBase)
+   {
+      write_log ("No layers.library\n");
+      return 0;
+   }
+
+   MUIMasterBase = OpenLibrary(MUIMASTER_NAME, MUIMASTER_VMIN);
+   if (!MUIMasterBase)
+   {
+      write_log ("Could not open muimaster.library\n");
+      return 0;
+   }
+
+   if (!(render_mcc = Init_Render())) return 0;
+
+   for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
+   {
+      if (!(LED_mcc[cntr] = Init_LED()))
+         return 0;
+   }
+
+   //if (!(Settings_mcc = Init_Settings())) return 0;
+
+   if (!CyberGfxBase)
+      CyberGfxBase = OpenLibrary ("cybergraphics.library", 40);
+
+    initpseudodevices ();
+    return 1;
+}
+
+
+/* Allocate and set-up off-screen buffer for rendering Amiga display to
+ * when using CGX V41 or better
+ *
+ * gfxinfo - the buffer description (which gets filled in by this routine)
+ *
+ */
+static APTR setup_cgx_buffer (struct vidbuf_description *gfxinfo)
+{
+   tmp_gfxinfo = gfxinfo;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   set(obj_rendermcc, MUIA_Initializing_Gfx, MUIV_InitGraphics);
+   return tmp_gfxinfo->bufmem;
+}
+
+//int fullscreen = 0;
+
+int graphics_init(void)  // TEST
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   gfxvidinfo.width  = DEFAULT_GFX_WIDTH;
+   gfxvidinfo.height = DEFAULT_GFX_HEIGHT;
+   
+/*
+   gfxvidinfo.width  = currprefs.gfx_width_win;
+   gfxvidinfo.height = currprefs.gfx_height_win;
+
+   if (gfxvidinfo.width < 320)
+      gfxvidinfo.width = 320;
+   if (!currprefs.gfx_correct_aspect && (gfxvidinfo.width < 64))
+      gfxvidinfo.width = 200;
+*/
+   
+   gfxvidinfo.width += 7;
+   gfxvidinfo.width &= ~7;
+ 
+ 
+   //use_overlay = currprefs.amiga_use_overlay;
+   //fullscreen = (currprefs.amiga_screen_type == UAESCREENTYPE_ASK) || (currprefs.amiga_screen_type == UAESCREENTYPE_CUSTOM);
+
+   if (!mui_setup_window ())
+      return 0;
+
+   gfxvidinfo.emergmem = 0;
+   gfxvidinfo.linemem  = 0;
+
+   setup_cgx_buffer (&gfxvidinfo);
+
+   gfxvidinfo.flush_clear_screen = flush_clear_screen_gfxlib;
+   gfxvidinfo.flush_screen       = dummy_flush_screen;
+   gfxvidinfo.lockscr            = dummy_lock;
+   gfxvidinfo.unlockscr          = dummy_unlock;
+
+
+   if (!gfxvidinfo.bufmem)
+   {
+      write_log ("MUIGFX: Not enough memory for video bufmem.\n");
+      return 0;
+   }
+
+   gfxvidinfo.maxblocklines = MAXBLOCKLINES_MAX;
+
+   if (!init_colors ())
+   {
+      write_log ("MUIGFX: Failed to init colors.\n");
+      return 0;
+   }
+
+   reset_drawing ();
+   //set_default_hotkeys (ami_hotkeys);
+   //pointer_state = DONT_KNOW;
+
+   return 1; 
+}
+
+
+/****************************************************************************/
+
+void graphics_leave (void)
+{
+   //closepseudodevices ();
+   //appw_exit ();
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   set(obj_rendermcc, MUIA_Cleanup_Gfx, MUIV_CleanupGraphics);
+   //set(obj_rendermcc, MUIV_CleanupGraphics, TRUE);
+   if (app)
+   {
+      MUI_DisposeObject(app);
+      app = NULL;
+   }
+   if (render_mcc) Cleanup_Render(render_mcc);
+
+   for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
+      if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
+   
+   //if (Settings_mcc) Cleanup_Settings(Settings_mcc);
+   
+   //if (dobj) FreeDiskObject(dobj);
+   
+   if (AslBase) 
+   {
+      CloseLibrary( (void*) AslBase);
+      AslBase = NULL;
+   }
+
+   if (GfxBase)
+   {
+      CloseLibrary ((void*)GfxBase);
+      GfxBase = NULL;
+   }
+
+   if (LayersBase)
+   {
+      CloseLibrary (LayersBase);
+      LayersBase = NULL;
+   }
+ 
+   if (IntuitionBase)
+   {
+      CloseLibrary ((void*)IntuitionBase);
+      IntuitionBase = NULL;
+   }
+
+   if (MUIMasterBase)
+   {
+      CloseLibrary(MUIMasterBase);
+      MUIMasterBase = NULL;
+   }
+
+   if (CyberGfxBase)
+   {
+      CloseLibrary((void*)CyberGfxBase);
+      CyberGfxBase = NULL;
+   }
+}
+
+/****************************************************************************/
+/*
+int do_inhibit_frame (int onoff)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (onoff != -1)
+   {
+      inhibit_frame = onoff ? 1 : 0;
+      if (inhibit_frame)
+         write_log ("display disabled\n");
+      else
+         write_log ("display enabled\n");
+         //set_title ();
+   }
+   return inhibit_frame;
+}
+*/
+/***************************************************************************/
+
+void graphics_notify_state (int state)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+/***************************************************************************/
+
+void handle_events(void)
+{
+   ULONG muisig = 0;
+
+   if (DoMethod(app, MUIM_Application_NewInput, &muisig) == MUIV_Application_ReturnID_Quit)
+      uae_quit();
+}
+
+/***************************************************************************/
+
+int debuggable (void)
+{
+    return 1;
+}
+
+/***************************************************************************/
+
+int mousehack_allowed (void)
+{
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+/***************************************************************************/
+
+void LED (int on)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+/***************************************************************************/
+
+/* sam: need to put all this in a separate module */
+
+#ifdef PICASSO96
+
+void DX_Invalidate (int first, int last)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+int DX_BitsPerCannon (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 8;
+}
+
+void DX_SetPalette (int start, int count)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+int DX_FillResolutions (uae_u16 *ppixel_format)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+void gfx_set_picasso_modeinfo (int w, int h, int depth)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+void gfx_set_picasso_state (int on)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+#endif
+
+/***************************************************************************/
+
+//static int led_state[5];
+
+//#define WINDOW_TITLE PACKAGE_NAME " " PACKAGE_VERSION
+
+/****************************************************************************/
+
+void main_window_led (int led, int on)                /* is used in amigui.c */
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+/*
+#if 0
+   if (led >= 0 && led <= 4)
+      led_state[led] = on;
+#endif
+*/
+}
+
+/****************************************************************************/
+
+int check_prefs_changed_gfx (void)
+{
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+/****************************************************************************/
+
+void toggle_mousegrab (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   write_log ("Mouse grab not supported\n");
+}
+
+int is_fullscreen (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   //return fullscreen;
+}
+
+int is_vsync (void)
+{
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+void toggle_fullscreen (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+/*
+   graphics_leave ();
+   currprefs.amiga_screen_type = 2;
+   notice_screen_contents_lost ();
+   XOffset = NULL;
+   YOffset = NULL;
+   usepub = 0;
+   graphics_setup();
+   graphics_init ();
+   notice_new_xcolors();
+*/
+}
+
+void screenshot (int type)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   write_log ("Screenshot not implemented yet\n");
+}
+
+/****************************************************************************
+ *
+ * Mouse inputdevice functions
+ */
+
+#define MAX_BUTTONS     3
+#define MAX_AXES        3
+#define FIRST_AXIS      0
+#define FIRST_BUTTON    MAX_AXES
+
+static int init_mouse (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 1;
+}
+
+static void close_mouse (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return;
+}
+
+static int acquire_mouse (unsigned int num, int flags)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 1;
+}
+
+static void unacquire_mouse (unsigned int num)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return;
+}
+
+static unsigned int get_mouse_num (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 1;
+}
+
+static const char *get_mouse_name (unsigned int mouse)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return "Default mouse";
+}
+
+static unsigned int get_mouse_widget_num (unsigned int mouse)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return MAX_AXES + MAX_BUTTONS;
+}
+
+static int get_mouse_widget_first (unsigned int mouse, int type)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   switch (type)
+   {
+      case IDEV_WIDGET_BUTTON:
+         return FIRST_BUTTON;
+      case IDEV_WIDGET_AXIS:
+         return FIRST_AXIS;
+   }
+   return -1;
+}
+
+static int get_mouse_widget_type (unsigned int mouse, unsigned int num, char *name, uae_u32 *code)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (num >= MAX_AXES && num < MAX_AXES + MAX_BUTTONS)
+   {
+      if (name)
+         sprintf (name, "Button %d", num + 1 + MAX_AXES);
+      return IDEV_WIDGET_BUTTON;
+   }
+   else if (num < MAX_AXES)
+   {
+      if (name)
+         sprintf (name, "Axis %d", num + 1);
+      return IDEV_WIDGET_AXIS;
+   }
+   return IDEV_WIDGET_NONE;
+}
+
+static void read_mouse (void)
+{
+   //debug_print("%s (%d)\n", __func__, __LINE__);
+    /* We handle mouse input in handle_events() */
+}
+
+struct inputdevice_functions inputdevicefunc_mouse = {
+   init_mouse,
+   close_mouse,
+   acquire_mouse,
+   unacquire_mouse,
+   read_mouse,
+   get_mouse_num,
+   get_mouse_name,
+   get_mouse_widget_num,
+   get_mouse_widget_type,
+   get_mouse_widget_first
+};
+
+/*
+ * Default inputdevice config for mouse
+ */
+void input_get_default_mouse (struct uae_input_device *uid)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   /* Supports only one mouse for now */
+   uid[0].eventid[ID_AXIS_OFFSET + 0][0]   = INPUTEVENT_MOUSE1_HORIZ;
+   uid[0].eventid[ID_AXIS_OFFSET + 1][0]   = INPUTEVENT_MOUSE1_VERT;
+   uid[0].eventid[ID_AXIS_OFFSET + 2][0]   = INPUTEVENT_MOUSE1_WHEEL;
+   uid[0].eventid[ID_BUTTON_OFFSET + 0][0] = INPUTEVENT_JOY1_FIRE_BUTTON;
+   uid[0].eventid[ID_BUTTON_OFFSET + 1][0] = INPUTEVENT_JOY1_2ND_BUTTON;
+   uid[0].eventid[ID_BUTTON_OFFSET + 2][0] = INPUTEVENT_JOY1_3RD_BUTTON;
+   uid[0].enabled = 1;
+}
+
+/****************************************************************************
+ *
+ * Keyboard inputdevice functions
+ */
+static unsigned int get_kb_num (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 1;
+}
+
+static const char *get_kb_name (unsigned int kb)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return "Default keyboard";
+}
+
+static unsigned int get_kb_widget_num (unsigned int kb)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 128;
+}
+
+static int get_kb_widget_first (unsigned int kb, int type)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+static int get_kb_widget_type (unsigned int kb, unsigned int num, char *name, uae_u32 *code)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   // fix me
+   *code = num;
+   return IDEV_WIDGET_KEY;
+}
+
+static int keyhack (int scancode, int pressed, int num)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return scancode;
+}
+
+static void read_kb (void)
+{
+}
+
+static int init_kb (void)
+{
+   return 1;
+}
+
+static void close_kb (void)
+{
+}
+
+static int acquire_kb (unsigned int num, int flags)
+{
+   return 1;
+}
+
+static void unacquire_kb (unsigned int num)
+{
+}
+
+struct inputdevice_functions inputdevicefunc_keyboard =
+{
+   init_kb,
+   close_kb,
+   acquire_kb,
+   unacquire_kb,
+   read_kb,
+   get_kb_num,
+   get_kb_name,
+   get_kb_widget_num,
+   get_kb_widget_type,
+   get_kb_widget_first
+};
+
+int getcapslockstate (void)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return 0;
+}
+
+void setcapslockstate (int state)
+{
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+/****************************************************************************
+ *
+ * Handle gfx specific cfgfile options
+ */
+
+//static const char *screen_type[] = { "custom", "public", "ask", 0 };
+
+void gfx_default_options (struct uae_prefs *p)
+{
+/*
+   p->amiga_screen_type     = UAESCREENTYPE_PUBLIC;
+   p->amiga_publicscreen[0] = '\0';
+   p->amiga_use_dither      = 1;
+   p->amiga_use_grey        = 0;
+   p->amiga_use_overlay     = 0;
+*/
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+}
+
+void gfx_save_options (FILE *f, const struct uae_prefs *p)
+{
+/*
+   cfgfile_write (f, GFX_NAME ".screen_type=%s\n",  screen_type[p->amiga_screen_type]);
+   cfgfile_write (f, GFX_NAME ".publicscreen=%s\n", p->amiga_publicscreen);
+   cfgfile_write (f, GFX_NAME ".use_dither=%s\n",   p->amiga_use_dither ? "true" : "false");
+   cfgfile_write (f, GFX_NAME ".use_grey=%s\n",     p->amiga_use_grey ? "true" : "false");
+   cfgfile_write (f, GFX_NAME ".use_overlay=%s\n",     p->amiga_use_overlay ? "true" : "false");
+*/
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+int gfx_parse_option (struct uae_prefs *p, const char *option, const char *value)
+{
+/*
+   return (cfgfile_yesno  (option, value, "use_dither",   &p->amiga_use_dither)
+   || cfgfile_yesno  (option, value, "use_grey",    &p->amiga_use_grey)
+   || cfgfile_yesno  (option, value, "use_overlay",   &p->amiga_use_overlay)
+   || cfgfile_strval (option, value, "screen_type",  &p->amiga_screen_type, screen_type, 0)
+   || cfgfile_string (option, value, "publicscreen", &p->amiga_publicscreen[0], 256));
+*/
+   debug_print("%s (%d)\n", __func__, __LINE__);
+}
+
+/****************************************************************************/

@@ -1,0 +1,25 @@
+u_deep.o: u_deep.c /gg/includestd/string.h /gg/includestd/machine/ansi.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h \
+ /gg/includestd/sys/cdefs.h /gg/includestd/machine/cdefs.h cdata.h \
+ tables.h u_deep.h getbits.h
+
+/gg/includestd/string.h:
+
+/gg/includestd/machine/ansi.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h:
+
+/gg/includestd/sys/cdefs.h:
+
+/gg/includestd/machine/cdefs.h:
+
+cdata.h:
+
+tables.h:
+
+u_deep.h:
+
+getbits.h:

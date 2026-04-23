@@ -1,0 +1,210 @@
+pfile.o: pfile.c /gg/includestd/stdio.h /gg/includestd/sys/types.h \
+ /gg/includestd/machine/types.h /gg/includestd/sys/cdefs.h \
+ /gg/includestd/machine/cdefs.h /gg/includestd/machine/ansi.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h \
+ /gg/includestd/machine/endian.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h \
+ /gg/includestd/sys/select.h /gg/includestd/stdlib.h \
+ /gg/includestd/string.h /gg/includestd/time.h /gg/includestd/sys/time.h \
+ ../../src/sysconfig.h ../../src/include/sysdeps.h \
+ /gg/os-include/devices/timer.h /gg/os-include/exec/types.h \
+ /gg/os-include/exec/io.h /gg/os-include/exec/ports.h \
+ /gg/os-include/exec/nodes.h /gg/os-include/exec/lists.h \
+ /gg/os-include/exec/tasks.h /gg/includestd/errno.h \
+ /gg/includestd/assert.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include-fixed/limits.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/syslimits.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include-fixed/limits.h \
+ /gg/includestd/limits.h /gg/includestd/machine/limits.h \
+ /gg/includestd/sys/syslimits.h /gg/includestd/values.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/float.h \
+ ../../src/include/uae_string.h /gg/includestd/strings.h \
+ /gg/includestd/unistd.h /gg/includestd/sys/unistd.h \
+ /gg/os-include/proto/exec.h /gg/os-include/clib/exec_protos.h \
+ /gg/os-include/exec/memory.h /gg/os-include/exec/semaphores.h \
+ /gg/os-include/exec/devices.h /gg/os-include/exec/libraries.h \
+ /gg/os-include/exec/machine.h /gg/os-include/utility/tagitem.h \
+ /gg/os-include/emul/emulinterface.h /gg/os-include/utility/hooks.h \
+ /gg/os-include/ppcinline/exec.h /gg/os-include/ppcinline/macros.h \
+ /gg/os-include/emul/emulregs.h /gg/os-include/proto/socket.h \
+ /gg/os-include/clib/socket_protos.h /gg/includestd/sys/socket.h \
+ /gg/includestd/netinet/in.h /gg/os-include/ppcinline/socket.h \
+ /gg/os-include/proto/usergroup.h /gg/os-include/clib/usergroup_protos.h \
+ /gg/os-include/libraries/usergroup.h /gg/includestd/pwd.h \
+ /gg/includestd/grp.h /gg/includestd/utmp.h \
+ /gg/os-include/ppcinline/usergroup.h /gg/includestd/fcntl.h \
+ /gg/includestd/sys/fcntl.h /gg/includestd/utime.h \
+ /gg/includestd/sys/stat.h /gg/includestd/dirent.h \
+ /gg/includestd/sys/dirent.h ../../src/include/uae_types.h \
+ ../../src/include/uae_malloc.h ../../src/include/writelog.h \
+ ../../src/target.h ../../src/machdep/machdep.h ../../src/gfxdep/gfx.h \
+ ../../src/include/zfile.h cdata.h u_init.h u_rle.h u_quick.h u_medium.h \
+ u_deep.h u_heavy.h crc_csum.h pfile.h
+
+/gg/includestd/stdio.h:
+
+/gg/includestd/sys/types.h:
+
+/gg/includestd/machine/types.h:
+
+/gg/includestd/sys/cdefs.h:
+
+/gg/includestd/machine/cdefs.h:
+
+/gg/includestd/machine/ansi.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h:
+
+/gg/includestd/machine/endian.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h:
+
+/gg/includestd/sys/select.h:
+
+/gg/includestd/stdlib.h:
+
+/gg/includestd/string.h:
+
+/gg/includestd/time.h:
+
+/gg/includestd/sys/time.h:
+
+../../src/sysconfig.h:
+
+../../src/include/sysdeps.h:
+
+/gg/os-include/devices/timer.h:
+
+/gg/os-include/exec/types.h:
+
+/gg/os-include/exec/io.h:
+
+/gg/os-include/exec/ports.h:
+
+/gg/os-include/exec/nodes.h:
+
+/gg/os-include/exec/lists.h:
+
+/gg/os-include/exec/tasks.h:
+
+/gg/includestd/errno.h:
+
+/gg/includestd/assert.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include-fixed/limits.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/syslimits.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include-fixed/limits.h:
+
+/gg/includestd/limits.h:
+
+/gg/includestd/machine/limits.h:
+
+/gg/includestd/sys/syslimits.h:
+
+/gg/includestd/values.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/float.h:
+
+../../src/include/uae_string.h:
+
+/gg/includestd/strings.h:
+
+/gg/includestd/unistd.h:
+
+/gg/includestd/sys/unistd.h:
+
+/gg/os-include/proto/exec.h:
+
+/gg/os-include/clib/exec_protos.h:
+
+/gg/os-include/exec/memory.h:
+
+/gg/os-include/exec/semaphores.h:
+
+/gg/os-include/exec/devices.h:
+
+/gg/os-include/exec/libraries.h:
+
+/gg/os-include/exec/machine.h:
+
+/gg/os-include/utility/tagitem.h:
+
+/gg/os-include/emul/emulinterface.h:
+
+/gg/os-include/utility/hooks.h:
+
+/gg/os-include/ppcinline/exec.h:
+
+/gg/os-include/ppcinline/macros.h:
+
+/gg/os-include/emul/emulregs.h:
+
+/gg/os-include/proto/socket.h:
+
+/gg/os-include/clib/socket_protos.h:
+
+/gg/includestd/sys/socket.h:
+
+/gg/includestd/netinet/in.h:
+
+/gg/os-include/ppcinline/socket.h:
+
+/gg/os-include/proto/usergroup.h:
+
+/gg/os-include/clib/usergroup_protos.h:
+
+/gg/os-include/libraries/usergroup.h:
+
+/gg/includestd/pwd.h:
+
+/gg/includestd/grp.h:
+
+/gg/includestd/utmp.h:
+
+/gg/os-include/ppcinline/usergroup.h:
+
+/gg/includestd/fcntl.h:
+
+/gg/includestd/sys/fcntl.h:
+
+/gg/includestd/utime.h:
+
+/gg/includestd/sys/stat.h:
+
+/gg/includestd/dirent.h:
+
+/gg/includestd/sys/dirent.h:
+
+../../src/include/uae_types.h:
+
+../../src/include/uae_malloc.h:
+
+../../src/include/writelog.h:
+
+../../src/target.h:
+
+../../src/machdep/machdep.h:
+
+../../src/gfxdep/gfx.h:
+
+../../src/include/zfile.h:
+
+cdata.h:
+
+u_init.h:
+
+u_rle.h:
+
+u_quick.h:
+
+u_medium.h:
+
+u_deep.h:
+
+u_heavy.h:
+
+crc_csum.h:
+
+pfile.h:

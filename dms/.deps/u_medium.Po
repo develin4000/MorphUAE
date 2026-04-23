@@ -1,0 +1,26 @@
+u_medium.o: u_medium.c /gg/includestd/string.h \
+ /gg/includestd/machine/ansi.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h \
+ /gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h \
+ /gg/includestd/sys/cdefs.h /gg/includestd/machine/cdefs.h cdata.h \
+ u_medium.h getbits.h tables.h
+
+/gg/includestd/string.h:
+
+/gg/includestd/machine/ansi.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stdarg.h:
+
+/gg/lib/gcc-lib/ppc-morphos/9.5.0/include/stddef.h:
+
+/gg/includestd/sys/cdefs.h:
+
+/gg/includestd/machine/cdefs.h:
+
+cdata.h:
+
+u_medium.h:
+
+getbits.h:
+
+tables.h:
