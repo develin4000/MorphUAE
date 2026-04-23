@@ -1,4 +1,6 @@
 kickstart_rom_file=kick.rom
+#hardfile=read-write,32,1,2,512,PROGDIR:Hardfiles/AOS31.hdf
+#filesystem=rw,Gateway:PROGDIR:Hardfiles/Gateway
 
 # cpu settings
 cpu_type=68020

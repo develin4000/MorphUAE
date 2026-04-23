@@ -23,33 +23,18 @@
 #undef   __USE_BASETYPE__
 #include <exec/execbase.h>
 
-#ifdef USE_SDL
-# include <SDL.h>
-#endif
 
 /* Get compiler/libc to enlarge stack to this size - if possible */
 #if defined __PPC__ || defined __ppc__ || defined POWERPC || defined __POWERPC__
 # define MIN_STACK_SIZE  (64 * 1024)
-#else
-# define MIN_STACK_SIZE  (32 * 1024)
 #endif
 
 #if defined __libnix__ || defined __ixemul__
 /* libnix requires that we link against the swapstack.o module */
 unsigned int __stack = MIN_STACK_SIZE;
-#else
-# if !defined __MORPHOS__ && !defined __AROS__
-/* clib2 minimum stack size. Use this on OS3.x and OS4.0. */
-unsigned int __stack_size = MIN_STACK_SIZE;
-# endif
 #endif
 
 struct Device *TimerBase;
-#ifdef __amigaos4__
-struct Library *ExpansionBase;
-struct TimerIFace *ITimer;
-struct ExpansionIFace *IExpansion;
-#endif
 
 //Version tag string for AmigaOS version command
 //Not perfect: format of date supposed to be: dd.MM.yyyy, but that format is not available
@@ -58,14 +43,7 @@ char* AMIGAOS_VERSION_TAG = "$VER: " UAE_VERSION_STRING " (" __DATE__ ")";
 
 static void free_libs (void)
 {
-#ifdef __amigaos4__
-    if (ITimer)
-	DropInterface ((struct Interface *)ITimer);
-    if (IExpansion)
-	DropInterface ((struct Interface *)IExpansion);
-    if (ExpansionBase)
-	CloseLibrary (ExpansionBase);
-#endif
+
 }
 
 static void init_libs (void)
@@ -73,17 +51,6 @@ static void init_libs (void)
     atexit (free_libs);
 
     TimerBase = (struct Device *) FindName(&SysBase->DeviceList, "timer.device");
-
-#ifdef __amigaos4__
-    ITimer = (struct TimerIFace *) GetInterface((struct Library *)TimerBase, "main", 1, 0);
-
-    ExpansionBase = OpenLibrary ("expansion.library", 0);
-    if (ExpansionBase)
-	IExpansion = (struct ExpansionIFace *) GetInterface(ExpansionBase, "main", 1, 0);
-
-    if(!ITimer || !IExpansion)
-	exit (20);
-#endif
 }
 
 static int fromWB;
@@ -100,10 +67,6 @@ int main (int argc, char *argv[])
 	set_logfile ("T:E-UAE.log");
 
     init_libs ();
-
-#ifdef USE_SDL
-    init_sdl ();
-#endif
 
     real_main (argc, argv);
 

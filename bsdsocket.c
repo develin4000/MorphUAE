@@ -25,10 +25,6 @@
 
 #ifdef BSDSOCKET
 
-#ifdef WIN32
-# include <winsock2.h>
-#endif
-
 static uae_u32 SockLibBase;
 
 #define SOCKPOOLSIZE 128

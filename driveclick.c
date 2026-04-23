@@ -166,19 +166,6 @@ void driveclick_init (void)
 	    } else 
 	    //load from file
 	    if (currprefs.dfxclick[i] == -1) {
-#ifdef __amigaos4__
-			//currprefs.dfxclickexternal[i] is the path to the wav directory (path contains trailing separator)
-			sprintf (tmp_path, "%sdrive_click.wav", currprefs.dfxclickexternal[i]);
-			v = loadsample (tmp_path, &drvs[i][DS_CLICK]);
-			sprintf (tmp_path, "%sdrive_spin.wav", currprefs.dfxclickexternal[i]);
-			v += loadsample (tmp_path, &drvs[i][DS_SPIN]);
-			sprintf (tmp_path, "%sdrive_spinnd.wav", currprefs.dfxclickexternal[i]);
-			v += loadsample (tmp_path, &drvs[i][DS_SPINND]);
-			sprintf (tmp_path, "%sdrive_startup.wav", currprefs.dfxclickexternal[i]);
-			v += loadsample (tmp_path, &drvs[i][DS_START]);
-			sprintf (tmp_path, "%sdrive_snatch.wav", currprefs.dfxclickexternal[i]);
-			v += loadsample (tmp_path, &drvs[i][DS_SNATCH]);
-#else
 			char * start_path = "."; //TODO - ??? set correct path
 			sprintf (tmp_path, "%suae_data%cdrive_click_%s", start_path, FSDB_DIR_SEPARATOR, currprefs.dfxclickexternal[i]);
 			v = loadsample (tmp_path, &drvs[i][DS_CLICK]);
@@ -190,7 +177,6 @@ void driveclick_init (void)
 			v += loadsample (tmp_path, &drvs[i][DS_START]);
 			sprintf (tmp_path, "%suae_data%cdrive_snatch_%s", start_path, FSDB_DIR_SEPARATOR, currprefs.dfxclickexternal[i]);
 			v += loadsample (tmp_path, &drvs[i][DS_SNATCH]);
-#endif	/* __amigaos4__ */
 	    }
 	    if (v == 0) {
 			int j;

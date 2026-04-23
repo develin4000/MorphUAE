@@ -26,9 +26,6 @@
 #include "events.h"
 #include "audio.h"
 #include "savestate.h"
-#ifdef AVIOUTPUT
-# include "avioutput.h"
-#endif
 #include "sinctable.h"
 #include "gui.h" /* for gui_ledstate */
 
@@ -899,9 +896,6 @@ void check_prefs_changed_audio (void)
 #endif
     if (sound_available && sound_prefs_changed ()) {
 	close_sound ();
-#ifdef AVIOUTPUT
-	AVIOutput_Restart ();
-#endif
 
 	currprefs.produce_sound = changed_prefs.produce_sound;
 	currprefs.sound_stereo = changed_prefs.sound_stereo;

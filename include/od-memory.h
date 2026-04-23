@@ -14,9 +14,3 @@
 #ifndef SAVE_MEMORY
 #define SAVE_MEMORY
 #endif
-
-/* sam: fmode defined in custom.c conflicts with the done defined */
-/* in sc:include/stdio.h */
-#ifdef __SASC
-#define fmode my_fmode
-#endif

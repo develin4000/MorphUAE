@@ -430,37 +430,6 @@ static void close_scsi_bus (void)
     /* Not currently used */
 }
 
-#ifdef __amigaos4__
-static int find_devices (void)
-{
-    struct FileSystemData *filesys;
-    char cd_device[8];
-    int i;
-
-    /* block 'please insert volume CDx: requesters */
-    struct Process *self = (struct Process *) FindTask (NULL);
-    APTR old_windptr = self->pr_WindowPtr;
-    self->pr_WindowPtr = (APTR)-1;
-
-    /* Scan for device names of the form CDx: */
-    for (i=0; i<10; i++) {
-	sprintf (cd_device, "CD%d:\n", i);
-
-	DEBUG_LOG ("Looking for %s\n", cd_device);
-
-	if ((filesys = GetDiskFileSystemData (cd_device))) {
-	    if (check_device (filesys->fsd_DeviceName, filesys->fsd_DeviceUnit))
-		add_device (filesys->fsd_DeviceName, filesys->fsd_DeviceUnit);
-
-	    FreeDiskFileSystemData (filesys);
-	}
-    }
-
-    self->pr_WindowPtr = old_windptr;
-
-    return total_drives;
-}
-#else
 #include <exec/lists.h>
 #include <proto/dos.h>
 #include <dos/dos.h>
@@ -537,7 +506,6 @@ static int find_devices (void)
 
     return total_drives;
 }
-#endif
 
 static int open_scsi_bus (int flags)
 {

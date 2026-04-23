@@ -40,9 +40,7 @@
 #define __NOINLINES__
 
 #include <proto/exec.h>
-#ifndef __SASC
 #include <clib/alib_protos.h>
-#endif
 #include <proto/dos.h>
 #endif
 

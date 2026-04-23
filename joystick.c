@@ -31,15 +31,6 @@ static unsigned int nr_joysticks;
 static int init_joysticks (void)
 {
     LowLevelBase = (struct Library *) OpenLibrary ("lowlevel.library", 39);
-#ifdef __amigaos4__
-    if (LowLevelBase) {
-	ILowLevel = (struct LowLevelIFace *)GetInterface (LowLevelBase, "main", 1, NULL);
-	if (!ILowLevel) {
-	    CloseLibrary (LowLevelBase);
-	    LowLevelBase = 0;
-	}
-    }
-#endif
 
     if (LowLevelBase) {
 	nr_joysticks = 2;
