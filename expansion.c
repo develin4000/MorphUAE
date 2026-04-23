@@ -23,7 +23,6 @@
 #include "picasso96.h"
 #include "savestate.h"
 #include "zfile.h"
-#include "catweasel.h"
 
 #define MAX_EXPANSION_BOARDS	8
 
@@ -411,134 +410,6 @@ addrbank fastmem_bank = {
     fastmem_xlate, fastmem_check, NULL
 };
 
-
-#ifdef CATWEASEL
-
-/*
- * Catweasel ZorroII
- */
-
-static uae_u32 catweasel_lget (uaecptr) REGPARAM;
-static uae_u32 catweasel_wget (uaecptr) REGPARAM;
-static uae_u32 catweasel_bget (uaecptr) REGPARAM;
-static void catweasel_lput (uaecptr, uae_u32) REGPARAM;
-static void catweasel_wput (uaecptr, uae_u32) REGPARAM;
-static void catweasel_bput (uaecptr, uae_u32) REGPARAM;
-static int catweasel_check (uaecptr addr, uae_u32 size) REGPARAM;
-static uae_u8 *catweasel_xlate (uaecptr addr) REGPARAM;
-
-static uae_u32 catweasel_mask;
-static uae_u32 catweasel_start;
-
-static uae_u32 REGPARAM2 catweasel_lget (uaecptr addr)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_READ;
-#endif
-    write_log ("catweasel_lget @%08.8X!\n",addr);
-    return 0;
-}
-
-static uae_u32 REGPARAM2 catweasel_wget (uaecptr addr)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_READ;
-#endif
-    write_log ("catweasel_wget @%08.8X!\n",addr);
-    return 0;
-}
-
-static uae_u32 REGPARAM2 catweasel_bget (uaecptr addr)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_READ;
-#endif
-    addr -= catweasel_start & catweasel_mask;
-    addr &= catweasel_mask;
-    return catweasel_do_bget (addr);
-}
-
-static void REGPARAM2 catweasel_lput (uaecptr addr, uae_u32 l)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_WRITE;
-#endif
-    write_log ("catweasel_lput @%08.8X=%08.8X!\n",addr,l);
-}
-
-static void REGPARAM2 catweasel_wput (uaecptr addr, uae_u32 w)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_WRITE;
-#endif
-    write_log ("catweasel_wput @%08.8X=%04.4X!\n",addr,w);
-}
-
-static void REGPARAM2 catweasel_bput (uaecptr addr, uae_u32 b)
-{
-#ifdef JIT
-    special_mem |= SPECIAL_MEM_WRITE;
-#endif
-    addr -= catweasel_start & catweasel_mask;
-    addr &= catweasel_mask;
-    catweasel_do_bput (addr, b);
-}
-
-static int REGPARAM2 catweasel_check (uaecptr addr, uae_u32 size)
-{
-    write_log ("catweasel_check @%08.8X size %08.8X\n", addr, size);
-    return 0;
-}
-
-static uae_u8 REGPARAM2 *catweasel_xlate (uaecptr addr)
-{
-    write_log ("catweasel_xlate @%08.8X size %08.8X\n", addr);
-    return 0;
-}
-
-static addrbank catweasel_bank = {
-    catweasel_lget, catweasel_wget, catweasel_bget,
-    catweasel_lput, catweasel_wput, catweasel_bput,
-    catweasel_xlate, catweasel_check, NULL
-};
-
-static void expamem_map_catweasel (void)
-{
-    catweasel_start = ((expamem_hi | (expamem_lo >> 4)) << 16);
-    map_banks (&catweasel_bank, catweasel_start >> 16, 1, 0);
-    write_log ("Catweasel MK%d: mapped @$%lx\n", cwc.type, catweasel_start);
-}
-
-static void expamem_init_catweasel (void)
-{
-    uae_u8 productid = cwc.type == CATWEASEL_TYPE_MK3 ? 66 : 200;
-    uae_u16 vendorid = cwc.type == CATWEASEL_TYPE_MK3 ? 4626 : 5001;
-
-    catweasel_mask = (cwc.type == CATWEASEL_TYPE_MK3) ? 0xffff : 0x1ffff;
-
-    expamem_init_clear();
-
-    expamem_write (0x00, (cwc.type == CATWEASEL_TYPE_MK3 ? Z2_MEM_64KB : Z2_MEM_128KB) | zorroII);
-
-    expamem_write (0x04, productid);
-
-    expamem_write (0x08, no_shutup);
-
-    expamem_write (0x10, vendorid >> 8);
-    expamem_write (0x14, vendorid & 0xff);
-
-    expamem_write (0x18, 0x00); /* ser.no. Byte 0 */
-    expamem_write (0x1c, 0x00); /* ser.no. Byte 1 */
-    expamem_write (0x20, 0x00); /* ser.no. Byte 2 */
-    expamem_write (0x24, 0x00); /* ser.no. Byte 3 */
-
-    expamem_write (0x28, 0x00); /* Rom-Offset hi */
-    expamem_write (0x2c, 0x00); /* ROM-Offset lo */
-
-    expamem_write (0x40, 0x00); /* Ctrl/Statusreg.*/
-}
-
-#endif
 
 #ifdef CDTV
 /*
@@ -1212,12 +1083,7 @@ void expamem_reset (void)
 	card_map[cardno++] = expamem_map_filesys;
     }
 #endif
-#ifdef CATWEASEL
-    if (catweasel_init ()) {
-	card_init[cardno] = expamem_init_catweasel;
-	card_map[cardno++] = expamem_map_catweasel;
-    }
-#endif
+
     while (cardno < MAX_EXPANSION_BOARDS) {
 	card_init[cardno] = expamem_init_clear;
 	card_map[cardno++] = expamem_map_clear;
@@ -1238,9 +1104,7 @@ void expansion_init (void)
     fastmemory = 0;
     gfxmem_mask = gfxmem_start = 0;
     gfxmemory = 0;
-#ifdef CATWEASEL
-    catweasel_mask = catweasel_start = 0;
-#endif
+
 #ifdef FILESYS
     filesys_start = 0;
     filesysory = 0;
@@ -1276,9 +1140,6 @@ void expansion_cleanup (void)
     fastmemory = 0;
     z3fastmem = 0;
     gfxmemory = 0;
-#ifdef CATWEASEL
-    catweasel_free ();
-#endif
 }
 
 

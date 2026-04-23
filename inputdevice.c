@@ -34,7 +34,6 @@
 #include "inputdevice.h"
 #include "uae.h"
 #include "picasso96.h"
-#include "catweasel.h"
 #include "debug.h"
 #include "ar.h"
 #include "gui.h"
@@ -876,9 +875,6 @@ void inputdevice_hsync (void)
 	potgo_hsync = 255;
 
 
-#ifdef CATWEASEL
-    catweasel_hsync ();
-#endif
     if (inputdelay > 0) {
 	inputdelay--;
 	if (inputdelay == 0) {

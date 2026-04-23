@@ -33,7 +33,6 @@
 #ifdef FDI2RAW
 #include "fdi2raw.h"
 #endif
-#include "catweasel.h"
 #include "driveclick.h"
 #include "fsdb.h"
 #ifdef CAPS
@@ -179,11 +178,7 @@ typedef struct {
 #endif
     int useturbo;
     int floppybitcounter; /* number of bits left */
-#ifdef CATWEASEL
-    catweasel_drive *catweasel;
-#else
     int catweasel;
-#endif
 } drive;
 
 int disk_debug_logging;
@@ -1027,10 +1022,6 @@ static void rand_shifter (void)
 
 STATIC_INLINE int drive_empty (const drive * drv)
 {
-#ifdef CATWEASEL
-    if (drv->catweasel)
-	return catweasel_disk_changed (drv->catweasel) == 0;
-#endif
     return drv->diskfile == 0;
 }
 
@@ -1042,17 +1033,7 @@ static void drive_step (drive * drv)
 	drv->dskready_time = DSKREADY_TIME;
     }
 #endif
-#ifdef CATWEASEL
-    if (drv->catweasel) {
-	int dir = direction ? -1 : 1;
-	catweasel_step (drv->catweasel, dir);
-	drv->cyl += dir;
-	if (drv->cyl < 0)
-	    drv->cyl = 0;
-	write_log ("%d -> %d\n", dir, drv->cyl);
-	return;
-    }
-#endif
+
     if (drv->steplimit && get_cycles () - drv->steplimitcycle < MIN_STEPLIMIT_CYCLE) {
 	if (disk_debug_logging > 1)
 	    write_log (" step ignored %d", (int)((get_cycles () - drv->steplimitcycle) / CYCLE_UNIT));
@@ -1081,10 +1062,6 @@ static void drive_step (drive * drv)
 	unsigned int maxtrack = drv->hard_num_cyls;
 	if (drv->cyl < maxtrack + 3) {
 	    drv->cyl++;
-#ifdef CATWEASEL
-	    if (drv->catweasel)
-		catweasel_step (drv->catweasel, 1);
-#endif
 	}
 	if (drv->cyl >= maxtrack)
 	    write_log ("program tried to step over track %d\n", maxtrack);
@@ -1099,19 +1076,11 @@ static void drive_step (drive * drv)
 
 static int drive_track0 (drive * drv)
 {
-#ifdef CATWEASEL
-    if (drv->catweasel)
-	return catweasel_track0 (drv->catweasel);
-#endif
     return drv->cyl == 0;
 }
 
 static int drive_writeprotected (drive * drv)
 {
-#ifdef CATWEASEL
-    if (drv->catweasel)
-	return 1;
-#endif
     return drv->wrprot || drv->diskfile == NULL;
 }
 
@@ -1156,10 +1125,6 @@ static void drive_motor (drive * drv, int off)
 	drv->dskready = 0;
 	drv->dskready_time = 0;
     }
-#ifdef CATWEASEL
-    if (drv->catweasel)
-	catweasel_set_motor (drv->catweasel, !drv->motoroff);
-#endif
 }
 
 static void read_floppy_data (struct zfile *diskfile, trackid *tid, int offset, void *dst, int len)
@@ -1405,17 +1370,7 @@ static void drive_fill_bigbuf (drive * drv, int force)
 	if (disk_debug_logging > 0)
 	    write_log ("track %d, length %d read from \"saveimage\"\n", tr, drv->tracklen);
     } else if (drv->filetype == ADF_CATWEASEL) {
-#ifdef CATWEASEL
-	drv->tracklen = 0;
-	if (!catweasel_disk_changed (drv->catweasel)) {
-	    drv->tracklen = catweasel_fillmfm (drv->catweasel, drv->bigmfmbuf, side, drv->ddhd, 0);
-	}
-	drv->buffered_cyl = -1;
-	if (!drv->tracklen) {
-	    track_reset (drv);
-	    return;
-	}
-#endif
+
     } else if (drv->filetype == ADF_IPF) {
 
 #ifdef CAPS
@@ -2226,10 +2181,7 @@ uae_u8 DISK_status (void)
 	if (!(selected & (1 << dr))) {
 	    if (drive_running (drv)) {
 		if (drv->catweasel) {
-#ifdef CATWEASEL
-		    if (catweasel_diskready (drv->catweasel))
-			st &= ~0x20;
-#endif
+
 		} else {
 		    if (drv->dskready && !drv->indexhack && currprefs.dfxtype[dr] != DRV_35_DD_ESCOM)
 			st &= ~0x20;
@@ -2250,10 +2202,7 @@ uae_u8 DISK_status (void)
 	    if (drive_writeprotected (drv))
 		st &= ~8;
 	    if (drv->catweasel) {
-#ifdef CATWEASEL
-		if (catweasel_disk_changed (drv->catweasel))
-		    st &= ~4;
-#endif
+
 	    } else if (drv->dskchange && currprefs.dfxtype[dr] != DRV_525_SD) {
 		st &= ~4;
 	    }
