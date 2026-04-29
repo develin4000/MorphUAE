@@ -23,11 +23,10 @@ C++_MORPHOS	= ppc-morphos-g++-9
 STRIP_MORPHOS	= ppc-morphos-strip
 AR_MORPHOS	= ppc-morphos-ar
 RANLIB_MORPHOS	= ppc-morphos-ranlib
-#
-# Relative paths
-#
 
-
+#
+# Libs and Objects
+#
 OBJ_MACHDEP	= support.o
 LIB_MACHDEP	= libmachdep.a
 
@@ -70,7 +69,7 @@ INCDIR		= ./include
 # Platform specific compiler and linker flags 
 #
 CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wall -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes
-CPPFLG_MOS	= -DCPUEMU_0 -DCPUEMU_5 -DCPUEMU_6 -DFPUEMU -DJIT -DDRIVESOUND -DAGA -DAUTOCONFIG -DFILESYS -DSUPPORT_THREADS -DFDI2RAW -DDEBUGGER -DSAVESTATE -DENFORCER -DACTION_REPLAY -DXARCADE
+CPPFLG_MOS	= -DDEBUGGER
 LFLG_MOS	= -lz -lm -ldebug
 
 
@@ -103,12 +102,6 @@ debug: 	$(LIB_MACHDEP) $(LIB_THREADDEP) $(LIB_GFXDEP) $(LIB_SOUNDDEP) $(LIB_JOYD
 	@echo ""
 	@echo "Debug-enabled MorphOS binary sucessfully built..."
 	@echo ""
-
-
-#$(APP_MORPHOS_DB):	$(SRCDIR)/$(SOURCE_APP) $(OBJDIR)/$(OBJS_LOCA_MOS_DB)
-$(APP_MORPHOS_DB):	$(SRCDIR)/$(SOURCE_APP)
-	$(CC_MORPHOS) $(SRCDIR)/$(SOURCE_APP) $(CFLG_MOS_DB) $(LFLG_MOS_DB) -o $(EXEDIR)/$(APP_MORPHOS_DB)
-
 
 morphos: $(LIB_MACHDEP) $(LIB_THREADDEP) $(LIB_GFXDEP) $(LIB_SOUNDDEP) $(LIB_JOYDEP) $(LIB_GUIDEP) $(LIB_OSDEP) $(LIB_KEYMAP) $(LIB_DMS) $(LIB_CAPS) $(LIB_CPUEMU) $(OBJ_MAIN)
 	@echo ""

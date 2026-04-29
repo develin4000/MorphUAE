@@ -37,20 +37,9 @@ int is_zlib;
 
 static int zlib_test (void)
 {
-#if defined WIN32 && !defined __MINGW32__
-    static int zlibmsg;
-    if (is_zlib)
-	return 1;
-    if (zlibmsg)
-	return 0;
-    zlibmsg = 1;
-    gui_message("zip and gzip support disabled because zlib1.dll is missing");
-    return 0;
-#else
     /* On non-Windows platforms, we can safely assume (I think) that if we got this
      * far zlib is present - Rich */
     return 1;
-#endif
 }
 
 static struct zfile *zfile_create (void)
@@ -718,10 +707,6 @@ int zfile_zcompress (struct zfile *f, void *src, int size)
     z_stream zs;
     uae_u8 outbuf[4096];
 
-#ifdef WIN32
-    if (!is_zlib)
-	return 0;
-#endif
     memset (&zs, 0, sizeof (zs));
     if (deflateInit (&zs, Z_DEFAULT_COMPRESSION) != Z_OK)
 	return 0;

@@ -164,7 +164,7 @@ static void fix_options (void)
 	currprefs.produce_sound = 0;
 	err = 1;
     }
-#ifdef JIT
+
     if (currprefs.comptrustbyte < 0 || currprefs.comptrustbyte > 3) {
 	write_log ("Bad value for comptrustbyte parameter: value must be within 0..2\n");
 	currprefs.comptrustbyte = 1;
@@ -217,7 +217,7 @@ static void fix_options (void)
 	currprefs.cachesize = 0;
 	err = 1;
     }
-#endif
+
     if (currprefs.cpu_level < 2 && currprefs.z3fastmem_size > 0) {
 	write_log ("Z3 fast memory can't be used with a 68000/68010 emulation. It\n"
 		 "requires a 68020 emulation. Turning off Z3 fast memory.\n");
@@ -265,33 +265,13 @@ static void fix_options (void)
 #ifdef CPU_68000_ONLY
     currprefs.cpu_level = 0;
 #endif
-#ifndef CPUEMU_0
-    currprefs.cpu_compatible = 1;
-    currprefs.address_space_24 = 1;
-#endif
-#if !defined(CPUEMU_5) && !defined (CPUEMU_6)
-    currprefs.cpu_compatible = 0;
-    currprefs.address_space_24 = 0;
-#endif
-#if !defined (CPUEMU_6)
-    currprefs.cpu_cycle_exact = currprefs.blitter_cycle_exact = 0;
-#endif
-#ifndef AGA
-    currprefs.chipset_mask &= ~CSMASK_AGA;
-#endif
-#ifndef AUTOCONFIG
-    currprefs.z3fastmem_size = 0;
-    currprefs.fastmem_size = 0;
-    currprefs.gfxmem_size = 0;
-#endif
+
+
 #if !defined (BSDSOCKET)
     currprefs.socket_emu = 0;
 #endif
 #if !defined (SCSIEMU)
     currprefs.scsi = 0;
-//#ifdef _WIN32
-//    currprefs.win32_aspi = 0;
-//#endif
 #endif
 
     fixup_prefs_joysticks (&currprefs);
@@ -337,9 +317,9 @@ static void parse_cmdline (int argc, char **argv)
 	    if (i + 1 < argc)
 		i++;
 	} else if (strncmp (argv[i], "-config=", 8) == 0) {
-#ifdef FILESYS
+
 	    free_mountinfo (currprefs.mountinfo);
-#endif
+
 	    if (cfgfile_load (&currprefs, argv[i] + 8, 0))
 		strcpy (optionsfile, argv[i] + 8);
 	}
@@ -348,9 +328,9 @@ static void parse_cmdline (int argc, char **argv)
 	    if (i + 1 == argc) {
 		write_log ("Missing argument for '-f' option.\n");
 	    } else {
-#ifdef FILESYS
+
 		free_mountinfo (currprefs.mountinfo);
-#endif
+
 		if (cfgfile_load (&currprefs, argv[++i], 0))
 		    strcpy (optionsfile, argv[i]);
 	    }
@@ -544,17 +524,15 @@ static int do_preinit_machine (int argc, char **argv)
 	exit (1);
     }
     if (restart_config[0]) {
-#ifdef FILESYS
+
 	free_mountinfo (currprefs.mountinfo);
-#endif
+
 	default_prefs (&currprefs, 0);
 	fix_options ();
     }
 
-#ifdef FILESYS
     rtarea_init ();
     hardfile_install ();
-#endif
 
     if (restart_config[0])
 	parse_cmdline_and_init_file (argc, argv);
@@ -579,39 +557,29 @@ static int do_preinit_machine (int argc, char **argv)
  */
 static int do_init_machine (void)
 {
-#ifdef JIT
     if (!(( currprefs.cpu_level >= 2 ) && ( currprefs.address_space_24 == 0 ) && ( currprefs.cachesize )))
 	canbang = 0;
-#endif
 
-#ifdef SAVESTATE
     savestate_init ();
-#endif
 #ifdef SCSIEMU
     scsidev_install ();
 #endif
-#ifdef AUTOCONFIG
+
     /* Install resident module to get 8MB chipmem, if requested */
     rtarea_setup ();
-#endif
-
     keybuf_init (); /* Must come after init_joystick */
 
-#ifdef AUTOCONFIG
     expansion_init ();
-#endif
+
     memory_init ();
     memory_reset ();
 
-#ifdef FILESYS
     filesys_install ();
-#endif
-#ifdef AUTOCONFIG
+
     bsdlib_install ();
     emulib_install ();
     uaeexe_install ();
     native2amiga_install ();
-#endif
 
     if (custom_init ()) { /* Must come after memory_init */
 #ifdef SERIAL_PORT
@@ -633,11 +601,6 @@ static int do_init_machine (void)
 		activate_debugger ();
 #endif
 
-//#ifdef WIN32
-//#ifdef FILESYS
-//	    filesys_init (); /* New function, to do 'add_filesys_unit()' calls at start-up */
-//#endif
-//#endif
 	    if (sound_available && currprefs.produce_sound > 1 && ! audio_init ()) {
 		write_log ("Sound driver unavailable: Sound output disabled\n");
 		currprefs.produce_sound = 0;
@@ -660,11 +623,11 @@ static void reset_all_systems (void)
 #ifdef BSDSOCKET
     bsdlib_reset ();
 #endif
-#ifdef FILESYS
+
     filesys_reset ();
     filesys_start_threads ();
     hardfile_reset ();
-#endif
+
 #ifdef SCSIEMU
     scsidev_reset ();
     scsidev_start_threads ();
@@ -676,12 +639,11 @@ static void reset_all_systems (void)
  */
 static void do_reset_machine (int hardreset)
 {
-#ifdef SAVESTATE
     if (savestate_state == STATE_RESTORE)
 	restore_state (savestate_fname);
     else if (savestate_state == STATE_REWIND)
 	savestate_rewind ();
-#endif
+
     /* following three lines must not be reordered or
      * fastram state restore breaks
      */
@@ -692,7 +654,7 @@ static void do_reset_machine (int hardreset)
 	memset (chipmemory, 0, allocated_chipmem);
 	write_log ("chipmem cleared\n");
     }
-#ifdef SAVESTATE
+
     /* We may have been restoring state, but we're done now.  */
     if (savestate_state == STATE_RESTORE || savestate_state == STATE_REWIND)
     {
@@ -700,7 +662,6 @@ static void do_reset_machine (int hardreset)
 	fill_prefetch_slow (&regs); /* compatibility with old state saves */
     }
     savestate_restore_finish ();
-#endif
 
     fill_prefetch_slow (&regs);
     if (currprefs.produce_sound == 0)
@@ -726,9 +687,7 @@ static void do_exit_machine (void)
     graphics_leave ();
     inputdevice_close ();
 
-#ifdef JIT
     compemu_cleanup();
-#endif
 
 #ifdef SCSIEMU
     scsidev_exit ();
@@ -745,16 +704,12 @@ static void do_exit_machine (void)
 #endif
     gui_exit ();
 
-#ifdef AUTOCONFIG
     expansion_cleanup ();
-#endif
-#ifdef FILESYS
+
     filesys_cleanup ();
     hardfile_cleanup ();
-#endif
-#ifdef SAVESTATE
+
     savestate_free ();
-#endif
 
     memory_cleanup ();
     cfgfile_addcfgparam (0);
@@ -768,9 +723,8 @@ void real_main (int argc, char **argv)
 {
     show_version ();
 
-#ifdef FILESYS
     currprefs.mountinfo = changed_prefs.mountinfo = &options_mountinfo;
-#endif
+
     restart_program = 1;
 
     strcat (restart_config, OPTIONSFILENAME);
@@ -883,11 +837,9 @@ void real_main (int argc, char **argv)
 
 	    set_inhibit_frame (IHF_QUIT_PROGRAM);
 
-#ifdef FILESYS
 	    /* Ensure any cached changes to virtual filesystem are flushed before
 	     * resetting or exitting. */
 	    filesys_prepare_reset ();
-#endif
 
 	} /* while (!QUITTING && !STOPPED) */
 
@@ -905,7 +857,8 @@ void real_main (int argc, char **argv)
 #ifndef NO_MAIN_IN_MAIN_C
 int main (int argc, char **argv)
 {
-    gui_init (argc, argv);
+    //gui_init (argc, argv);
+    gui_init ();
     real_main (argc, argv);
     return 0;
 }

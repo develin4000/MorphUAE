@@ -1,5 +1,3 @@
-#ifdef JIT
-
 /* If BOOL is not defined then define it here using int */
 #ifndef BOOL
 #define BOOL int
@@ -423,7 +421,7 @@ void comp_ppc_exception(uae_u8 level, comp_exception_data* exception_data);
 void comp_ppc_save_mapped_registers_from_list(uae_s8* mapped_regs);
 void comp_ppc_save_flags(void);
 void comp_ppc_load_pc(uae_u32 pc_address, uae_u32 location);
-#endif
+
 
 /* I wonder why we don't have these defined globally. */
 #ifndef FALSE

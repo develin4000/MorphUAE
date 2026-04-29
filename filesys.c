@@ -270,33 +270,18 @@ static const char *set_filesys_unit_1 (struct uaedev_mount_info *mountinfo, int 
 	struct stat statbuf;
 	memset (&statbuf, 0, sizeof (statbuf));
 	ui->volname = my_strdup (volname);
-#if defined(WIN32) && !defined(__MINGW32__)
-	v = isspecialdrive (rootdir);
-	if (v < 0) {
-	    sprintf (errmsg, "invalid drive '%s'", rootdir);
-	    return errmsg;
-	}
-	if (v == 0) {
-#endif
+
 	    if (stat (rootdir, &statbuf) < 0) {
 		sprintf (errmsg, "directory '%s' not found", rootdir);
 		return errmsg;
 	    }
-#ifdef WIN32
-	    if (!(statbuf.st_mode & FILEFLAG_WRITE)) {
-		write_log ("'%s' set to read-only\n", rootdir);
-		readonly = 1;
-	    }
-#else
+
 	    /* Check if the filesystem which contains rootdir is read-only */
 	    if (filesys_is_readonly (rootdir) && !readonly) {
 		write_log ("Mounting '%s' as read-only\n", rootdir);
 		readonly = 1;
 	}
-#endif
-#if defined(WIN32) && !defined(__MINGW32__)
-	}
-#endif
+
     } else {
 	ui->hf.secspertrack = secspertrack;
 	ui->hf.surfaces = surfaces;
@@ -1887,105 +1872,6 @@ action_dup_lock (Unit *unit, dpacket packet)
 }
 
 
-#if !defined TARGET_AMIGAOS || !defined WORDS_BIGENDIAN
-/*
- * The difference between the start of the Unix epoch and the start
- * of the Amiga epoch
- */
-const int secs_per_day = 24 * 60 * 60;
-const int diff = (8 * 365 + 2) * (24 * 60 * 60);
-
-/*
- * Convert host time (seconds since the start of the Unix Epoch) to
- * Amiga date-stamp
- */
-static void
-get_time (time_t t, long* days, long* mins, long* ticks)
-{
-    /* t is secs since 1-1-1970 */
-    /* days since 1-1-1978 */
-    /* mins since midnight */
-    /* ticks past minute @ 50Hz */
-
-# if !defined _WIN32 && !defined BEOS && !defined TARGET_AMIGAOS
-    /*
-     * On Unix-like systems, t is in UTC. The Amiga
-     * requires local time, so we have to take account of
-     * this difference if we can. This ain't easy to do in
-     * a portable, thread-safe way.
-     */
-#  if defined HAVE_LOCALTIME_R && defined HAVE_TIMEGM
-    struct tm tm;
-
-    /* Convert t to local time */
-    localtime_r (&t, &tm);
-
-    /* Calculate local time in seconds since the Unix Epoch */
-    t = timegm (&tm);
-#  endif
-# endif
-
-    /* Adjust for difference between Unix and Amiga epochs */
-    t -= diff;
-
-    /* Calculate Amiga date-stamp */
-    *days = t / secs_per_day;
-    t -= *days * secs_per_day;
-    *mins = t / 60;
-    t -= *mins * 60;
-    *ticks = t * 50;
-}
-
-/*
- * Convert Amiga date-stamp to host time in seconds since the start
- * of the Unix epoch
- */
-static time_t
-put_time (long days, long mins, long ticks)
-{
-    time_t t;
-
-    /* Calculate time in seconds since Amiga epoch */
-    t  = ticks / 50;
-    t += mins * 60;
-    t += days * secs_per_day;
-
-    /* Adjust for difference between Unix and Amiga epochs */
-    t += diff;
-
-# if !defined _WIN32 && !defined BEOS
-    /*
-     * t is still in local time zone. For Unix-like systems
-     * we need a time in UTC, so we have to take account of
-     * the difference if we can. This ain't easy to do in
-     * a portable, thread-safe way.
-     */
-#  if defined HAVE_GMTIME_R && defined HAVE_LOCALTIME_R
-    {
-	struct tm tm;
-	struct tm now_tm;
-	time_t now_t;
-
-	gmtime_r (&t, &tm);
-
-	/*
-	 * tm now contains the desired time in local time zone, not taking account
-	 * of DST. To fix this, we determine if DST is in effect now and stuff that
-	 * into tm.
-	 */
-	now_t = time (0);
-	localtime_r (&now_t, &now_tm);
-	tm.tm_isdst = now_tm.tm_isdst;
-
-	/* Convert time to UTC in seconds since the Unix epoch */
-	t = mktime (&tm);
-    }
-#  endif
-# endif
-    return t;
-}
-#endif
-
 static void free_exkey (Unit *unit, ExamineKey *ek)
 {
     if (--ek->aino->exnext_count == 0) {
@@ -3454,7 +3340,6 @@ static uae_u32 REGPARAM2 exter_int_helper (TrapContext *context)
 	 *        d0 = 6: FreeMem(), memory in a1, size in d0
 	 */
 
-#ifdef SUPPORT_THREADS
 	/* First, check signals/messages */
 	while (comm_pipe_has_data (&native2amiga_pending)) {
 	    int cmd = read_comm_pipe_int_blocking (&native2amiga_pending);
@@ -3487,7 +3372,6 @@ static uae_u32 REGPARAM2 exter_int_helper (TrapContext *context)
 		break;
 	    }
 	}
-#endif
 
 	/* Find some unit that needs a message sent, and return its port,
 	 * or zero if all are done.
@@ -4385,6 +4269,3 @@ void filesys_install_code (void)
     #include "filesys_bootrom.c"
 }
 
-#if defined(WIN32) && !defined(__MINGW32__)
-# include "od-win32/win32_filesys.c"
-#endif

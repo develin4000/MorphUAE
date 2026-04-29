@@ -41,8 +41,6 @@ void native2amiga_startup (void)
 {
 }
 
-#ifdef SUPPORT_THREADS
-
 void uae_Cause (uaecptr interrupt)
 {
     uae_sem_wait (&n2asem);
@@ -90,8 +88,6 @@ void uae_NotificationHack (uaecptr port, uaecptr nr)
     do_uae_int_requested ();
     uae_sem_post (&n2asem);
 }
-
-#endif
 
 void uae_NewList (uaecptr list)
 {

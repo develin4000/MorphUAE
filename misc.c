@@ -204,13 +204,11 @@ static uae_u32 REGPARAM2 misc_demux (TrapContext *context)
 /*
  * Support for enforcer emulation
  */
-#ifdef ENFORCER
 	case 20:
 	    return enforcer_enable ();
 
 	case 21:
 	    return enforcer_disable ();
-#endif
 
 #if 0
 	case 25:
@@ -389,7 +387,6 @@ static uae_u32 REGPARAM2 misc_demux (TrapContext *context)
 
 void misc_hsync_stuff (void)
 {
-#ifdef FILESYS
     static int misc_demux_installed;
 
 #ifdef AHI
@@ -414,5 +411,4 @@ void misc_hsync_stuff (void)
 	org (a);
 	misc_demux_installed = 1;
     }
-#endif
 }

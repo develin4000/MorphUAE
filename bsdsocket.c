@@ -1206,29 +1206,6 @@ static uae_u32 REGPARAM2 bsdsocklib_SocketBaseTagList (TrapContext *context)
 
 static uae_u32 REGPARAM2 bsdsocklib_GetSocketEvents (TrapContext *context)
 {
-#ifdef _WIN32
-    struct socketbase *sb = get_socketbase (context);
-    int i;
-    int flags;
-    uae_u32 ptr = m68k_areg (&context->regs, 0);
-
-    TRACE (("GetSocketEvents(0x%x) -> ", ptr));
-
-    for (i = sb->dtablesize; i--; sb->eventindex++) {
-	if (sb->eventindex >= sb->dtablesize)
-	    sb->eventindex = 0;
-
-	if (sb->mtable[sb->eventindex]) {
-	    flags = sb->ftable[sb->eventindex] & SET_ALL;
-	    if (flags) {
-		sb->ftable[sb->eventindex] &= ~SET_ALL;
-		put_long (m68k_areg (&context->regs, 0), flags >> 8);
-		TRACE (("%d (0x%x)\n", sb->eventindex + 1, flags >> 8));
-		return sb->eventindex; // xxx
-	    }
-	}
-    }
-#endif
     TRACE (("-1\n"));
     return -1;
 }

@@ -225,9 +225,6 @@ void keybuf_init (void)
     inputdevice_updateconfig (&currprefs);
 }
 
-
-#ifdef SAVESTATE
-
 uae_u8 *save_keyboard (uae_u32 *len)
 {
     uae_u8 *dst, *t;
@@ -244,5 +241,3 @@ const uae_u8 *restore_keyboard (const uae_u8 *src)
     restore_u32 ();
     return src;
 }
-
-#endif /* SAVESTATE */

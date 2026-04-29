@@ -43,7 +43,6 @@ extern char *restore_string_func (const uae_u8 **);
 #define STATE_REWIND 16
 #define STATE_DOREWIND 32
 
-#ifdef SAVESTATE
 /* save, restore and initialize routines for Amiga's subsystems */
 
 extern const uae_u8 *restore_cpu (const uae_u8 *src);
@@ -128,8 +127,3 @@ extern void savestate_rewind (void);
 extern int savestate_dorewind (int);
 extern void savestate_listrewind (void);
 
-#else
-
-#define savestate_state 0
-
-#endif

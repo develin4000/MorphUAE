@@ -67,23 +67,19 @@ extern void init_eventtab (void);
 extern void events_schedule (void);
 extern void handle_active_events (void);
 
-#ifdef JIT
 /* For faster cycles handling */
 extern signed long pissoff;
-#endif
 
 /*
  * Handle all events pending within the next cycles_to_add cycles
  */
 STATIC_INLINE void do_cycles (unsigned int cycles_to_add)
 {
-#ifdef JIT
     if ((pissoff -= cycles_to_add) >= 0)
 	return;
 
     cycles_to_add = -pissoff;
     pissoff = 0;
-#endif
 
     if (is_lastline && eventtab[ev_hsync].evtime - currcycle <= cycles_to_add) {
 	frame_time_t rpt = uae_gethrtime ();
@@ -91,9 +87,7 @@ STATIC_INLINE void do_cycles (unsigned int cycles_to_add)
 	if (v > syncbase || v < -(syncbase))
 	    vsyncmintime = rpt;
 	if (v < 0) {
-#ifdef JIT
 	    pissoff = 3000 * CYCLE_UNIT;
-#endif
 	    return;
 	}
     }
@@ -120,23 +114,17 @@ STATIC_INLINE unsigned long get_cycles (void)
 
 STATIC_INLINE void set_cycles (unsigned long x)
 {
-#ifdef JIT
     currcycle = x;
-#endif
 }
 
 STATIC_INLINE void cycles_do_special (void)
 {
-#ifdef JIT
     if (pissoff >= 0)
 	pissoff = -1;
-#endif
 }
 
 STATIC_INLINE void do_extra_cycles (unsigned long cycles_to_add)
 {
-#ifdef JIT
     pissoff -= cycles_to_add;
-#endif
 }
 #endif

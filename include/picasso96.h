@@ -532,10 +532,6 @@ extern int uaegfx_card_found;
 
 extern struct picasso96_state_struct picasso96_state;
 
-#ifdef _WIN32
-extern unsigned int timer_id;
-#endif
-
 extern int DX_Fill (int dstx, int dsty, int width, int height, uae_u32 color, RGBFTYPE rgbtype);
 extern int DX_Blit (int srcx, int srcy, int dstx, int dsty, int width, int height, BLIT_OPCODE opcode);
 extern void DX_BlitRectFromBuffer (struct RenderInfo *ri, uae_u8* buffer, uae_u16 dstx, uae_u16 dsty, uae_u16 w, uae_u16 h);

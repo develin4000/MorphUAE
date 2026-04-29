@@ -15,13 +15,12 @@
  * Amiga counterpart, but can be called in situation where calling
  * the exec.library functions is impossible.
  */
-#ifdef SUPPORT_THREADS
 void uae_Cause(uaecptr interrupt);
 void uae_ReplyMsg(uaecptr msg);
 void uae_PutMsg(uaecptr port, uaecptr msg);
 void uae_Signal(uaecptr task, uae_u32 mask);
 void uae_NotificationHack(uaecptr, uaecptr);
-#endif
+
 void uae_NewList(uaecptr list);
 
 /*
@@ -46,14 +45,13 @@ void native2amiga_install (void);
 void native2amiga_startup (void);
 
 /**** internal stuff ****/
-#ifdef SUPPORT_THREADS
+
 /* This pipe is filled by Signal() with pairs of
  * (uae_u32)0/(uaecptr)task/(uae_u32)signal_set,
  * by PutMsg() with (uae_u32)1/(uaecptr)port/(uaecptr)msg and by
  * ReplyMsg() with (uae_u32)2/(uaecptr)msg.
  * It's emptied via exter_int_helper by the EXTER interrupt. */
 extern smp_comm_pipe native2amiga_pending;
-#endif
 
 STATIC_INLINE void do_uae_int_requested (void)
 {

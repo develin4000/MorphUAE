@@ -60,11 +60,7 @@
 #include "audio.h"
 #include "version.h"
 
-#ifndef _WIN32
 #define console_out printf
-#endif
-
-#ifdef SAVESTATE
 
 int savestate_state = 0;
 
@@ -86,8 +82,6 @@ static int replaybuffersize;
 
 char savestate_fname[MAX_DPATH];
 static struct staterecord staterecords[MAX_STATERECORDS];
-
-#endif
 
 /* functions for reading/writing bytes, shorts and longs in big-endian
  * format independent of host machine's endianess */
@@ -176,8 +170,6 @@ char *restore_string_func (const uae_u8 **dstp)
     *dstp = dst;
     return to;
 }
-
-#ifdef SAVESTATE
 
 /* read and write IFF-style hunks */
 
@@ -384,14 +376,14 @@ void restore_state (const char *filename)
 	} else if (!strcmp (name, "BRAM")) {
 	    restore_bram (totallen, filepos);
 	    continue;
-#ifdef AUTOCONFIG
+
 	} else if (!strcmp (name, "FRAM")) {
 	    restore_fram (totallen, filepos);
 	    continue;
 	} else if (!strcmp (name, "ZRAM")) {
 	    restore_zram (totallen, filepos);
 	    continue;
-#endif
+
 #ifdef PICASSO96
 	} else if (!strcmp (name, "PRAM")) {
 	    restore_pram (totallen, filepos);
@@ -399,10 +391,8 @@ void restore_state (const char *filename)
 #endif
 	} else if (!strcmp (name, "CPU "))
 	    end = restore_cpu (chunk);
-#ifdef FPUEMU
 	else if (!strcmp (name, "FPU "))
 	    end = restore_fpu (chunk);
-#endif
 	else if (!strcmp (name, "AGAC"))
 	    end = restore_custom_agacolors (chunk);
 	else if (!strcmp (name, "SPR0"))
@@ -449,25 +439,19 @@ void restore_state (const char *filename)
 	    end = restore_disk (3, chunk);
 	else if (!strcmp (name, "KEYB"))
 	    end = restore_keyboard (chunk);
-#ifdef AUTOCONFIG
 	else if (!strcmp (name, "EXPA"))
 	    end = restore_expansion (chunk);
-#endif
 	else if (!strcmp (name, "ROM "))
 	    end = restore_rom (chunk);
 #ifdef PICASSO96
 	else if (!strcmp (name, "P96 "))
 	    end = restore_p96 (chunk);
 #endif
-#ifdef ACTION_REPLAY
 	else if (!strcmp (name, "ACTR"))
 	    end = restore_action_replay (chunk);
-#endif
 #if 0
-#ifdef FILESYS
 	else if (!strcmp (name, "FSYS"))
 	    end = restore_filesys (chunk);
-#endif
 #endif
 	else
 	    write_log ("unknown chunk '%s' size %ld bytes\n", name, len);
@@ -515,12 +499,10 @@ static void save_rams (struct zfile *f, int comp)
     save_chunk (f, dst, len, "CRAM", comp);
     dst = save_bram (&len);
     save_chunk (f, dst, len, "BRAM", comp);
-#ifdef AUTOCONFIG
     dst = save_fram (&len);
     save_chunk (f, dst, len, "FRAM", comp);
     dst = save_zram (&len);
     save_chunk (f, dst, len, "ZRAM", comp);
-#endif
 #ifdef PICASSO96
     dst = save_pram (&len);
     save_chunk (f, dst, len, "PRAM", comp);
@@ -542,11 +524,9 @@ void save_state (const char *filename, const char *description)
     char name[5];
     int comp = savestate_docompress;
 
-#ifdef FILESYS
     if (nr_units (currprefs.mountinfo)) {
 	gui_message ("WARNING: State saves do not support hard drive emulation");
     }
-#endif
 
     custom_prepare_savestate ();
 
@@ -590,11 +570,9 @@ void save_state (const char *filename, const char *description)
     save_chunk (f, dst, len, "CPU ", 0);
     free (dst);
 
-#ifdef FPUEMU
     dst = save_fpu (&len,0 );
     save_chunk (f, dst, len, "FPU ", 0);
     free (dst);
-#endif
 
     strcpy (name, "DSKx");
     for (i = 0; i < 4; i++) {
@@ -649,10 +627,9 @@ void save_state (const char *filename, const char *description)
     save_chunk (f, dst, len, "KEYB", 0);
     free (dst);
 
-#ifdef AUTOCONFIG
     dst = save_expansion (&len, 0);
     save_chunk (f, dst, len, "EXPA", 0);
-#endif
+
     save_rams (f, comp);
 
     dst = save_rom (1, &len, 0);
@@ -663,12 +640,9 @@ void save_state (const char *filename, const char *description)
 	free (dst);
     } while ((dst = save_rom (0, &len, 0)));
 
-#ifdef ACTION_REPLAY
     dst = save_action_replay (&len, 0);
     save_chunk (f, dst, len, "ACTR", 0);
-#endif
 #if 0
-#ifdef FILESYS
     for (i = 0; i < nr_units (currprefs.mountinfo); i++) {
 	dst = save_filesys (i, &len);
 	if (dst) {
@@ -676,7 +650,6 @@ void save_state (const char *filename, const char *description)
 	    free (dst);
 	}
     }
-#endif
 #endif
 
     zfile_fwrite ("END ", 1, 4, f);
@@ -779,10 +752,9 @@ void savestate_rewind (void)
     p2 = st->end;
     write_log ("rewinding from %d\n", replaycounter);
     p = restore_cpu (p);
-#ifdef FPUEMU
     if (restore_u32_func (&p))
 	p = restore_fpu (p);
-#endif
+
     for (i = 0; i < 4; i++) {
 	p = restore_disk (i, p);
     }
@@ -798,27 +770,26 @@ void savestate_rewind (void)
     }
     p = restore_cia (0, p);
     p = restore_cia (1, p);
-#ifdef AUTOCONFIG
+
     p = restore_expansion (p);
-#endif
+
     len = restore_u32_func (&p);
     memcpy (chipmemory, p, currprefs.chipmem_size > len ? len : currprefs.chipmem_size);
     p += len;
     len = restore_u32_func (&p);
     memcpy (save_bram (&dummy), p, currprefs.bogomem_size > len ? len : currprefs.bogomem_size);
     p += len;
-#ifdef AUTOCONFIG
+
     len = restore_u32_func (&p);
     memcpy (save_fram (&dummy), p, currprefs.fastmem_size > len ? len : currprefs.fastmem_size);
     p += len;
     len = restore_u32_func (&p);
     memcpy (save_zram (&dummy), p, currprefs.z3fastmem_size > len ? len : currprefs.z3fastmem_size);
     p += len;
-#endif
-#ifdef ACTION_REPLAY
+
     if (restore_u32_func (&p))
 	p = restore_action_replay (p);
-#endif
+
     p += 4;
     if (p != p2) {
 	gui_message ("reload failure, address mismatch %p != %p", p, p2);
@@ -850,10 +821,9 @@ void savestate_capture (int force)
     int i, tlen, retrycnt;
     struct staterecord *st, *stn;
 
-#ifdef FILESYS
     if (nr_units (currprefs.mountinfo))
 	return;
-#endif
+
     if (!replaybuffer)
 	return;
     if (!force && (!currprefs.statecapture || !currprefs.statecapturerate || ((timeframes + frameextra) % currprefs.statecapturerate)))
@@ -876,7 +846,7 @@ retry2:
     save_cpu (&len, p);
     tlen += len;
     p += len;
-#ifdef FPUEMU
+
     if (bufcheck (&p, 0))
 	goto retry;
     p3 = p;
@@ -887,7 +857,7 @@ retry2:
 	tlen += len;
 	p += len;
     }
-#endif
+
     for (i = 0; i < 4; i++) {
 	if (bufcheck (&p, 0))
 	    goto retry;
@@ -939,13 +909,13 @@ retry2:
     save_cia (1, &len, p);
     tlen += len;
     p += len;
-#ifdef AUTOCONFIG
+
     if (bufcheck (&p, 0))
 	goto retry;
     save_expansion (&len, p);
     tlen += len;
     p += len;
-#endif
+
     dst = save_cram (&len);
     if (bufcheck (&p, len))
 	goto retry;
@@ -960,7 +930,7 @@ retry2:
     memcpy (p, dst, len);
     tlen += len + 4;
     p += len;
-#ifdef AUTOCONFIG
+
     dst = save_fram (&len);
     if (bufcheck (&p, len))
 	goto retry;
@@ -975,8 +945,7 @@ retry2:
     memcpy (p, dst, len);
     tlen += len + 4;
     p += len;
-#endif
-#ifdef ACTION_REPLAY
+
     if (bufcheck (&p, 0))
 	goto retry;
     p3 = p;
@@ -987,7 +956,7 @@ retry2:
 	tlen += len;
 	p += len;
     }
-#endif
+
     save_u32_func (&p, tlen);
     stn->next = p;
     stn->start = p2;
@@ -1307,5 +1276,3 @@ misc:
 - should we strip all paths from image file names?
 
 */
-
-#endif

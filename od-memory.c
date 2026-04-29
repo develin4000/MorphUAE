@@ -10,7 +10,6 @@
 #include "sysdeps.h"
 #include "include/memory.h"
 
-#ifdef JIT
 //We need the memory handling functions for MorphOS
 #include <proto/exec.h>
 #include <exec/system.h>
@@ -49,4 +48,3 @@ void cache_free (void *cache)
 	FreeVec(cache);
 }
 
-#endif

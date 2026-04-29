@@ -7,8 +7,6 @@
  * Copyright 2004      Richard Drummond
  */
 
-#ifdef ENFORCER
-
 #include <stdlib.h>
 
 #include "sysconfig.h"
@@ -20,11 +18,7 @@
 #include "newcpu.h"
 #include "enforcer.h"
 
-#ifndef _WIN32
 #define console_out printf
-#else
-#define console_out(...) do {;} while (0)
-#endif
 
 /* Configurable options */
 #define ENFORCESIZE 1024
@@ -462,20 +456,16 @@ static int      dummy_check2   (uaecptr addr, uae_u32 size) REGPARAM;
 
 static uae_u32 REGPARAM2 dummy_lget2 (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     enforcer_display_hit ("LONG READ from", GET_PC, addr);
     return 0xbadedeef;
 }
 
-#ifdef JIT
 static int warned_JIT_0xF10000 = 0;
-#endif
 
 static uae_u32 REGPARAM2 dummy_wget2 (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
 
     if (addr >= 0x00F10000 && addr <= 0x00F7FFFF) {
@@ -485,49 +475,44 @@ static uae_u32 REGPARAM2 dummy_wget2 (uaecptr addr)
 	}
 	return 0;
     }
-#endif
+
     enforcer_display_hit ("WORD READ from", GET_PC, addr);
     return 0xbadf;
 }
 
 static uae_u32 REGPARAM2 dummy_bget2 (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     enforcer_display_hit ("BYTE READ from", GET_PC, addr);
     return 0xbadedeef;
 }
 
 static void REGPARAM2 dummy_lput2 (uaecptr addr, uae_u32 l)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     enforcer_display_hit ("LONG WRITE to", GET_PC, addr);
 }
 
 static void REGPARAM2 dummy_wput2 (uaecptr addr, uae_u32 w)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     enforcer_display_hit ("WORD WRITE to", GET_PC, addr);
 }
 
 static void REGPARAM2 dummy_bput2 (uaecptr addr, uae_u32 b)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     enforcer_display_hit ("BYTE WRITE to", GET_PC, addr);
 }
 
 static int REGPARAM2 dummy_check2 (uaecptr addr, uae_u32 size)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     enforcer_display_hit ("CHECK from ", GET_PC, addr);
     return 0;
 }
@@ -573,5 +558,3 @@ int enforcer_disable (void)
     }
     return 1;
 }
-
-#endif

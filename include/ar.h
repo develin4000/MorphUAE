@@ -1,20 +1,15 @@
 
 /* disable HRTMon support by commenting this out */
 #define ACTION_REPLAY_HRTMON
-
-#ifdef ACTION_REPLAY
 #define ACTION_REPLAY_COMMON
-#endif
 
 #ifdef ACTION_REPLAY_HRTMON
 #define ACTION_REPLAY_COMMON
 #endif
 
-#ifdef ACTION_REPLAY
 /* disable Action Replay ROM/RAM hide by commenting this out */
 /* Better not disable this unless you do plenty of testing first. -Mark */
 #define ACTION_REPLAY_HIDE_CARTRIDGE
-#endif
 
 #define ACTION_REPLAY_WAIT_PC -3 	/* Wait for a specified Program counter */
 #define ACTION_REPLAY_INACTIVE -2

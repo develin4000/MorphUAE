@@ -142,8 +142,6 @@
 	* for the first time it displays all the familiar text. Then unsets 'PRIN'.
 	*/
 
-#ifdef ACTION_REPLAY
-
 #include "sysconfig.h"
 #include "sysdeps.h"
 
@@ -482,9 +480,9 @@ static void disable_rom_test(void);
 static uae_u32 REGPARAM2 arram_lget (uaecptr addr)
 {
     uae_u32 *m;
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arram_start;
     addr &= arram_mask;
     m = (uae_u32 *)(armemory_ram + addr);
@@ -508,9 +506,9 @@ static uae_u32 REGPARAM2 arram_lget (uaecptr addr)
 static uae_u32 REGPARAM2 arram_wget (uaecptr addr)
 {
     uae_u16 *m;
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arram_start;
     addr &= arram_mask;
     m = (uae_u16 *)(armemory_ram + addr);
@@ -519,9 +517,9 @@ static uae_u32 REGPARAM2 arram_wget (uaecptr addr)
 
 static uae_u32 REGPARAM2 arram_bget (uaecptr addr)
 {
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arram_start;
     addr &= arram_mask;
     return armemory_ram[addr];
@@ -555,9 +553,8 @@ void REGPARAM2 arram_wput (uaecptr addr, uae_u32 w)
 {
     uae_u16 *m;
 
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     addr -= arram_start;
     addr &= arram_mask;
     m = (uae_u16 *)(armemory_ram + addr);
@@ -587,9 +584,8 @@ static uae_u8 REGPARAM2 *arram_xlate (uaecptr addr)
 
 static uae_u32 REGPARAM2 arrom_lget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     return (ar3a (addr, 0, 0) << 24) | (ar3a (addr + 1, 0, 0) << 16) | (ar3a (addr + 2, 0, 0) << 8) | ar3a (addr + 3, 0, 0);
@@ -597,9 +593,8 @@ static uae_u32 REGPARAM2 arrom_lget (uaecptr addr)
 
 static uae_u32 REGPARAM2 arrom_wget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     return (ar3a (addr, 0, 0) << 8) | ar3a (addr + 1, 0, 0);
@@ -607,9 +602,8 @@ static uae_u32 REGPARAM2 arrom_wget (uaecptr addr)
 
 static uae_u32 REGPARAM2 arrom_bget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     return ar3a (addr, 0, 0);
@@ -617,9 +611,8 @@ static uae_u32 REGPARAM2 arrom_bget (uaecptr addr)
 
 static void REGPARAM2 arrom_lput (uaecptr addr, uae_u32 l)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     ar3a (addr + 0,(uae_u8)(l >> 24), 1);
@@ -630,9 +623,8 @@ static void REGPARAM2 arrom_lput (uaecptr addr, uae_u32 l)
 
 static void REGPARAM2 arrom_wput (uaecptr addr, uae_u32 w)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     ar3a (addr + 0,(uae_u8)(w >> 8), 1);
@@ -641,9 +633,8 @@ static void REGPARAM2 arrom_wput (uaecptr addr, uae_u32 w)
 
 static void REGPARAM2 arrom_bput (uaecptr addr, uae_u32 b)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     addr -= arrom_start;
     addr &= arrom_mask;
     ar3a (addr, b, 1);
@@ -1594,9 +1585,6 @@ void action_replay_memory_reset(void)
     action_replay_checksum_info();
 }
 
-
-#ifdef SAVESTATE
-
 uae_u8 *save_action_replay (uae_u32 *len, uae_u8 *dstptr)
 {
     uae_u8 *dstbak, *dst;
@@ -1634,7 +1622,3 @@ const uae_u8 *restore_action_replay (const uae_u8 *src)
     src += 256;
     return src;
 }
-
-#endif /* SAVESTATE */
-
-#endif /* ACTION_REPLAY */

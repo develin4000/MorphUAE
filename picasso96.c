@@ -43,13 +43,11 @@
 #include "picasso96.h"
 #include "uae_endian.h"
 
-#ifdef JIT
 int        have_done_picasso       = 0;         /* For the JIT compiler */
 # ifdef PICASSO96
 static int picasso_is_special      = PIC_WRITE; /* ditto */
 static int picasso_is_special_read = PIC_READ;  /* ditto */
 # endif
-#endif
 
 #ifdef PICASSO96
 
@@ -837,9 +835,7 @@ void picasso_refresh (int call_setpalette)
 	} else new_beamcon0 |= 0x20;
     }
 
-#ifdef JIT
     have_done_picasso=1;
-#endif
 
     /* Make sure that the first time we show a Picasso video mode, we don't
      * blit any crap. We can do this by checking if we have an Address yet. */
@@ -1798,9 +1794,7 @@ uae_u32 REGPARAM2 picasso_FillRect (struct regstruct *regs)
     struct RenderInfo ri;
     uae_u32 result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2059,9 +2053,7 @@ uae_u32 REGPARAM2 picasso_BlitRect (struct regstruct *regs)
 
     int result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2107,9 +2099,7 @@ uae_u32 REGPARAM2 picasso_BlitRectNoMaskComplete (struct regstruct *regs)
 
     int result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2214,9 +2204,7 @@ uae_u32 REGPARAM picasso_BlitPattern (struct regstruct *regs)
     unsigned long ysize_mask;
     int result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2367,9 +2355,7 @@ uae_u32 REGPARAM2 picasso_BlitTemplate (struct regstruct *regs)
     uae_u8 *tmpl_base;
     uae_u32 result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2801,9 +2787,7 @@ uae_u32 REGPARAM2 picasso_BlitPlanar2Direct (struct regstruct *regs)
     struct ColorIndexMapping local_cim;
     int result = 0;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read | picasso_is_special;
-#endif
 
     wgfx_flushline ();
 
@@ -2901,9 +2885,8 @@ static uae_u32 REGPARAM2 gfxmem_lget (uaecptr addr)
 {
     uae_u32 *m;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read;
-#endif
+
     addr -= gfxmem_start;
     addr &= gfxmem_mask;
     m = (uae_u32 *) (gfxmemory + addr);
@@ -2914,9 +2897,8 @@ static uae_u32 REGPARAM2 gfxmem_wget (uaecptr addr)
 {
     uae_u16 *m;
 
-#ifdef JIT
     special_mem |= picasso_is_special_read;
-#endif
+
     addr -= gfxmem_start;
     addr &= gfxmem_mask;
     m = (uae_u16 *) (gfxmemory + addr);
@@ -2925,9 +2907,8 @@ static uae_u32 REGPARAM2 gfxmem_wget (uaecptr addr)
 
 static uae_u32 REGPARAM2 gfxmem_bget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= picasso_is_special_read;
-#endif
+
     addr -= gfxmem_start;
     addr &= gfxmem_mask;
     return gfxmemory[addr];
@@ -2936,9 +2917,9 @@ static uae_u32 REGPARAM2 gfxmem_bget (uaecptr addr)
 static void REGPARAM2 gfxmem_lput (uaecptr addr, uae_u32 l)
 {
     uae_u32 *m;
-#ifdef JIT
+
     special_mem |= picasso_is_special;
-#endif
+
     m = (uae_u32 *)(((addr - gfxmem_start) & gfxmem_mask) + gfxmemory);
     do_put_mem_long (m, l);
 
@@ -2949,9 +2930,9 @@ static void REGPARAM2 gfxmem_lput (uaecptr addr, uae_u32 l)
 static void REGPARAM2 gfxmem_wput (uaecptr addr, uae_u32 w)
 {
     uae_u16 *m;
-#ifdef JIT
+
     special_mem |= picasso_is_special;
-#endif
+
     m = (uae_u16 *)(((addr - gfxmem_start) & gfxmem_mask) + gfxmemory);
     do_put_mem_word (m, (uae_u16)w);
 
@@ -2962,9 +2943,9 @@ static void REGPARAM2 gfxmem_wput (uaecptr addr, uae_u32 w)
 static void REGPARAM2 gfxmem_bput (uaecptr addr, uae_u32 b)
 {
     uae_u8 *m;
-#ifdef JIT
+
     special_mem |= picasso_is_special;
-#endif
+
     m = (uae_u8 *)(((addr - gfxmem_start) & gfxmem_mask) + gfxmemory);
     *m = (uae_u8) b;
 

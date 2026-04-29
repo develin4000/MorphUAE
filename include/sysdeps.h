@@ -137,100 +137,6 @@ struct utimbuf
 #undef DONT_HAVE_STDIO
 #undef DONT_HAVE_MALLOC
 
-#if defined _WIN32
-
-#if defined __WATCOMC__
-
-#define O_NDELAY 0
-#include <direct.h>
-#define dirent direct
-#define mkdir(a,b) mkdir(a)
-
-#elif defined __MINGW32__
-
-#define FILEFLAG_DIR     0x1
-#define FILEFLAG_ARCHIVE 0x2
-#define FILEFLAG_WRITE   0x4
-#define FILEFLAG_READ    0x8
-#define FILEFLAG_EXECUTE 0x10
-#define FILEFLAG_SCRIPT  0x20
-#define FILEFLAG_PURE    0x40
-
-#define O_NDELAY 0
-#define mkdir(a,b) mkdir(a)
-
-#elif defined _MSC_VER
-
-#ifdef HAVE_GETTIMEOFDAY
-#include <winsock.h> // for 'struct timeval' definition
-extern void gettimeofday( struct timeval *tv, void *blah );
-#endif
-
-#define O_NDELAY 0
-
-#define FILEFLAG_DIR     0x1
-#define FILEFLAG_ARCHIVE 0x2
-#define FILEFLAG_WRITE   0x4
-#define FILEFLAG_READ    0x8
-#define FILEFLAG_EXECUTE 0x10
-#define FILEFLAG_SCRIPT  0x20
-#define FILEFLAG_PURE    0x40
-
-
-#include <io.h>
-#define O_BINARY _O_BINARY
-#define O_WRONLY _O_WRONLY
-#define O_RDONLY _O_RDONLY
-#define O_RDWR   _O_RDWR
-#define O_CREAT  _O_CREAT
-#define O_TRUNC  _O_TRUNC
-#define W_OK 0x2
-#define R_OK 0x4
-#define STAT struct stat
-#define DIR struct DIR
-struct direct
-{
-    char d_name[1];
-};
-#include <sys/utime.h>
-#define utimbuf _utimbuf
-#define USE_ZFILE
-
-#undef S_ISDIR
-#undef S_IWUSR
-#undef S_IRUSR
-#undef S_IXUSR
-#define S_ISDIR(a) (a&FILEFLAG_DIR)
-#define S_ISARC(a) (a&FILEFLAG_ARCHIVE)
-#define S_IWUSR FILEFLAG_WRITE
-#define S_IRUSR FILEFLAG_READ
-#define S_IXUSR FILEFLAG_EXECUTE
-
-/* These are prototypes for functions from the Win32 posixemu file */
-extern void get_time(time_t t, long* days, long* mins, long* ticks);
-extern time_t put_time (long days, long mins, long ticks);
-extern DWORD getattr(const char *name, LPFILETIME lpft, size_t *size);
-
-/* #define DONT_HAVE_POSIX - don't need all of Mathias' posixemu_functions, just a subset (below) */
-#define chmod(a,b) posixemu_chmod ((a), (b))
-extern int posixemu_chmod (const char *, int);
-#define stat(a,b) posixemu_stat ((a), (b))
-extern int posixemu_stat (const char *, struct stat *);
-#define mkdir(x,y) mkdir(x)
-#define truncate posixemu_truncate
-extern int posixemu_truncate (const char *, long int);
-#define utime posixemu_utime
-extern int posixemu_utime (const char *, struct utimbuf *);
-#define opendir posixemu_opendir
-extern DIR * posixemu_opendir (const char *);
-#define readdir posixemu_readdir
-extern struct dirent* posixemu_readdir (DIR *);
-#define closedir posixemu_closedir
-extern void posixemu_closedir (DIR *);
-
-#endif
-
-#endif /* _WIN32 */
 
 #ifdef DONT_HAVE_POSIX
 
@@ -305,11 +211,7 @@ extern void mallocemu_free (void *ptr);
 
 #endif
 
-#ifdef X86_ASSEMBLY
-#define ASM_SYM_FOR_FUNC(a) __asm__(a)
-#else
 #define ASM_SYM_FOR_FUNC(a)
-#endif
 
 #include "target.h"
 #include "machdep.h"

@@ -20,11 +20,7 @@
 #include "serial.h"
 
 #ifdef SERIAL_PORT
-# ifndef WIN32
-#  include "osdep/serial.h"
-# else
-#  include "od-win32/parser.h"
-# endif
+#include "osdep/serial.h"
 #endif
 
 #define SERIALDEBUG	0 /* 0, 1, 2 3 */

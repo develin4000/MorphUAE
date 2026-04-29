@@ -1391,9 +1391,6 @@ void fpp_opp (uae_u32 opcode, struct regstruct *regs, uae_u16 extra)
 
 #endif
 
-
-#ifdef SAVESTATE
-
 const uae_u8 *restore_fpu (const uae_u8 *src)
 {
     unsigned int model, i;
@@ -1456,5 +1453,3 @@ uae_u8 *save_fpu (uae_u32 *len, uae_u8 *dstptr)
     *len = dst - dstbak;
     return dstbak;
 }
-
-#endif /* SAVESTATE */

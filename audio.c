@@ -891,9 +891,8 @@ STATIC_INLINE int sound_prefs_changed (void)
 
 void check_prefs_changed_audio (void)
 {
-#ifdef DRIVESOUND
     driveclick_check_prefs ();
-#endif
+
     if (sound_available && sound_prefs_changed ()) {
 	close_sound ();
 
@@ -1018,9 +1017,8 @@ void audio_evhandler (void)
     schedule_audio ();
 }
 
-#ifdef CPUEMU_6
 extern uae_u8 cycle_line[];
-#endif
+
 uae_u16	dmacon;
 
 void audio_hsync (int dmaaction)
@@ -1056,9 +1054,9 @@ void audio_hsync (int dmaaction)
 	    if (cdp->request_word >= 2)
 		handle2 = 1;
 	    if (chan_ena) {
-#ifdef CPUEMU_6
+
 		cycle_line[13 + nr * 2] |= CYCLE_MISC;
-#endif
+
 		if (cdp->request_word == 1 || cdp->request_word == 2)
 		    cdp->pt += 2;
 	    }
@@ -1254,8 +1252,6 @@ void audio_volume (int volume)
     sound_volume (volume);
 }
 
-#ifdef SAVESTATE
-
 const uae_u8 *restore_audio (unsigned int channel, const uae_u8 *src)
 {
     struct audio_channel_data *acd = &audio_channel[channel];
@@ -1276,9 +1272,7 @@ const uae_u8 *restore_audio (unsigned int channel, const uae_u8 *src)
     return src;
 }
 
-#endif /* SAVESTATE */
-
-#if defined SAVESTATE || defined DEBUGGER
+#ifdef DEBUGGER
 
 uae_u8 *save_audio (unsigned int channel, uae_u32 *len, uae_u8 *dstptr)
 {
@@ -1307,4 +1301,4 @@ uae_u8 *save_audio (unsigned int channel, uae_u32 *len, uae_u8 *dstptr)
     return dstbak;
 }
 
-#endif /* SAVESTATE || DEBUGGER */
+#endif /* DEBUGGER */

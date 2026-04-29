@@ -529,18 +529,17 @@ int mousehack_alive (void)
 
 static void mousehack_enable (void)
 {
-#ifdef FILESYS /* Internal mousehack depends on filesys boot-rom */
+ /* Internal mousehack depends on filesys boot-rom */
     if (!mousehack_allowed ())
 	return;
     if (rtarea[get_long (RTAREA_BASE + 40) + 12 - 1])
 	return;
     rtarea[get_long (RTAREA_BASE + 40) + 12 - 1] = 1;
-#endif
 }
 
 static void mousehack_helper (void)
 {
-#ifdef FILESYS /* Internal mousehack depends on filesys boot-rom */
+ /* Internal mousehack depends on filesys boot-rom */
     int mousexpos, mouseypos;
     uae_u8 *p;
 
@@ -563,7 +562,6 @@ static void mousehack_helper (void)
     p[1] = mousexpos;
     p[2] = mouseypos >> 8;
     p[3] = mouseypos;
-#endif
 }
 
 STATIC_INLINE int adjust (int val)
@@ -1069,11 +1067,9 @@ void inputdevice_handle_inputcode (void)
     case AKS_SCREENSHOT:
 	screenshot (1);
 	break;
-#ifdef ACTION_REPLAY
     case AKS_FREEZEBUTTON:
 	action_replay_freeze ();
 	break;
-#endif
     case AKS_FLOPPY0:
 	gui_display (0);
 	break;
@@ -1113,10 +1109,8 @@ void inputdevice_handle_inputcode (void)
     case AKS_INHIBITSCREEN:
 	toggle_inhibit_frame (IHF_SCROLLLOCK);
 	break;
-#ifdef SAVESTATE
     case AKS_STATEREWIND:
 	savestate_dorewind(1);
-#endif
 	break;
     case AKS_VOLDOWN:
 	audio_volume (-1);
@@ -1136,7 +1130,6 @@ void inputdevice_handle_inputcode (void)
     case AKS_HARDRESET:
 	uae_reset (1);
 	break;
-#ifdef SAVESTATE
     case AKS_STATESAVEQUICK:
     case AKS_STATESAVEQUICK1:
     case AKS_STATESAVEQUICK2:
@@ -1161,7 +1154,6 @@ void inputdevice_handle_inputcode (void)
     case AKS_STATERESTOREQUICK9:
 	savestate_quick ((code - AKS_STATERESTOREQUICK) / 2, 0);
 	break;
-#endif
     case AKS_TOGGLEFULLSCREEN:
 	toggle_fullscreen ();
 	break;

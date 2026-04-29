@@ -62,9 +62,7 @@ static int blit_slowdown;
 static int blit_misscyclecounter;
 #endif
 
-#ifdef CPUEMU_6
 extern uae_u8 cycle_line[];
-#endif
 
 static unsigned long blit_firstline_cycles;
 static unsigned long blit_first_cycle;
@@ -243,7 +241,6 @@ STATIC_INLINE int channel_state (unsigned int cycles)
     return blit_diag[((cycles - blit_diag[0]) % blit_diag[1]) + 2];
 }
 
-#ifdef CPUEMU_6
 STATIC_INLINE int canblit (unsigned int hpos)
 {
     if (is_bitplane_dma (hpos))
@@ -254,7 +251,6 @@ STATIC_INLINE int canblit (unsigned int hpos)
 	return -1;
     return 0;
 }
-#endif
 
 static void blitter_done (void)
 {
@@ -563,8 +559,6 @@ STATIC_INLINE void blitter_nxline (void)
     bltstate = BLT_read;
 }
 
-#ifdef CPUEMU_6
-
 static unsigned int blit_last_hpos;
 
 static unsigned int blitter_cyclecounter;
@@ -612,8 +606,6 @@ static void decide_blitter_line (unsigned int hpos)
     if (blit_last_hpos > maxhpos)
 	blit_last_hpos = 0;
 }
-
-#endif
 
 static void actually_do_blit (void)
 {
@@ -670,8 +662,6 @@ void blitter_handler (void)
 #endif
     blitter_done ();
 }
-
-#ifdef CPUEMU_6
 
 static uae_u32 preva, prevb;
 STATIC_INLINE uae_u16 blitter_doblit (void)
@@ -882,9 +872,6 @@ void decide_blitter (unsigned int hpos)
     if (blit_last_hpos > maxhpos)
 	blit_last_hpos = 0;
 }
-#else
-void decide_blitter (unsigned int hpos) { }
-#endif
 
 static void blitter_force_finish (void)
 {
@@ -898,7 +885,7 @@ static void blitter_force_finish (void)
 	odmacon = dmacon;
 	dmacon |= DMA_MASTER | DMA_BLITTER;
 	write_log ("forcing blitter finish\n");
-#ifdef CPUEMU_6
+
 	if (currprefs.blitter_cycle_exact) {
 	    int rounds = 10000;
 	    while (bltstate != BLT_done && rounds > 0) {
@@ -909,7 +896,6 @@ static void blitter_force_finish (void)
 	    if (rounds == 0)
 		write_log ("blitter froze!?\n");
 	} else
-#endif
 	    actually_do_blit ();
 
 	blitter_done ();
@@ -1008,10 +994,8 @@ void do_blitter (unsigned int hpos)
     blt_info.blitzero = 1;
     bltstate = BLT_init;
 
-#ifdef CPUEMU_6
     preva = 0;
     prevb = 0;
-#endif
 
     blit_firstline_cycles = blit_first_cycle = get_cycles ();
 #ifdef BLITTER_DEBUG
@@ -1020,9 +1004,7 @@ void do_blitter (unsigned int hpos)
     blit_last_cycle = 0;
     blit_maxcyclecounter = 0;
     blit_cyclecounter = 0;
-#ifdef CPUEMU_6
     blit_last_hpos = hpos;
-#endif
 
     blit_bltset (1|2);
     blit_modset ();
@@ -1068,7 +1050,6 @@ void do_blitter (unsigned int hpos)
 
     blit_maxcyclecounter = 0x7fffffff;
 
-#ifdef CPUEMU_6
     if (currprefs.blitter_cycle_exact) {
 	blitter_hcounter1 = blitter_hcounter2 = 0;
 	blitter_vcounter1 = blitter_vcounter2 = 0;
@@ -1078,7 +1059,6 @@ void do_blitter (unsigned int hpos)
 	    blit_maxcyclecounter = blt_info.hblitsize * blt_info.vblitsize;
 	return;
     }
-#endif
 
     if (currprefs.immediate_blits)
 	cycles = 1;
@@ -1170,8 +1150,6 @@ void blitter_slowdown (int ddfstrt, int ddfstop, unsigned int totalcycles, unsig
 #endif
 }
 
-#ifdef SAVESTATE
-
 const uae_u8 *restore_blitter (const uae_u8 *src)
 {
     uae_u32 flags = restore_u32 ();
@@ -1212,5 +1190,3 @@ uae_u8 *save_blitter (uae_u32 *len, uae_u8 *dstptr)
     *len = dst - dstbak;
     return dstbak;
 }
-
-#endif /* SAVESTATE */

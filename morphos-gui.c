@@ -150,7 +150,7 @@ static void do_file_dialog (unsigned int type)
 
 /****************************************************************************/
 
-void gui_init (int argc, char **argv)
+void gui_init (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
 }

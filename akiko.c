@@ -1380,8 +1380,6 @@ int akiko_init (void)
 }
 
 
-#ifdef SAVESTATE
-
 uae_u8 *save_akiko (uae_u32 *len)
 {
     uae_u8 *dstbak, *dst;
@@ -1481,8 +1479,6 @@ const uae_u8 *restore_akiko (const uae_u8 *src)
 
     return src;
 }
-
-#endif /* SAVESTATE */
 
 
 void akiko_entergui (void)

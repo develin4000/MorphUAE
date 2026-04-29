@@ -74,7 +74,6 @@ struct uae_prefs {
     int sound_adjust;
     int sound_volume;
 
-#ifdef JIT
     int comptrustbyte;
     int comptrustword;
     int comptrustlong;
@@ -90,7 +89,6 @@ struct uae_prefs {
 
     int cachesize;
     int optcount[10];
-#endif
 
     int gfx_framerate;
     int gfx_width_win, gfx_height_win;
@@ -142,14 +140,12 @@ struct uae_prefs {
     char romextfile[256];
     char keyfile[256];
     char flashfile[256];
-#ifdef ACTION_REPLAY
     char cartfile[256];
-#endif
+
     char prtname[256];
     char sername[256];
-#ifndef WIN32
+
     char scsi_device[256];
-#endif
 
     int m68k_speed;
     int cpu_level;
@@ -174,56 +170,14 @@ struct uae_prefs {
 
     int nr_floppies;
     int dfxtype[4];
-#ifdef DRIVESOUND
+
     int dfxclick[4];
     char dfxclickexternal[4][256];
     int dfxclickvolume;
-#endif
 
     int hide_cursor;				/* Whether to hide host WM cursor or not */
 
     /* Target specific options */
-#ifdef USE_X11_GFX
-    int x11_use_low_bandwidth;
-    int x11_use_mitshm;
-    int x11_use_dgamode;
-#endif
-
-#ifdef USE_SVGALIB_GFX
-    int svga_no_linear;
-#endif
-
-#ifdef _WIN32
-    int win32_middle_mouse;
-    int win32_logfile;
-
-    int win32_active_priority;
-    int win32_inactive_priority;
-    int win32_inactive_pause;
-    int win32_inactive_nosound;
-    int win32_iconified_priority;
-    int win32_iconified_pause;
-    int win32_iconified_nosound;
-
-    int win32_no_overlay; /* If this is set, we won't try and use any RGB overlays */
-    int win32_ctrl_F11_is_quit;
-    int win32_automount_drives;
-    int win32_midioutdev;
-    int win32_midiindev;
-    int win32_aspi;
-    int win32_soundcard;
-#endif
-
-#ifdef USE_CURSES_GFX
-    int curses_reverse_video;
-#endif
-
-#if defined USE_SDL_GFX || defined USE_X11_GFX
-    int map_raw_keys;
-#endif
-#ifdef USE_SDL_GFX
-    int use_gl;
-#endif
 
 #ifdef USE_AMIGA_GFX
     int  amiga_screen_type;
@@ -233,10 +187,8 @@ struct uae_prefs {
     int  amiga_use_overlay;
 #endif
 
-#ifdef SAVESTATE
     int statecapture;
     int statecapturerate, statecapturebuffersize;
-#endif
 
     /* input */
 

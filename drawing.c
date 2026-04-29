@@ -41,9 +41,7 @@
 #include "gui.h"
 #include "picasso96.h"
 #include "drawing.h"
-#ifdef JIT
 # include "compemu.h"
-#endif
 #include "savestate.h"
 
 int lores_factor, lores_shift;
@@ -83,15 +81,11 @@ struct vidbuf_description gfxvidinfo;
 /* OCS/ECS color lookup table. */
 xcolnr xcolors[4096];
 
-#ifdef AGA
+
 static uae_u8 spriteagadpfpixels[MAX_PIXELS_PER_LINE * 2]; /* AGA dualplayfield sprite */
 /* AGA mode color lookup tables */
 unsigned int xredcolors[256], xgreencolors[256], xbluecolors[256];
 static int dblpf_ind1_aga[256], dblpf_ind2_aga[256];
-#else
-static uae_u8 spriteagadpfpixels[1];
-static int dblpf_ind1_aga[1], dblpf_ind2_aga[1];
-#endif
 
 struct color_entry colors_for_drawing;
 
@@ -286,7 +280,7 @@ static void pfield_init_linetoscr (void)
 
     real_playfield_end = playfield_end;
     real_playfield_start = playfield_start;
-#ifdef AGA
+
     if (brdsprt && dip_for_drawing->nr_sprites) {
 	int min = visible_right_border, max = visible_left_border, i;
 	for (i = 0; i < dip_for_drawing->nr_sprites; i++) {
@@ -307,7 +301,7 @@ static void pfield_init_linetoscr (void)
 	if (playfield_end > visible_right_border)
 	    playfield_end = visible_right_border;
     }
-#endif
+
     /* Now, compute some offsets.  */
 
     res_shift = lores_shift - bplres;
@@ -405,11 +399,9 @@ STATIC_INLINE void fill_line (void)
     nrem = nints & 7;
     nints &= ~7;
     start = (int *)(((char *)xlinebuffer) + (visible_left_border << shift));
-#ifdef AGA
+
     val = brdblank ? 0 : colors_for_drawing.acolors[0];
-#else
-    val = colors_for_drawing.acolors[0];
-#endif
+
     for (; nints > 0; nints -= 8, start += 8) {
 	*start = val;
 	*(start+1) = val;
@@ -443,7 +435,6 @@ STATIC_INLINE void fill_line (void)
 
 static void pfield_do_linetoscr (int start, int stop)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	if (res_shift == 0)
 	    switch (gfxvidinfo.pixbytes) {
@@ -464,7 +455,7 @@ static void pfield_do_linetoscr (int start, int stop)
 	    case 4: src_pixel = linetoscr_32_shrink1_aga (src_pixel, start, stop); break;
 	    }
     } else {
-#endif
+
 	if (res_shift == 0)
 	    switch (gfxvidinfo.pixbytes) {
 	    case 1: src_pixel = linetoscr_8 (src_pixel, start, stop); break;
@@ -483,9 +474,7 @@ static void pfield_do_linetoscr (int start, int stop)
 	    case 2: src_pixel = linetoscr_16_shrink1 (src_pixel, start, stop); break;
 	    case 4: src_pixel = linetoscr_32_shrink1 (src_pixel, start, stop); break;
 	    }
-#ifdef AGA
     }
-#endif
 }
 
 static void pfield_do_fill_line (int start, int stop)
@@ -517,14 +506,14 @@ static void init_ham_decoding (void)
     if (! bplham || (bplplanecnt != 6 && ((currprefs.chipset_mask & CSMASK_AGA) == 0 || bplplanecnt != 8))) {
 	if (unpainted_amiga > 0) {
 	    int pv = pixdata.apixels[ham_decode_pixel + unpainted_amiga - 1];
-#ifdef AGA
+
 	    if (currprefs.chipset_mask & CSMASK_AGA)
 		ham_lastcolor = colors_for_drawing.color_regs_aga[pv];
 	    else
-#endif
+
 		ham_lastcolor = colors_for_drawing.color_regs_ecs[pv];
 	}
-#ifdef AGA
+
     } else if (currprefs.chipset_mask & CSMASK_AGA) {
 	if (bplplanecnt == 8) { /* AGA mode HAM8 */
 	    while (unpainted_amiga-- > 0) {
@@ -547,7 +536,7 @@ static void init_ham_decoding (void)
 		}
 	    }
 	}
-#endif
+
     } else {
 	if (bplplanecnt == 6) { /* OCS/ECS mode HAM6 */
 	    while (unpainted_amiga-- > 0) {
@@ -570,16 +559,16 @@ static void decode_ham (int pix, int stoppos)
     if (! bplham || (bplplanecnt != 6 && ((currprefs.chipset_mask & CSMASK_AGA) == 0 || bplplanecnt != 8))) {
 	while (todraw_amiga-- > 0) {
 	    int pv = pixdata.apixels[ham_decode_pixel];
-#ifdef AGA
+
 	    if (currprefs.chipset_mask & CSMASK_AGA)
 		ham_lastcolor = colors_for_drawing.color_regs_aga[pv];
 	    else
-#endif
+
 		ham_lastcolor = colors_for_drawing.color_regs_ecs[pv];
 
 	    ham_linebuf[ham_decode_pixel++] = ham_lastcolor;
 	}
-#ifdef AGA
+
     } else if (currprefs.chipset_mask & CSMASK_AGA) {
 	if (bplplanecnt == 8) { /* AGA mode HAM8 */
 	    while (todraw_amiga-- > 0) {
@@ -604,7 +593,7 @@ static void decode_ham (int pix, int stoppos)
 		ham_linebuf[ham_decode_pixel++] = ham_lastcolor;
 	    }
 	}
-#endif
+
     } else {
 	if (bplplanecnt == 6) { /* OCS/ECS mode HAM6 */
 	    while (todraw_amiga-- > 0) {
@@ -637,10 +626,8 @@ static void gen_pfield_tables (void)
 	dblpf_2nd1[i] = plane1 == 0 ? (plane2 == 0 ? 0 : 2) : 1;
 	dblpf_2nd2[i] = plane2 == 0 ? (plane1 == 0 ? 0 : 1) : 2;
 
-#ifdef AGA
 	dblpf_ind1_aga[i] = plane1 == 0 ? plane2 : plane1;
 	dblpf_ind2_aga[i] = plane2 == 0 ? plane1 : plane2;
-#endif
 
 	dblpf_ms1[i] = plane1 == 0 ? (plane2 == 0 ? 16 : 8) : 0;
 	dblpf_ms2[i] = plane2 == 0 ? (plane1 == 0 ? 16 : 0) : 8;
@@ -667,9 +654,8 @@ STATIC_INLINE void draw_sprites_1 (struct sprite_entry *e, int ham, int dualpf,
     uae_u16 *buf = spixels + e->first_pixel;
     uae_u8 *stbuf = spixstate.bytes + e->first_pixel;
     int pos, window_pos;
-#ifdef AGA
+
     uae_u8 xor_val = (uae_u8)(dp_for_drawing->bplcon4 >> 8);
-#endif
 
     buf -= e->pos;
     stbuf -= e->pos;
@@ -742,35 +728,34 @@ STATIC_INLINE void draw_sprites_1 (struct sprite_entry *e, int ham, int dualpf,
 		col += (offs * 2);
 	    }
 	    if (dualpf) {
-#ifdef AGA
+
 		if (aga) {
 		    spriteagadpfpixels[window_pos] = col;
 		    if (doubling)
 			spriteagadpfpixels[window_pos + 1] = col;
 		} else {
-#endif
+
 		    col += 128;
 		    if (doubling)
 			pixdata.apixels_w[window_pos >> 1] = col | (col << 8);
 		    else
 			pixdata.apixels[window_pos] = col;
-#ifdef AGA
 		}
-#endif
+
 	    } else if (ham) {
 		col = color_reg_get (&colors_for_drawing, col);
-#ifdef AGA
+
 		if (aga)
 		    col ^= xor_val;
-#endif
+
 		ham_linebuf[window_pos] = col;
 		if (doubling)
 		    ham_linebuf[window_pos + 1] = col;
 	    } else {
-#ifdef AGA
+
 		if (aga)
 		    col ^= xor_val;
-#endif
+
 		if (doubling)
 		    pixdata.apixels_w[window_pos >> 1] = col | (col << 8);
 		else
@@ -798,7 +783,6 @@ static void NOINLINE draw_sprites_normal_sp_hi_at (struct sprite_entry *e) { dra
 static void NOINLINE draw_sprites_normal_dp_hi_at (struct sprite_entry *e) { draw_sprites_1	(e, 0, 1, 1, 0, 1, 0); }
 static void NOINLINE draw_sprites_ham_sp_hi_at (struct sprite_entry *e) { draw_sprites_1		(e, 1, 0, 1, 0, 1, 0); }
 
-#ifdef AGA
 /* not very optimized */
 STATIC_INLINE void draw_sprites_aga (struct sprite_entry *e)
 {
@@ -808,7 +792,6 @@ STATIC_INLINE void draw_sprites_aga (struct sprite_entry *e)
     else
 	draw_sprites_1 (e, dp_for_drawing->ham_seen, bpldualpf, -diff, 0, e->has_attached, 1);
 }
-#endif
 
 STATIC_INLINE void draw_sprites_ecs (struct sprite_entry *e)
 {
@@ -848,7 +831,6 @@ STATIC_INLINE void draw_sprites_ecs (struct sprite_entry *e)
 		    draw_sprites_normal_sp_lo_nat (e);
 }
 
-#ifdef AGA
 /* clear possible bitplane data outside DIW area */
 static void clear_bitplane_border_aga (void)
 {
@@ -867,7 +849,6 @@ static void clear_bitplane_border_aga (void)
 	memset (pixdata.apixels + pixels_offset + (real_playfield_end >> shift), v, len);
     }
 }
-#endif
 
 /* emulate OCS/ECS only undocumented "SWIV" hardware feature */
 static void weird_bitplane_fix (void)
@@ -906,10 +887,10 @@ STATIC_INLINE void pfield_doline_1 (uae_u32 *pixels, int wordcount, int planes)
 
 	b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, b7 = 0;
 	switch (planes) {
-#ifdef AGA
+
 	case 8: b0 = GETLONG ((uae_u32 *)real_bplpt[7]); real_bplpt[7] += 4;
 	case 7: b1 = GETLONG ((uae_u32 *)real_bplpt[6]); real_bplpt[6] += 4;
-#endif
+
 	case 6: b2 = GETLONG ((uae_u32 *)real_bplpt[5]); real_bplpt[5] += 4;
 	case 5: b3 = GETLONG ((uae_u32 *)real_bplpt[4]); real_bplpt[4] += 4;
 	case 4: b4 = GETLONG ((uae_u32 *)real_bplpt[3]); real_bplpt[3] += 4;
@@ -962,10 +943,9 @@ static void NOINLINE pfield_doline_n3 (uae_u32 *data, int count) { pfield_doline
 static void NOINLINE pfield_doline_n4 (uae_u32 *data, int count) { pfield_doline_1 (data, count, 4); }
 static void NOINLINE pfield_doline_n5 (uae_u32 *data, int count) { pfield_doline_1 (data, count, 5); }
 static void NOINLINE pfield_doline_n6 (uae_u32 *data, int count) { pfield_doline_1 (data, count, 6); }
-#ifdef AGA
+
 static void NOINLINE pfield_doline_n7 (uae_u32 *data, int count) { pfield_doline_1 (data, count, 7); }
 static void NOINLINE pfield_doline_n8 (uae_u32 *data, int count) { pfield_doline_1 (data, count, 8); }
-#endif
 
 static void pfield_doline (int lineno)
 {
@@ -980,10 +960,9 @@ static void pfield_doline (int lineno)
     real_bplpt[3] = DATA_POINTER (3);
     real_bplpt[4] = DATA_POINTER (4);
     real_bplpt[5] = DATA_POINTER (5);
-#ifdef AGA
+
     real_bplpt[6] = DATA_POINTER (6);
     real_bplpt[7] = DATA_POINTER (7);
-#endif
 #endif
 
     switch (bplplanecnt) {
@@ -995,10 +974,9 @@ static void pfield_doline (int lineno)
     case 4: pfield_doline_n4 (data, wordcount); break;
     case 5: pfield_doline_n5 (data, wordcount); break;
     case 6: pfield_doline_n6 (data, wordcount); break;
-#ifdef AGA
+
     case 7: pfield_doline_n7 (data, wordcount); break;
     case 8: pfield_doline_n8 (data, wordcount); break;
-#endif
     }
 }
 
@@ -1190,7 +1168,7 @@ static void pfield_expand_dp_bplcon (void)
     plf_sprite_mask |= (0xFFFF << (4 * plf1pri)) & 0xFFFF;
     bpldualpf = (dp_for_drawing->bplcon0 & 0x400) == 0x400;
     bpldualpfpri = (dp_for_drawing->bplcon2 & 0x40) == 0x40;
-#ifdef AGA
+
     bpldualpf2of = (dp_for_drawing->bplcon3 >> 10) & 7;
     sbasecol[0] = ((dp_for_drawing->bplcon4 >> 4) & 15) << 4;
     sbasecol[1] = ((dp_for_drawing->bplcon4 >> 0) & 15) << 4;
@@ -1200,7 +1178,6 @@ static void pfield_expand_dp_bplcon (void)
     brdblank = (currprefs.chipset_mask & CSMASK_ECS_DENISE) && (dp_for_drawing->bplcon0 & 1) && (dp_for_drawing->bplcon3 & 0x20);
     if (brdblank)
 	brdsprt = 0;
-#endif
 }
 static void pfield_expand_dp_bplcon2 (int regno, int v)
 {
@@ -1216,14 +1193,13 @@ static void pfield_expand_dp_bplcon2 (int regno, int v)
 	case 0x104:
 	dp_for_drawing->bplcon2 = v;
 	break;
-#ifdef AGA
+
 	case 0x106:
 	dp_for_drawing->bplcon3 = v;
 	break;
 	case 0x108:
 	dp_for_drawing->bplcon4 = v;
 	break;
-#endif
     }
     pfield_expand_dp_bplcon ();
     res_shift = lores_shift - bplres;
@@ -1405,16 +1381,15 @@ STATIC_INLINE void pfield_draw_line (int lineno, int gfx_ypos, int follow_ypos)
 	{
 	    if (dip_for_drawing->nr_sprites) {
 		int i;
-#ifdef AGA
+
 		if (brdsprt)
 		    clear_bitplane_border_aga ();
-#endif
+
 		for (i = 0; i < dip_for_drawing->nr_sprites; i++) {
-#ifdef AGA
 		    if (currprefs.chipset_mask & CSMASK_AGA)
 			draw_sprites_aga (curr_sprite_entries + dip_for_drawing->first_sprite_entry + i);
 		    else
-#endif
+
 			draw_sprites_ecs (curr_sprite_entries + dip_for_drawing->first_sprite_entry + i);
 		}
 	    }
@@ -1632,25 +1607,11 @@ static int td_pos = (TD_RIGHT|TD_BOTTOM);
 
 #define TD_TOTAL_HEIGHT (TD_PADY * 2 + TD_NUM_HEIGHT)
 
-#ifndef JIT
-#define NUMBERS_NUM 14
-#else
 #define NUMBERS_NUM 16
-#endif
 
 #define TD_BORDER 0x333
 
-#ifndef JIT
-static const char *numbers = { /* ugly  0123456789CHD% */
-"+++++++--++++-+++++++++++++++++-++++++++++++++++++++++++++++++++++++++++++++-++++++-++++----++---+"
-"+xxxxx+--+xx+-+xxxxx++xxxxx++x+-+x++xxxxx++xxxxx++xxxxx++xxxxx++xxxxx++xxxx+-+x++x+-+xxx++-+xx+-+x"
-"+x+++x+--++x+-+++++x++++++x++x+++x++x++++++x++++++++++x++x+++x++x+++x++x++++-+x++x+-+x++x+--+x++x+"
-"+x+-+x+---+x+-+xxxxx++xxxxx++xxxxx++xxxxx++xxxxx+--++x+-+xxxxx++xxxxx++x+----+xxxx+-+x++x+----+x+-"
-"+x+++x+---+x+-+x++++++++++x++++++x++++++x++x+++x+--+x+--+x+++x++++++x++x++++-+x++x+-+x++x+---+x+x+"
-"+xxxxx+---+x+-+xxxxx++xxxxx+----+x++xxxxx++xxxxx+--+x+--+xxxxx++xxxxx++xxxx+-+x++x+-+xxx+---+x++xx"
-"+++++++---+++-++++++++++++++----+++++++++++++++++--+++--++++++++++++++++++++-++++++-++++----------"
-};
-#else
+
 static const char *numbers = { /* ugly  0123456789CHD%JIT */
 "+++++++--++++-+++++++++++++++++-++++++++++++++++++++++++++++++++++++++++++++-++++++-++++----++---+++++++++++++++"
 "+xxxxx+--+xx+-+xxxxx++xxxxx++x+-+x++xxxxx++xxxxx++xxxxx++xxxxx++xxxxx++xxxx+-+x++x+-+xxx++-+xx+-+x+xxxx+x+xxxxx+"
@@ -1660,7 +1621,6 @@ static const char *numbers = { /* ugly  0123456789CHD%JIT */
 "+xxxxx+---+x+-+xxxxx++xxxxx+----+x++xxxxx++xxxxx+--+x+--+xxxxx++xxxxx++xxxx+-+x++x+-+xxx+---+x++xx-+xx++x+-+x+--"
 "+++++++---+++-++++++++++++++----+++++++++++++++++--+++--++++++++++++++++++++-++++++-++++------------++-+++-+++--"
 };
-#endif
 
 STATIC_INLINE void putpixel (int x, xcolnr c8)
 {
@@ -1777,7 +1737,7 @@ static void draw_status_line (int line)
 	    num4 = num1 == 0 ? 13 : -1;
 	    am = 3;
 	}
-#ifdef JIT
+
 	 else if (led == 9) {
 			//Led #9 - JIT indicator
 		    pos = 9;
@@ -1798,7 +1758,7 @@ static void draw_status_line (int line)
 		    }
 			off_rgb = 0x000;
 	 }
-#endif
+
 	 else {
 		 //Unknown led?
 		 continue;
@@ -1943,7 +1903,6 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	 * done at other times.
 	 */
 
-#ifdef SAVESTATE
 	if (savestate_state == STATE_DORESTORE) {
 	    savestate_state = STATE_RESTORE;
 	    reset_drawing ();
@@ -1953,7 +1912,6 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	    reset_drawing ();
 	    uae_reset (0);
 	}
-#endif
 
 	if (uae_state_change_pending ()) {
 	    set_special (&regs, SPCFLAG_BRK);
@@ -1961,9 +1919,8 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	    return;
 	}
 
-#ifdef SAVESTATE
 	savestate_capture (0);
-#endif
+
 	count_frame ();
 	check_picasso ();
 
@@ -1976,9 +1933,9 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	}
 
 	check_prefs_changed_audio ();
-#ifdef JIT
+
 	check_prefs_changed_comp ();
-#endif
+
 	check_prefs_changed_custom ();
 	check_prefs_changed_cpu ();
 

@@ -188,7 +188,6 @@ static int NOINLINE linetoscr_8_shrink1 (int spix, int dpix, int stoppos)
     return spix;
 }
 
-#ifdef AGA
 static int NOINLINE linetoscr_8_aga (int spix, int dpix, int stoppos)
 {
     uae_u8 *buf = (uae_u8 *) xlinebuffer;
@@ -261,9 +260,7 @@ static int NOINLINE linetoscr_8_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_8_stretch1_aga (int spix, int dpix, int stoppos)
 {
     uae_u8 *buf = (uae_u8 *) xlinebuffer;
@@ -340,9 +337,7 @@ static int NOINLINE linetoscr_8_stretch1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_8_shrink1_aga (int spix, int dpix, int stoppos)
 {
     uae_u8 *buf = (uae_u8 *) xlinebuffer;
@@ -415,7 +410,6 @@ static int NOINLINE linetoscr_8_shrink1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
 static int NOINLINE linetoscr_16 (int spix, int dpix, int stoppos)
 {
@@ -829,7 +823,6 @@ static int NOINLINE linetoscr_16_shrink1 (int spix, int dpix, int stoppos)
     return spix;
 }
 
-#ifdef AGA
 static int NOINLINE linetoscr_16_aga (int spix, int dpix, int stoppos)
 {
     uae_u16 *buf = (uae_u16 *) xlinebuffer;
@@ -1049,9 +1042,7 @@ static int NOINLINE linetoscr_16_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_16_stretch1_aga (int spix, int dpix, int stoppos)
 {
     uae_u16 *buf = (uae_u16 *) xlinebuffer;
@@ -1128,9 +1119,7 @@ static int NOINLINE linetoscr_16_stretch1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_16_shrink1_aga (int spix, int dpix, int stoppos)
 {
     uae_u16 *buf = (uae_u16 *) xlinebuffer;
@@ -1350,7 +1339,6 @@ static int NOINLINE linetoscr_16_shrink1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
 static int NOINLINE linetoscr_32 (int spix, int dpix, int stoppos)
 {
@@ -1536,7 +1524,6 @@ static int NOINLINE linetoscr_32_shrink1 (int spix, int dpix, int stoppos)
     return spix;
 }
 
-#ifdef AGA
 static int NOINLINE linetoscr_32_aga (int spix, int dpix, int stoppos)
 {
     uae_u32 *buf = (uae_u32 *) xlinebuffer;
@@ -1609,9 +1596,7 @@ static int NOINLINE linetoscr_32_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_32_stretch1_aga (int spix, int dpix, int stoppos)
 {
     uae_u32 *buf = (uae_u32 *) xlinebuffer;
@@ -1688,9 +1673,7 @@ static int NOINLINE linetoscr_32_stretch1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 
-#ifdef AGA
 static int NOINLINE linetoscr_32_shrink1_aga (int spix, int dpix, int stoppos)
 {
     uae_u32 *buf = (uae_u32 *) xlinebuffer;
@@ -1763,5 +1746,4 @@ static int NOINLINE linetoscr_32_shrink1_aga (int spix, int dpix, int stoppos)
 
     return spix;
 }
-#endif
 

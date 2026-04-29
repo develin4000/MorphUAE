@@ -28,10 +28,8 @@ unsigned long currcycle;
 /* Cycles to next event pending */
 unsigned long nextevent;
 
-#ifdef JIT
 /* For faster cycles handling */
 signed long pissoff = 0;
-#endif
 
 struct ev eventtab[ev_max];
 

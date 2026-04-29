@@ -14,7 +14,7 @@
 #ifdef NOFLAGS
 #include "noflags.h"
 #endif
-#ifdef CPUEMU_0
+
 const struct cputbl CPUFUNC(op_smalltbl_0)[] = {
 { CPUFUNC(op_0000_0), 0 }, /* OR */
 { CPUFUNC(op_0010_0), 16 }, /* OR */
@@ -2481,7 +2481,7 @@ const struct cputbl CPUFUNC(op_smalltbl_0)[] = {
 { CPUFUNC(op_f620_0), 63008 }, /* MOVE16 */
 #endif
 { 0, 0 }};
-#endif /* CPUEMU_0 */
+
 #ifndef CPUEMU_68000_ONLY
 const struct cputbl CPUFUNC(op_smalltbl_1)[] = {
 { CPUFUNC(op_0000_0), 0}, /* OR */
@@ -9282,7 +9282,7 @@ const struct cputbl CPUFUNC(op_smalltbl_4)[] = {
 { CPUFUNC(op_e7f8_0), 59384}, /* ROLW */
 { CPUFUNC(op_e7f9_0), 59385}, /* ROLW */
 { 0, 0 }};
-#ifdef CPUEMU_5
+
 const struct cputbl CPUFUNC(op_smalltbl_5)[] = {
 { CPUFUNC(op_0000_5), 0 }, /* OR */
 { CPUFUNC(op_0010_5), 16 }, /* OR */
@@ -10852,8 +10852,7 @@ const struct cputbl CPUFUNC(op_smalltbl_5)[] = {
 { CPUFUNC(op_e7f8_5), 59384 }, /* ROLW */
 { CPUFUNC(op_e7f9_5), 59385 }, /* ROLW */
 { 0, 0 }};
-#endif /* CPUEMU_5 */
-#ifdef CPUEMU_6
+
 const struct cputbl CPUFUNC(op_smalltbl_6)[] = {
 { (cpuop_func*)CPUFUNC(op_0000_6), 0 }, /* OR */
 { (cpuop_func*)CPUFUNC(op_0010_6), 16 }, /* OR */
@@ -12423,4 +12422,4 @@ const struct cputbl CPUFUNC(op_smalltbl_6)[] = {
 { (cpuop_func*)CPUFUNC(op_e7f8_6), 59384 }, /* ROLW */
 { (cpuop_func*)CPUFUNC(op_e7f9_6), 59385 }, /* ROLW */
 { 0, 0 }};
-#endif /* CPUEMU_6 */
+

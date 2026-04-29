@@ -12,7 +12,6 @@ STATIC_INLINE uae_u32 get_long_prefetch (struct regstruct *regs, int o)
     return v;
 }
 
-#ifdef CPUEMU_6
 STATIC_INLINE uae_u32 mem_access_delay_word_read (uaecptr addr)
 {
     if (addr < 0x200000 || (addr >= 0xc00000 && addr < 0xe00000)) {
@@ -106,4 +105,3 @@ STATIC_INLINE void m68k_do_jsr_ce (struct regstruct *regs, uaecptr oldpc, uaecpt
     put_word_ce (m68k_areg (regs, 7) + 2, oldpc);
     m68k_setpc (regs, dest);
 }
-#endif

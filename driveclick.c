@@ -9,8 +9,6 @@
 #include "sysconfig.h"
 #include "sysdeps.h"
 
-#ifdef DRIVESOUND
-
 #include "uae.h"
 #include "options.h"
 #include "driveclick.h"
@@ -388,4 +386,3 @@ void driveclick_check_prefs (void)
     }
 }
 
-#endif

@@ -486,9 +486,9 @@ static uae_u8 ReadCIAA (unsigned int addr)
 
     switch (addr & 0xf) {
     case 0:
-#ifdef ACTION_REPLAY
+
 	action_replay_ciaread();
-#endif
+
 	tmp = DISK_status() & 0x3c;
 	tmp |= handle_joystick_buttons (ciaadra);
 	tmp |= (ciaapra | (ciaadra ^ 3)) & 0x03;
@@ -1094,9 +1094,8 @@ uae_u32 REGPARAM2 cia_bget (uaecptr addr)
     int r = (addr & 0xf00) >> 8;
     uae_u8 v;
 
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END)
 	return akiko_bget (addr);
@@ -1131,9 +1130,8 @@ uae_u32 REGPARAM2 cia_wget (uaecptr addr)
     int r = (addr & 0xf00) >> 8;
     uae_u16 v;
 
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END)
 	return akiko_wget (addr);
@@ -1166,9 +1164,9 @@ uae_u32 REGPARAM2 cia_wget (uaecptr addr)
 uae_u32 REGPARAM2 cia_lget (uaecptr addr)
 {
     uae_u32 v;
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END)
 	return akiko_lget (addr);
@@ -1182,9 +1180,8 @@ void REGPARAM2 cia_bput (uaecptr addr, uae_u32 value)
 {
     int r = (addr & 0xf00) >> 8;
 
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END) {
 	akiko_bput (addr, value);
@@ -1206,9 +1203,9 @@ void REGPARAM2 cia_bput (uaecptr addr, uae_u32 value)
 void REGPARAM2 cia_wput (uaecptr addr, uae_u32 value)
 {
     int r = (addr & 0xf00) >> 8;
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END) {
 	akiko_wput (addr, value);
@@ -1229,9 +1226,8 @@ void REGPARAM2 cia_wput (uaecptr addr, uae_u32 value)
 
 void REGPARAM2 cia_lput (uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
 #ifdef CD32
     if (cd32_enabled && addr >= AKIKO_BASE && addr < AKIKO_BASE_END) {
 	akiko_lput (addr, value);
@@ -1323,9 +1319,9 @@ uae_u32 REGPARAM2 clock_bget (uaecptr addr)
 	return cdtv_battram_read (addr);
 #endif
     ct = localtime (&t);
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     switch (addr & 0x3f) {
     case 0x03: return ct->tm_sec % 10;
     case 0x07: return ct->tm_sec / 10;
@@ -1361,9 +1357,8 @@ void REGPARAM2 clock_wput (uaecptr addr, uae_u32 value)
 
 void REGPARAM2 clock_bput (uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
 #ifdef CDTV
     if (cdtv_enabled && addr >= 0xdc8000) {
 	cdtv_battram_write (addr, value);
@@ -1376,8 +1371,6 @@ void REGPARAM2 clock_bput (uaecptr addr, uae_u32 value)
     case 0x3f: clock_control_f = value; break;
     }
 }
-
-#ifdef SAVESTATE
 
 /* CIA-A and CIA-B save/restore code */
 
@@ -1524,4 +1517,3 @@ uae_u8 *save_cia (unsigned int num, uae_u32 *len, uae_u8 *dstptr)
     return dstbak;
 }
 
-#endif /* SAVESTATE */

@@ -29,8 +29,6 @@
 
 */
 
-#ifdef FDI2RAW
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2192,4 +2190,3 @@ int fdi2raw_loadtrack (FDI *fdi, uae_u16 *mfmbuf, uae_u16 *tracktiming, unsigned
 	return outlen;
 }
 
-#endif

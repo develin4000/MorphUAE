@@ -140,10 +140,8 @@ extern uae_u16 htotal, vtotal;
 #define MAX_WORDS_PER_LINE 100
 #endif
 
-#ifdef AGA
 /* AGA mode color lookup tables */
 extern unsigned int xredcolors[256], xgreencolors[256], xbluecolors[256];
-#endif
 
 extern int bpl_off[8];
 
@@ -182,10 +180,9 @@ extern void hsync_handler (void);
 extern void copper_handler (void);
 #define HSYNCTIME (maxhpos * CYCLE_UNIT)
 
-#ifdef JIT
 //JIT compiled code executed indicators, defined in newcpu.c
 extern uae_u32 jit_indicator_compiled_executed;
 extern uae_u32 jit_indicator_interpreted_executed;
 //Cache reference from newcpu.c for detecting the JIT status
 extern int cache_enabled;
-#endif
+

@@ -19,7 +19,7 @@ immediate_blits=true
 
 # memory settings
 fastmem_size=4
-chipmem_size=2
+chipmem_size=4
 z3mem_size=16
 
 # gfx settings

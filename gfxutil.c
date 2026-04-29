@@ -111,7 +111,6 @@ void alloc_colors64k (int rw, int gw, int bw, int rs, int gs, int bs, int aw, in
 	}
     }
 
-#ifdef AGA
     /* create AGA color tables */
     for (i = 0; i < 256; i++) {
 	xredcolors  [i] = doColor (i, rw, rs) | doAlpha (alpha, aw, as);
@@ -138,7 +137,6 @@ void alloc_colors64k (int rw, int gw, int bw, int rs, int gs, int bs, int aw, in
 	    xbluecolors [i] = xbluecolors [i] * 0x00010001;
 	}
     }
-#endif
 }
 
 static int color_diff[4096];

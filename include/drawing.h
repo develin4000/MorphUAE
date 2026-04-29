@@ -11,11 +11,7 @@
 #define SMART_UPDATE 1
 #endif
 
-#ifdef AGA
 #define MAX_PLANES 8
-#else
-#define MAX_PLANES 6
-#endif
 
 /* According to the HRM, pixel data spends a couple of cycles somewhere in the chips
    before it appears on-screen.  */
@@ -65,15 +61,11 @@ extern int framecnt;
  */
 struct color_entry {
     uae_u16 color_regs_ecs[32];
-#ifndef AGA
-    xcolnr acolors[32];
-#else
+
     xcolnr acolors[256];
     uae_u32 color_regs_aga[256];
-#endif
 };
 
-#ifdef AGA
 /* convert 24 bit AGA Amiga RGB to native color */
 /* warning: this is still ugly, but now works with either byte order */
 #ifdef WORDS_BIGENDIAN
@@ -83,57 +75,48 @@ struct color_entry {
 # define CONVERT_RGB(c) \
     ( xbluecolors[((uae_u8*)(&c))[0]] | xgreencolors[((uae_u8*)(&c))[1]] | xredcolors[((uae_u8*)(&c))[2]] )
 #endif
-#else
-#define CONVERT_RGB(c) 0
-#endif
 
 STATIC_INLINE xcolnr getxcolor (int c)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA)
 	return CONVERT_RGB(c);
     else
-#endif
+
 	return xcolors[c];
 }
 
 /* functions for reading, writing, copying and comparing struct color_entry */
 STATIC_INLINE int color_reg_get (struct color_entry *ce, int c)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA)
 	return ce->color_regs_aga[c];
     else
-#endif
+
 	return ce->color_regs_ecs[c];
 }
 STATIC_INLINE void color_reg_set (struct color_entry *ce, int c, int v)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA)
 	ce->color_regs_aga[c] = v;
     else
-#endif
 	ce->color_regs_ecs[c] = v;
 }
 STATIC_INLINE int color_reg_cmp (struct color_entry *ce1, struct color_entry *ce2)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA)
 	return memcmp (ce1->color_regs_aga, ce2->color_regs_aga, sizeof (uae_u32) * 256);
     else
-#endif
+
 	return memcmp (ce1->color_regs_ecs, ce2->color_regs_ecs, sizeof (uae_u16) * 32);
 }
 /* ugly copy hack, is there better solution? */
 STATIC_INLINE void color_reg_cpy (struct color_entry *dst, struct color_entry *src)
 {
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA)
 	/* copy acolors and color_regs_aga */
 	memcpy (dst->acolors, src->acolors, sizeof(struct color_entry) - sizeof(uae_u16) * 32);
     else
-#endif
+
 	/* copy first 32 acolors and color_regs_ecs */
 	memcpy (dst->color_regs_ecs, src->color_regs_ecs,
 		sizeof(struct color_entry));
@@ -213,9 +196,9 @@ struct decision {
     int ctable;
 
     uae_u16 bplcon0, bplcon2;
-#ifdef AGA
+
     uae_u16 bplcon3, bplcon4;
-#endif
+
     uae_u8 nr_planes;
     uae_u8 bplres;
     unsigned int any_hires_sprites:1;

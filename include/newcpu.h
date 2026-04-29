@@ -41,11 +41,9 @@ extern int movem_index1[256];
 extern int movem_index2[256];
 extern int movem_next[256];
 
-#ifdef FPUEMU
 extern int fpp_movem_index1[256];
 extern int fpp_movem_index2[256];
 extern int fpp_movem_next[256];
-#endif
 
 struct regstruct;
 
@@ -56,8 +54,6 @@ struct cputbl {
     cpuop_func *handler;
     uae_u16 opcode;
 };
-
-#ifdef JIT
 
 //Prototype for the comptbl structure to allow us using it in the function type definition
 struct comptbl;
@@ -115,13 +111,11 @@ STATIC_INLINE int end_block(uae_u16 opcode)
  * for the temporary register saving.
  */
 #define COMP_REGS_ALLOCATED_SLOTS 4
-#endif
 
 extern unsigned long op_illg (uae_u32, struct regstruct *regs) REGPARAM;
 
 typedef char flagtype;
 
-#ifdef FPUEMU
 /* You can set this to long double to be more accurate. However, the
    resulting alignment issues will cost a lot of performance in some
    apps */
@@ -131,7 +125,6 @@ typedef char flagtype;
 typedef long double fptype;
 #else
 typedef double fptype;
-#endif
 #endif
 
 extern struct regstruct
@@ -160,14 +153,12 @@ extern struct regstruct
 
     uae_u32 vbr;
 
-#ifdef FPUEMU
     fptype fp_result;
 
     fptype fp[8];
 
     uae_u32 fpcr,fpsr,fpiar;
     uae_u32 fpsr_highbyte;
-#endif
 
     uae_u32 sfc, dfc;
 
@@ -177,10 +168,9 @@ extern struct regstruct
     uae_u8 panic;
     uae_u32 panic_pc, panic_addr;
 
-#ifdef JIT
     uae_u32 jit_cache_inconsistent;
     uae_u32 regslots[COMP_REGS_ALLOCATED_SLOTS];
-#endif
+
 } regs, lastint_regs;
 
 struct blockinfo_t;
@@ -372,10 +362,7 @@ extern uae_u32 start_pc;
 
 void newcpu_showstate (void);
 
-#ifdef JIT
 extern void flush_icache (int n);
 extern void compemu_reset (void);
 extern void compemu_cleanup (void);
-#else
-#define flush_icache(X) do {} while (0)
-#endif
+

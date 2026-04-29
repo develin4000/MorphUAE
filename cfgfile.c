@@ -22,9 +22,7 @@
 #include "gfxfilter.h"
 #include "gfx.h"
 
-#ifdef DRIVESOUND
-# include "driveclick.h"
-#endif
+#include "driveclick.h"
 
 #include "sound.h"
 #include "savestate.h"
@@ -88,13 +86,13 @@ static const struct cfg_lines opttable[] =
     {"sound_frequency", "" },
     {"sound_channels", "" },
     {"sound_latency", "" },
-#ifdef JIT
+
     {"comp_trustbyte", "How to access bytes in compiler (direct/indirect/indirectKS/afterPic" },
     {"comp_trustword", "How to access words in compiler (direct/indirect/indirectKS/afterPic" },
     {"comp_trustlong", "How to access longs in compiler (direct/indirect/indirectKS/afterPic" },
     {"comp_optimize", "Whether to optimize away native code generation where possible" },
     {"cachesize", "How many KB memory to use to buffer translated instructions"},
-#endif
+
     {"parallel_on_demand", "" },
     {"serial_on_demand", "" },
     {"scsi", "scsi.device emulation" },
@@ -105,20 +103,14 @@ static const struct cfg_lines opttable[] =
     {"kickstart_ext_rom_file", "Extended Kickstart ROM image, (C) Copyright Amiga, Inc." },
     {"kickstart_key_file", "Key-file for encrypted ROM images (from Cloanto's Amiga Forever)" },
     {"flash_ram_file", "Flash/battery backed RAM image file." },
-#ifdef ACTION_REPLAY
     {"cart_file", "Freezer cartridge ROM image file." },
-#endif
+
     {"floppy0", "Diskfile for drive 0" },
     {"floppy1", "Diskfile for drive 1" },
     {"floppy2", "Diskfile for drive 2" },
     {"floppy3", "Diskfile for drive 3" },
-#ifdef FILESYS
     {"hardfile", "access,sectors, surfaces, reserved, blocksize, path format" },
     {"filesystem", "access,'Amiga volume-name':'host directory path' - where 'access' can be 'read-only' or 'read-write'" },
-#endif
-#ifdef CATWEASEL
-    {"catweasel_io","Catweasel board io base address" }
-#endif
 };
 
 static const char *guimode1[] = { "no", "yes", "nowait", 0 };
@@ -344,13 +336,9 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
     cfgfile_write_path_option (f, "rom_path");
     cfgfile_write_path_option (f, "floppy_path");
     cfgfile_write_path_option (f, "hardfile_path");
-#ifdef SAVESTATE
     cfgfile_write_path_option (f, "savestate_path");
-#endif
 
-#ifndef _WIN32
     cfgfile_write (f, "%s.cpu_idle=%d\n", TARGET_NAME, p->cpu_idle);
-#endif
 
     machdep_save_options (f, p);
     target_save_options (f, p);
@@ -366,9 +354,7 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
     cfgfile_write_file_option (f, "kickstart_ext_rom_file", "rom_path", p->romextfile);
     cfgfile_write_file_option (f, "kickstart_key_file",     "rom_path", p->keyfile);
     cfgfile_write_file_option (f, "flash_file",             "rom_path", p->flashfile);
-#ifdef ACTION_REPLAY
     cfgfile_write_file_option (f, "cart_file",              "rom_path", p->cartfile);
-#endif
 
     cfgfile_write (f, "kickshifter=%s\n", p->kickshifter ? "true" : "false");
 
@@ -377,11 +363,11 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
 	tmp_option[6] = '0' + i;
 	cfgfile_write_file_option (f, tmp_option, "floppy_path", p->df[i]);
 	cfgfile_write (f, "floppy%dtype=%d\n", i, p->dfxtype[i]);
-#ifdef DRIVESOUND
+
 	cfgfile_write (f, "floppy%dsound=%d\n", i, p->dfxclick[i]);
 	if (p->dfxclick[i] < 0 && p->dfxclickexternal[i][0])
 	    cfgfile_write (f, "floppy%dsoundext=%s\n", i, p->dfxclickexternal[i]);
-#endif
+
     }
     for (i = 0; i < MAX_SPARE_DRIVES; i++) {
 	if (p->dfxlist[i][0])
@@ -390,17 +376,17 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
 
     cfgfile_write (f, "nr_floppies=%d\n", p->nr_floppies);
     cfgfile_write (f, "floppy_speed=%d\n", p->floppy_speed);
-#ifdef DRIVESOUND
+
     cfgfile_write (f, "floppy_volume=%d\n", p->dfxclickvolume);
-#endif
+
     cfgfile_write (f, "parallel_on_demand=%s\n", p->parallel_demand ? "true" : "false");
     cfgfile_write (f, "serial_on_demand=%s\n", p->serial_demand ? "true" : "false");
     cfgfile_write (f, "serial_hardware_ctsrts=%s\n", p->serial_hwctsrts ? "true" : "false");
     cfgfile_write (f, "serial_direct=%s\n", p->serial_direct ? "true" : "false");
     cfgfile_write (f, "scsi=%s\n", p->scsi ? "true" : "false");
-#ifndef WIN32
+
     cfgfile_write (f, "scsi_device=%s\n", p->scsi_device);
-#endif
+
 
     cfgfile_write (f, "sound_output=%s\n", soundmode1[p->produce_sound]);
     cfgfile_write (f, "sound_channels=%s\n", stereomode[p->sound_stereo]);
@@ -413,7 +399,6 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
     cfgfile_write (f, "sound_volume=%d\n", p->sound_volume);
     cfgfile_write (f, "sound_latency=%d\n", p->sound_latency);
 
-#ifdef JIT
     cfgfile_write (f, "comp_trustbyte=%s\n", compmode[p->comptrustbyte]);
     cfgfile_write (f, "comp_trustword=%s\n", compmode[p->comptrustword]);
     cfgfile_write (f, "comp_trustlong=%s\n", compmode[p->comptrustlong]);
@@ -427,7 +412,6 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
 
     cfgfile_write (f, "comp_flushmode=%s\n", flushmode[p->comp_hardflush]);
     cfgfile_write (f, "cachesize=%d\n", p->cachesize);
-#endif
 
     for (i = 0; i < 2; i++) {
 	int v = i == 0 ? p->jport0 : p->jport1;
@@ -552,17 +536,13 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
 				  : p->keyboard_lang == KBD_LANG_IT ? "it"
 				  : "FOO"));
 
-#ifdef SAVESTATE
     cfgfile_write (f, "state_replay=%s\n", p->statecapture ? "yes" : "no");
     cfgfile_write (f, "state_replay_rate=%d\n", p->statecapturerate);
     cfgfile_write (f, "state_replay_buffer=%d\n", p->statecapturebuffersize);
-#endif
 
-#ifdef FILESYS
     write_filesys_config (currprefs.mountinfo, UNEXPANDED, prefs_get_attr ("hardfile_path"), f);
     if (p->filesys_no_uaefsdb)
 	cfgfile_write (f, "filesys_no_fsdb=%s\n", p->filesys_no_uaefsdb ? "true" : "false");
-#endif
     write_inputdevice_config (p, f);
 
     /* Don't write gfxlib/gfx_test_speed options.  */
@@ -783,14 +763,13 @@ static int cfgfile_parse_host (struct uae_prefs *p, char *option, char *value)
 		return 1;
 	    if (cfgfile_path (option, value, "hardfile_path"))
 		return 1;
-#ifdef SAVESTATE
+
 	    if (cfgfile_path (option, value, "savestate_path"))
 		return 1;
-#endif
-#ifndef _WIN32
+
 	    if (cfgfile_intval (option, value, "cpu_idle", &p->cpu_idle, 1))
 		return 1;
-#endif
+
 	    if (target_parse_option (p, option, value))
 		return 1;
 	}
@@ -840,14 +819,11 @@ static int cfgfile_parse_host (struct uae_prefs *p, char *option, char *value)
 	return 1;
 #endif
 
-#ifdef SAVESTATE
     if    (cfgfile_intval (option, value, "state_replay_rate", &p->statecapturerate, 1)
 	|| cfgfile_intval (option, value, "state_replay_buffer", &p->statecapturebuffersize, 1)
 	|| cfgfile_yesno  (option, value, "state_replay", &p->statecapture))
 	return 1;
-#endif
 
-#ifdef DRIVESOUND
     if    (cfgfile_intval (option, value, "floppy0sound", &p->dfxclick[0], 1)
 	|| cfgfile_intval (option, value, "floppy1sound", &p->dfxclick[1], 1)
 	|| cfgfile_intval (option, value, "floppy2sound", &p->dfxclick[2], 1)
@@ -858,7 +834,6 @@ static int cfgfile_parse_host (struct uae_prefs *p, char *option, char *value)
 	|| cfgfile_string (option, value, "floppy2soundext", p->dfxclickexternal[2], 256)
 	|| cfgfile_string (option, value, "floppy3soundext", p->dfxclickexternal[3], 256))
 	return 1;
-#endif
 
     if    (cfgfile_string (option, value, "config_info", p->info, 256)
 	|| cfgfile_string (option, value, "config_description", p->description, 256))
@@ -991,13 +966,11 @@ static int cfgfile_parse_host (struct uae_prefs *p, char *option, char *value)
 	return 1;
     }
 
-#ifdef SAVESTATE
     if (cfgfile_string (option, value, "statefile", tmpbuf, sizeof (tmpbuf))) {
 	savestate_state = STATE_DORESTORE;
 	strcpy (savestate_fname, tmpbuf);
 	return 1;
     }
-#endif
 
     if (cfgfile_strval (option, value, "sound_channels", &p->sound_stereo, stereomode, 1)) {
 	if (p->sound_stereo == 3) { /* "mixed stereo" compatibility hack */
@@ -1088,7 +1061,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 	|| cfgfile_yesno (option, value, "serial_on_demand", &p->serial_demand)
 	|| cfgfile_yesno (option, value, "serial_hardware_ctsrts", &p->serial_hwctsrts)
 	|| cfgfile_yesno (option, value, "serial_direct", &p->serial_direct)
-#ifdef JIT
+
 	|| cfgfile_yesno (option, value, "comp_optimize", &p->compoptim)
 #ifdef JIT_DEBUG
 	|| cfgfile_yesno (option, value, "comp_log", &p->complog)
@@ -1096,7 +1069,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 #endif
 	|| cfgfile_yesno (option, value, "comp_constjump", &p->comp_constjump)
 	|| cfgfile_yesno (option, value, "comp_test_consistency", &p->comptestconsistency)
-#endif
+
 	|| cfgfile_yesno (option, value, "scsi", &p->scsi))
 	return 1;
 
@@ -1114,26 +1087,24 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 	|| cfgfile_intval (option, value, "maprom", (int *)&p->maprom, 1)
 	|| cfgfile_intval (option, value, "catweasel_io", &p->catweasel_io, 1))
 	return 1;
-#ifdef JIT
+
     if (cfgfile_intval (option, value, "cachesize", &p->cachesize, 1)
 	|| cfgfile_strval (option, value, "comp_trustbyte",  &p->comptrustbyte,  compmode, 1)
 	|| cfgfile_strval (option, value, "comp_trustword",  &p->comptrustword,  compmode, 1)
 	|| cfgfile_strval (option, value, "comp_trustlong",  &p->comptrustlong,  compmode, 1)
 	|| cfgfile_strval (option, value, "comp_flushmode", &p->comp_hardflush, flushmode, 0))
 	return 1;
-#endif
+
     if (cfgfile_strval (option, value, "collision_level", &p->collision_level, collmode, 0))
 	return 1;
     if (cfgfile_string (option, value, "kickstart_rom_file", p->romfile, 256)
 	|| cfgfile_string (option, value, "kickstart_ext_rom_file", p->romextfile, 256)
 	|| cfgfile_string (option, value, "kickstart_key_file", p->keyfile, 256)
 	|| cfgfile_string (option, value, "flash_file", p->flashfile, 256)
-#ifdef ACTION_REPLAY
 	|| cfgfile_string (option, value, "cart_file", p->cartfile, 256)
-#endif
-#ifndef WIN32
+
 	|| cfgfile_string (option, value, "scsi_device", p->scsi_device, 256)
-#endif
+
 	)
 	return 1;
 
@@ -1233,7 +1204,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 	    root = value;
 	    aname = 0;
 	}
-#ifdef FILESYS
+
 	{
 	    const char *err_msg;
 	    char *str;
@@ -1247,7 +1218,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 
 	    free (str);
 	}
-#endif
+
 	return 1;
     }
 
@@ -1315,7 +1286,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 		    *tmpp = 0;
 	    }
 	}
-#ifdef FILESYS
+
 	{
 	    const char *err_msg;
 	    char *str;
@@ -1329,7 +1300,7 @@ static int cfgfile_parse_hardware (struct uae_prefs *p, char *option, char *valu
 
 	    free (str);
 	}
-#endif
+
 	return 1;
 
       invalid_fs:
@@ -1755,7 +1726,7 @@ static void parse_filesys_spec (int readonly, const char *spec)
 	}
 #endif
 	s2 = 0;
-#ifdef FILESYS
+
 	{
 	    const char *err;
 
@@ -1764,7 +1735,7 @@ static void parse_filesys_spec (int readonly, const char *spec)
 	    if (err)
 		write_log ("%s\n", s2);
 	}
-#endif
+
     } else {
 	write_log ("Usage: [-m | -M] VOLNAME:mount_point\n");
     }
@@ -1791,7 +1762,7 @@ static void parse_hardfile_spec (char *spec)
     if (x4 == NULL)
 	goto argh;
     *x4++ = '\0';
-#ifdef FILESYS
+
     {
        const char *err_msg;
        err_msg = add_filesys_unit (currprefs.mountinfo, 0, 0, x4, 0, atoi (x0), atoi (x1), atoi (x2), atoi (x3), 0, 0, 0);
@@ -1799,7 +1770,6 @@ static void parse_hardfile_spec (char *spec)
        if (err_msg)
 	   write_log ("%s\n", err_msg);
     }
-#endif
 
     free (x0);
     return;
@@ -2327,7 +2297,6 @@ void default_prefs (struct uae_prefs *p, int type)
     p->sound_latency = DEFAULT_SOUND_LATENCY;
     p->sound_interpol = 0;
 
-#ifdef JIT
     p->comptrustbyte = 1;
     p->comptrustword = 1;
     p->comptrustlong = 1;
@@ -2352,7 +2321,7 @@ void default_prefs (struct uae_prefs *p, int type)
 	p->optcount[4] = 0;
 	p->optcount[5] = 0;
     }
-#endif
+
     p->gfx_framerate = 1;
     p->gfx_width_fs = 800;
     p->gfx_height_fs = 600;
@@ -2399,16 +2368,12 @@ void default_prefs (struct uae_prefs *p, int type)
     strcpy (p->keyfile, "");
     strcpy (p->romextfile, "");
     strcpy (p->flashfile, "");
-#ifdef ACTION_REPLAY
     strcpy (p->cartfile, "");
-#endif
 
     prefs_set_attr ("rom_path",       strdup_path_expand (TARGET_ROM_PATH));
     prefs_set_attr ("floppy_path",    strdup_path_expand (TARGET_FLOPPY_PATH));
     prefs_set_attr ("hardfile_path",  strdup_path_expand (TARGET_HARDFILE_PATH));
-#ifdef SAVESTATE
     prefs_set_attr ("savestate_path", strdup_path_expand (TARGET_SAVESTATE_PATH));
-#endif
 
     strcpy (p->prtname, DEFPRTNAME);
     strcpy (p->sername, DEFSERNAME);
@@ -2434,19 +2399,14 @@ void default_prefs (struct uae_prefs *p, int type)
     p->dfxtype[2] = -1;
     p->dfxtype[3] = -1;
     p->floppy_speed = 100;
-#ifdef DRIVESOUND
-    p->dfxclickvolume = 33;
-#endif
 
-#ifdef SAVESTATE
+    p->dfxclickvolume = 33;
+
     p->statecapturebuffersize = 20 * 1024 * 1024;
     p->statecapturerate = 5 * 50;
     p->statecapture = 0;
-#endif
 
-#ifdef FILESYS
     p->mountinfo = &options_mountinfo;
-#endif
 
 #ifdef UAE_MINI
     default_prefs_mini (p, 0);

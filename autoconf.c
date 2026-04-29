@@ -53,50 +53,41 @@ uae_u8 REGPARAM2 *rtarea_xlate (uaecptr addr)
 
 uae_u32 REGPARAM2 rtarea_lget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr &= 0xFFFF;
     return (uae_u32)(rtarea_wget (addr) << 16) + rtarea_wget (addr+2);
 }
 
 uae_u32 REGPARAM2 rtarea_wget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr &= 0xFFFF;
     return (rtarea[addr]<<8) + rtarea[addr+1];
 }
 
 uae_u32 REGPARAM2 rtarea_bget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr &= 0xFFFF;
     return rtarea[addr];
 }
 
 void REGPARAM2 rtarea_lput (uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
 }
 
 void REGPARAM2 rtarea_wput (uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
 }
 
 void REGPARAM2 rtarea_bput (uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
 }
 
 
@@ -231,10 +222,7 @@ void rtarea_init (void)
 
     org (a);
 
-#ifdef FILESYS
     filesys_install_code ();
-#endif
-
     init_extended_traps ();
 }
 

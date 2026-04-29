@@ -51,9 +51,7 @@
 #endif
 #include "debug.h"
 #include "akiko.h"
-#if defined(ENFORCER)
 #include "enforcer.h"
-#endif
 #include "hrtimer.h"
 #include "sleep.h"
 
@@ -63,11 +61,7 @@ static void uae_abort (const char *format,...)
     char buffer[1000];
 
     va_start (parms, format);
-#ifdef _WIN32
-    _vsnprintf( buffer, sizeof (buffer) -1, format, parms );
-#else
     vsnprintf( buffer, sizeof (buffer) -1, format, parms );
-#endif
     va_end (parms);
     gui_message (buffer);
 }
@@ -104,9 +98,7 @@ static int rpt_did_reset;
 
 volatile frame_time_t vsynctime, vsyncmintime;
 
-#ifdef JIT
 extern uae_u8* compiled_code;
-#endif
 
 unsigned int vpos;
 int hack_vpos;
@@ -168,19 +160,15 @@ static struct sprite spr[MAX_SPRITES];
 static unsigned int sprite_vblank_endline = VBLANK_SPRITE_PAL;
 
 static unsigned int sprctl[MAX_SPRITES], sprpos[MAX_SPRITES];
-#ifdef AGA
+
 static uae_u16 sprdata[MAX_SPRITES][4], sprdatb[MAX_SPRITES][4];
-#else
-static uae_u16 sprdata[MAX_SPRITES][1], sprdatb[MAX_SPRITES][1];
-#endif
+
 static unsigned int last_sprite_point;
 static int nr_armed;
 static unsigned int sprite_width;
 static unsigned int sprres, sprite_buffer_res;
 
-#ifdef CPUEMU_6
 uae_u8 cycle_line[256];
-#endif
 
 static uae_u32 bpl1dat;
 #if 0 /* useless */
@@ -406,7 +394,6 @@ STATIC_INLINE void docols (struct color_entry *colentry)
 {
     int i;
 
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	for (i = 0; i < 256; i++) {
 	    int v = color_reg_get (colentry, i);
@@ -415,16 +402,14 @@ STATIC_INLINE void docols (struct color_entry *colentry)
 	    colentry->acolors[i] = CONVERT_RGB (v);
 	}
     } else {
-#endif
+
 	for (i = 0; i < 32; i++) {
 	    int v = color_reg_get (colentry, i);
 	    if (v < 0 || v > 4095)
 		continue;
 	    colentry->acolors[i] = xcolors[v];
 	}
-#ifdef AGA
     }
-#endif
 }
 
 void notice_new_xcolors (void)
@@ -532,10 +517,10 @@ static void add_modulos (void)
     }
 
     switch (GET_PLANES_LIMIT (bplcon0)) {
-#ifdef AGA
+
 	case 8: bplpt[7] += m2;
 	case 7: bplpt[6] += m1;
-#endif
+
 	case 6: bplpt[5] += m2;
 	case 5: bplpt[4] += m1;
 	case 4: bplpt[3] += m2;
@@ -557,10 +542,10 @@ static void finish_playfield_line (void)
 	|| line_decisions[next_lineno].plfleft != thisline_decision.plfleft
 	|| line_decisions[next_lineno].bplcon0 != thisline_decision.bplcon0
 	|| line_decisions[next_lineno].bplcon2 != thisline_decision.bplcon2
-#ifdef AGA
+
 	|| line_decisions[next_lineno].bplcon3 != thisline_decision.bplcon3
 	|| line_decisions[next_lineno].bplcon4 != thisline_decision.bplcon4
-#endif
+
 	)
 #endif /* SMART_UPDATE */
 	thisline_changed = 1;
@@ -692,10 +677,10 @@ static uae_u32 outword[MAX_PLANES];
 static int out_nbits, out_offs;
 static uae_u32 todisplay[MAX_PLANES][4];
 static uae_u32 fetched[MAX_PLANES];
-#ifdef AGA
+
 static uae_u32 fetched_aga0[MAX_PLANES];
 static uae_u32 fetched_aga1[MAX_PLANES];
-#endif
+
 
 /* Expansions from bplcon0/bplcon1.  */
 static int toscr_res, toscr_nr_planes, fetchwidth;
@@ -794,7 +779,7 @@ STATIC_INLINE void fetch (int nr, int fm)
 	fetched[nr] = last_custom_value = chipmem_wget (p);
 	bplpt[nr] += 2;
 	break;
-#ifdef AGA
+
     case 1:
 	fetched_aga0[nr] = chipmem_lget (p);
 	last_custom_value = (uae_u16)fetched_aga0[nr];
@@ -806,7 +791,7 @@ STATIC_INLINE void fetch (int nr, int fm)
 	last_custom_value = (uae_u16)fetched_aga0[nr];
 	bplpt[nr] += 8;
 	break;
-#endif
+
     }
     if (passed_plfstop == 2 && fetch_cycle >= (fetch_cycle & ~fetchunit_mask) + fetch_modulo_cycle) {
 	int mod;
@@ -880,7 +865,6 @@ STATIC_INLINE void shift32plus (uae_u32 *p, int n)
     p[1] = t;
 }
 
-#ifdef AGA
 STATIC_INLINE void aga_shift (uae_u32 *p, int n, int fm)
 {
     if (fm == 2) {
@@ -930,13 +914,11 @@ STATIC_INLINE void toscr_3_aga (int nbits, int fm)
     }
 }
 
-#endif
-
 static void toscr_2_0 (int nbits) { toscr_3_ecs (nbits); }
-#ifdef AGA
+
 static void toscr_2_1 (int nbits) { toscr_3_aga (nbits, 1); }
 static void toscr_2_2 (int nbits) { toscr_3_aga (nbits, 2); }
-#endif
+
 
 STATIC_INLINE void toscr_1 (int nbits, int fm)
 {
@@ -944,14 +926,14 @@ STATIC_INLINE void toscr_1 (int nbits, int fm)
     case 0:
 	toscr_2_0 (nbits);
 	break;
-#ifdef AGA
+
     case 1:
 	toscr_2_1 (nbits);
 	break;
     case 2:
 	toscr_2_2 (nbits);
 	break;
-#endif
+
     }
     out_nbits += nbits;
     if (out_nbits == 32) {
@@ -979,10 +961,9 @@ STATIC_INLINE void toscr (int nbits, int fm)
 {
     switch (fm) {
     case 0: toscr_fm0 (nbits); break;
-#ifdef AGA
+
     case 1: toscr_fm1 (nbits); break;
     case 2: toscr_fm2 (nbits); break;
-#endif
     }
 }
 
@@ -1050,14 +1031,14 @@ STATIC_INLINE void beginning_of_plane_block (int pos, int fm)
     if (fm == 0)
 	for (i = 0; i < MAX_PLANES; i++)
 	    todisplay[i][0] |= fetched[i];
-#ifdef AGA
+
     else
 	for (i = 0; i < MAX_PLANES; i++) {
 	    if (fm == 2)
 		todisplay[i][1] = fetched_aga1[i];
 	    todisplay[i][0] = fetched_aga0[i];
 	}
-#endif
+
     maybe_first_bpl1dat (pos);
     toscr_delay1 = toscr_delay1x;
     toscr_delay2 = toscr_delay2x;
@@ -1121,7 +1102,6 @@ STATIC_INLINE void long_fetch_ecs (int plane, int nwords, int weird_number_of_bi
     outword[plane] = outval;
 }
 
-#ifdef AGA
 STATIC_INLINE void long_fetch_aga (int plane, int nwords, int weird_number_of_bits, int fm, int dma)
 {
     uae_u32 *real_pt = (uae_u32 *)pfield_xlateptr (bplpt[plane] + bpl_off[plane], nwords * 2);
@@ -1199,16 +1179,15 @@ STATIC_INLINE void long_fetch_aga (int plane, int nwords, int weird_number_of_bi
     fetched_aga1[plane] = fetchval1;
     outword[plane] = outval;
 }
-#endif
 
 static void NOINLINE long_fetch_ecs_0 (int hpos, int nwords, int dma) { long_fetch_ecs (hpos, nwords, 0, dma); }
 static void NOINLINE long_fetch_ecs_1 (int hpos, int nwords, int dma) { long_fetch_ecs (hpos, nwords, 1, dma); }
-#ifdef AGA
+
 static void NOINLINE long_fetch_aga_1_0 (int hpos, int nwords, int dma) { long_fetch_aga (hpos, nwords, 0, 1, dma); }
 static void NOINLINE long_fetch_aga_1_1 (int hpos, int nwords, int dma) { long_fetch_aga (hpos, nwords, 1, 1, dma); }
 static void NOINLINE long_fetch_aga_2_0 (int hpos, int nwords, int dma) { long_fetch_aga (hpos, nwords, 0, 2, dma); }
 static void NOINLINE long_fetch_aga_2_1 (int hpos, int nwords, int dma) { long_fetch_aga (hpos, nwords, 1, 2, dma); }
-#endif
+
 
 static void do_long_fetch (int hpos, int nwords, int dma, int fm)
 {
@@ -1225,7 +1204,7 @@ static void do_long_fetch (int hpos, int nwords, int dma, int fm)
 		long_fetch_ecs_0 (i, nwords, dma);
 	}
 	break;
-#ifdef AGA
+
     case 1:
 	if (out_nbits & 15) {
 	    for (i = 0; i < toscr_nr_planes; i++)
@@ -1244,7 +1223,6 @@ static void do_long_fetch (int hpos, int nwords, int dma, int fm)
 		long_fetch_aga_2_0 (i, nwords, dma);
 	}
 	break;
-#endif
     }
 
     out_nbits += nwords * 16;
@@ -1341,10 +1319,10 @@ STATIC_INLINE int one_fetch_cycle (int i, int ddfstop_to_test, int dma, int fm)
 {
     switch (fm) {
     case 0: return one_fetch_cycle_fm0 (i, ddfstop_to_test, dma);
-#ifdef AGA
+
     case 1: return one_fetch_cycle_fm1 (i, ddfstop_to_test, dma);
     case 2: return one_fetch_cycle_fm2 (i, ddfstop_to_test, dma);
-#endif
+
     default: uae_abort ("fm corrupt"); return 0;
     }
 }
@@ -1469,10 +1447,10 @@ STATIC_INLINE void decide_fetch (int hpos)
     if (fetch_state != fetch_not_started && hpos > last_fetch_hpos) {
 	switch (fetchmode) {
 	case 0: update_fetch_0 (hpos); break;
-#ifdef AGA
+
 	case 1: update_fetch_1 (hpos); break;
 	case 2: update_fetch_2 (hpos); break;
-#endif
+
 	default: uae_abort ("fetchmode corrupt");
 	}
     }
@@ -1629,11 +1607,8 @@ static void do_playfield_collisions (void)
     hwres_t hw_diwlast = coord_window_to_diw_x (thisline_decision.diwlastword);
     hwres_t hw_diwfirst = coord_window_to_diw_x (thisline_decision.diwfirstword);
     int i, collided, minpos, maxpos;
-#ifdef AGA
+
     int planes = (currprefs.chipset_mask & CSMASK_AGA) ? 8 : 6;
-#else
-    int planes = 6;
-#endif
 
     if (clxcon_bpl_enable == 0) {
 	clxdat |= 1;
@@ -1734,11 +1709,9 @@ static void do_sprite_collisions (void)
 	    /* Loop over number of playfields.  */
 	    for (k = 1; k >= 0; k--) {
 		unsigned int l;
-#ifdef AGA
+
 		unsigned int planes = (currprefs.chipset_mask & CSMASK_AGA) ? 8 : 6;
-#else
-		unsigned int planes = 6;
-#endif
+
 		if (bplcon0 & 0x400)
 		    match = 1;
 		for (l = k; match && l < planes; l += 2) {
@@ -1863,7 +1836,6 @@ static void record_sprite (int line, int num, int sprxp, uae_u16 *data, uae_u16 
     if (sprres != RES_LORES)
 	thisline_decision.any_hires_sprites = 1;
 
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	width = (width << 1) >> sprres;
 	dbl = sprite_buffer_res - sprres;
@@ -1873,7 +1845,6 @@ static void record_sprite (int line, int num, int sprxp, uae_u16 *data, uae_u16 
 	}
 	mask = sprres == RES_SUPERHIRES ? 1 : 0;
     }
-#endif
 
     /* Try to coalesce entries if they aren't too far apart.  */
     if (! next_sprite_forced && e[-1].max + 16 >= sprxp) {
@@ -2148,10 +2119,10 @@ static void reset_decisions (void)
 
     memset (todisplay, 0, sizeof todisplay);
     memset (fetched, 0, sizeof fetched);
-#ifdef AGA
+
     memset (fetched_aga0, 0, sizeof fetched_aga0);
     memset (fetched_aga1, 0, sizeof fetched_aga1);
-#endif
+
     memset (outword, 0, sizeof outword);
 
     last_decide_line_hpos = -1;
@@ -2164,10 +2135,9 @@ static void reset_decisions (void)
     /* These are for comparison. */
     thisline_decision.bplcon0 = bplcon0;
     thisline_decision.bplcon2 = bplcon2;
-#ifdef AGA
+
     thisline_decision.bplcon3 = bplcon3;
     thisline_decision.bplcon4 = bplcon4;
-#endif
 }
 
 int vsynctime_orig;
@@ -2367,10 +2337,10 @@ static uae_u32 REGPARAM2 timehack_helper (TrapContext *context)
   */
 STATIC_INLINE uae_u16 DENISEID (void)
 {
-#ifdef AGA
+
     if (currprefs.chipset_mask & CSMASK_AGA)
 	return 0xF8;
-#endif
+
     if (currprefs.chipset_mask & CSMASK_ECS_DENISE)
 	return 0xFC;
     return 0xffff;
@@ -2409,9 +2379,9 @@ STATIC_INLINE uae_u16 VPOSR (void)
 {
     unsigned int csbit = currprefs.ntscmode ? 0x1000 : 0;
     unsigned int vp = (GETVPOS() >> 8) & 7;
-#ifdef AGA
+
     csbit |= (currprefs.chipset_mask & CSMASK_AGA) ? 0x2300 : 0;
-#endif
+
     csbit |= (currprefs.chipset_mask & CSMASK_ECS_AGNUS) ? 0x2000 : 0;
     if (!(currprefs.chipset_mask & CSMASK_ECS_AGNUS))
 	vp &= 1;
@@ -2534,8 +2504,6 @@ static void DMACON (unsigned int hpos, uae_u16 v)
     events_schedule();
 }
 
-#ifdef CPUEMU_6
-
 static int           irq_pending[15];	/* If true, an IRQ is pending arrival at the CPU. If false,
 					 * an IRQ has arrived or is disabled. */
 static unsigned long irq_time[15];	/* Cycle time an IRQ will arrive at the CPU if that IRQ is
@@ -2579,7 +2547,6 @@ STATIC_INLINE int intlev_exact (uae_u16 imask)
      * but has not yet arrived at the CPU. */
     return 0;
 }
-#endif
 
 /*
  * Get priority level of IRQ (not cycle-exact mode)
@@ -2616,12 +2583,12 @@ int intlev (void)
     uae_u16 imask = intreq & intena;
 
     if (imask && (intena & 0x4000)) {
-#ifdef CPUEMU_6
-	if (currprefs.cpu_cycle_exact)
-	    return intlev_exact (imask);
-	else
-#endif
-	    return intlev_simple (imask);
+
+    if (currprefs.cpu_cycle_exact)
+       return intlev_exact (imask);
+    else
+
+       return intlev_simple (imask);
     }
     return -1;
 }
@@ -2634,7 +2601,6 @@ static void doint (void)
     if (intena & 0x4000)
 	set_special (&regs, SPCFLAG_INT);
 
-#ifdef CPUEMU_6
     if (currprefs.cpu_cycle_exact) {
 	int i;
 	uae_u16 imask;
@@ -2652,7 +2618,6 @@ static void doint (void)
 	    }
 	}
     }
-#endif
 }
 
 STATIC_INLINE void INTENA (uae_u16 v)
@@ -2673,7 +2638,6 @@ void INTREQ_0 (uae_u16 v)
 
     setclr (&intreq, v);
 
-#ifdef CPUEMU_6
     if (currprefs.cpu_cycle_exact) {
 	if (!(v & 0x8000)) {
 	    /* Interrupt request is being cleared - reset
@@ -2687,7 +2651,6 @@ void INTREQ_0 (uae_u16 v)
 	    }
 	}
     }
-#endif
 
     if (intena & 0x4000)
 	doint ();
@@ -2817,12 +2780,10 @@ static void BPLCON0 (unsigned int hpos, uae_u16 v)
     bplcon0 = v;
     record_register_change (hpos, 0x100, v);
 
-#ifdef AGA
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	decide_sprites (hpos);
 	expand_sprres ();
     }
-#endif
 
     expand_fmodes ();
     calcdiw ();
@@ -2852,7 +2813,6 @@ STATIC_INLINE void BPLCON2 (unsigned int hpos, uae_u16 v)
     record_register_change (hpos, 0x104, v);
 }
 
-#ifdef AGA
 STATIC_INLINE void BPLCON3 (unsigned int hpos, uae_u16 v)
 {
     if (! (currprefs.chipset_mask & CSMASK_AGA))
@@ -2876,7 +2836,6 @@ STATIC_INLINE void BPLCON4 (unsigned int hpos, uae_u16 v)
     bplcon4 = v;
     record_register_change (hpos, 0x10c, v);
 }
-#endif
 
 static void BPL1MOD (unsigned int hpos, uae_u16 v)
 {
@@ -3121,7 +3080,7 @@ STATIC_INLINE void SPRxCTLPOS (unsigned int num)
     sprstartstop (s);
     sprxp = (sprpos[num] & 0xFF) * 2 + (sprctl[num] & 1);
     /* Quite a bit salad in this register... */
-#ifdef AGA
+
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	/* We ignore the SHRES 35ns increment for now; SHRES support doesn't
 	   work anyway, so we may as well restrict AGA sprites to a 70ns
@@ -3129,7 +3088,7 @@ STATIC_INLINE void SPRxCTLPOS (unsigned int num)
 	sprxp <<= 1;
 	sprxp |= (sprctl[num] >> 4) & 1;
     }
-#endif
+
     s->xpos = sprxp;
     s->vstart = (sprpos[num] >> 8) | ((sprctl[num] << 6) & 0x100);
     s->vstop = (sprctl[num] >> 8) | ((sprctl[num] << 7) & 0x100);
@@ -3174,11 +3133,11 @@ STATIC_INLINE void SPRxPOS_1 (uae_u16 v, unsigned int num, unsigned int hpos)
 STATIC_INLINE void SPRxDATA_1 (uae_u16 v, unsigned int num, unsigned int hpos)
 {
     sprdata[num][0] = v;
-#ifdef AGA
+
     sprdata[num][1] = v;
     sprdata[num][2] = v;
     sprdata[num][3] = v;
-#endif
+
     spr_arm (num, 1);
 #if SPRITE_DEBUG > 1
     if (vpos >= SPRITE_DEBUG_MINY && vpos <= SPRITE_DEBUG_MAXY) {
@@ -3191,11 +3150,11 @@ STATIC_INLINE void SPRxDATA_1 (uae_u16 v, unsigned int num, unsigned int hpos)
 STATIC_INLINE void SPRxDATB_1 (uae_u16 v, unsigned int num, unsigned int hpos)
 {
     sprdatb[num][0] = v;
-#ifdef AGA
+
     sprdatb[num][1] = v;
     sprdatb[num][2] = v;
     sprdatb[num][3] = v;
-#endif
+
 #if SPRITE_DEBUG > 1
     if (vpos >= SPRITE_DEBUG_MINY && vpos <= SPRITE_DEBUG_MAXY) {
 	write_log ("%d:%d:SPR%dDATB %04.4X P=%06.6X D=%d A=%d PC=%x\n",
@@ -3256,8 +3215,6 @@ static uae_u16 CLXDAT (void)
     return v;
 }
 
-#ifdef AGA
-
 static uae_u16 COLOR_READ (int num)
 {
     int cr, cg, cb, colreg;
@@ -3276,12 +3233,11 @@ static uae_u16 COLOR_READ (int num)
 	cval = ((cr >> 4) << 8) | ((cg >> 4) << 4) | ((cb >> 4) << 0);
     return cval;
 }
-#endif
 
 static void COLOR_WRITE (unsigned int hpos, uae_u16 v, int num)
 {
     v &= 0xFFF;
-#ifdef AGA
+
     if (currprefs.chipset_mask & CSMASK_AGA) {
 	unsigned int r,g,b;
 	unsigned int cr,cg,cb;
@@ -3319,7 +3275,7 @@ static void COLOR_WRITE (unsigned int hpos, uae_u16 v, int num)
 	current_colors.color_regs_aga[colreg] = cval;
 	current_colors.acolors[colreg] = CONVERT_RGB (cval);
    } else {
-#endif
+
 	if (current_colors.color_regs_ecs[num] == v)
 	    return;
 	/* Call this with the old table still intact. */
@@ -3327,9 +3283,7 @@ static void COLOR_WRITE (unsigned int hpos, uae_u16 v, int num)
 	remembered_color_entry = -1;
 	current_colors.color_regs_ecs[num] = v;
 	current_colors.acolors[num] = xcolors[v];
-#ifdef AGA
     }
-#endif
 }
 
 /* The copper code.  The biggest nightmare in the whole emulator.
@@ -3558,9 +3512,9 @@ static void update_copper (unsigned int until_hpos)
 	    if (copper_cant_read (old_hpos))
 		continue;
 	    cop_state.i1 = chipmem_wget (cop_state.ip);
-#ifdef CPUEMU_6
+
 	    cycle_line[old_hpos] |= CYCLE_COPPER;
-#endif
+
 	    cop_state.ip += 2;
 	    cop_state.state = cop_state.state == COP_read1 ? COP_read2 : COP_read2_wr_in2;
 	    break;
@@ -3572,9 +3526,8 @@ static void update_copper (unsigned int until_hpos)
 	    if (copper_cant_read (old_hpos))
 		continue;
 	    cop_state.i2 = chipmem_wget (cop_state.ip);
-#ifdef CPUEMU_6
 	    cycle_line[old_hpos] |= CYCLE_COPPER;
-#endif
+
 	    cop_state.ip += 2;
 	    if (cop_state.ignore_next) {
 		cop_state.ignore_next = 0;
@@ -3779,9 +3732,8 @@ STATIC_INLINE uae_u16 sprite_fetch (struct sprite *s, int dma, unsigned int hpos
     uae_u16 data = last_custom_value;
     if (dma) {
 	data = last_custom_value = chipmem_wget (s->pt);
-#ifdef CPUEMU_6
 	cycle_line[hpos] |= CYCLE_SPRITE;
-#endif
+
     }
     s->pt += 2;
     return data;
@@ -3869,7 +3821,7 @@ STATIC_INLINE void do_sprites_1 (unsigned int num, int cycle, unsigned int hpos)
 	    SPRxDATB_1 (dma ? data : sprdatb[num][0], num, hpos);
 	    spr_arm (num, 1);
 	}
-#ifdef AGA
+
 	switch (sprite_width)
 	{
 	    case 64:
@@ -3902,7 +3854,7 @@ STATIC_INLINE void do_sprites_1 (unsigned int num, int cycle, unsigned int hpos)
 	    }
 	    break;
 	}
-#endif
+
     }
 }
 
@@ -4240,7 +4192,6 @@ static void vsync_handler (void)
 {
     fpscounter ();
 
-#ifdef JIT
     //Set the JIT indicator on the UI and then clear it
     if (cache_enabled)
     {
@@ -4260,16 +4211,11 @@ static void vsync_handler (void)
 
     jit_indicator_compiled_executed = 0;
     jit_indicator_interpreted_executed = 0;
-#endif
 
     if (!is_vsync ()
-#ifdef AVIOUTPUT
-	&& ((avioutput_framelimiter && avioutput_enabled) || !avioutput_enabled)
-#endif
+
 	) {
-#ifdef JIT
 	if (!compiled_code) {
-#endif
 	    if (currprefs.m68k_speed == -1) {
 		frame_time_t curr_time = uae_gethrtime ();
 		vsyncmintime += vsynctime;
@@ -4282,13 +4228,11 @@ static void vsync_handler (void)
 	    } else {
 		framewait ();
 	    }
-#ifdef JIT
 	} else {
 	    if (currprefs.m68k_speed == 0) {
 		framewait ();
 	    }
 	}
-#endif
     }
 
     if (bogusframe > 0)
@@ -4342,8 +4286,6 @@ static void vsync_handler (void)
     init_hardware_frame ();
 }
 
-#ifdef JIT
-
 #define N_LINES 8
 
 static __inline__ int trigger_frh(int v)
@@ -4376,7 +4318,6 @@ static void frh_handler(void)
 	}
     }
 }
-#endif
 
 #if 0
 static void copper_check (int n)
@@ -4426,7 +4367,6 @@ void hsync_handler (void)
     if (vpos == sprite_vblank_endline)
 	vpos_lpen = -1;
 
-#ifdef CPUEMU_6
     if (currprefs.cpu_cycle_exact || currprefs.blitter_cycle_exact) {
 	decide_blitter (hpos);
 	memset (cycle_line, 0, sizeof cycle_line);
@@ -4435,7 +4375,7 @@ void hsync_handler (void)
 	cycle_line[5] = CYCLE_REFRESH;
 	cycle_line[7] = CYCLE_REFRESH;
     }
-#endif
+
     if ((currprefs.chipset_mask & CSMASK_AGA) || (!currprefs.chipset_mask & CSMASK_ECS_AGNUS))
 	last_custom_value = rand ();
     else
@@ -4467,7 +4407,6 @@ void hsync_handler (void)
 
     DISK_hsync (maxhpos);
 
-#ifdef JIT
     if (compiled_code) {
 	if (currprefs.m68k_speed == -1) {
 	    static int count = 0;
@@ -4480,11 +4419,8 @@ void hsync_handler (void)
 	    is_lastline=0;
 	}
     } else {
-#endif
 	is_lastline = (vpos + 1 == (maxvpos + (lof == 0 ? 0 : 1))) && (currprefs.m68k_speed == -1) && ! rpt_did_reset;
-#ifdef JIT
     }
-#endif
 
     if ((bplcon0 & 4) && currprefs.gfx_linedbl)
 	notice_interlace_seen ();
@@ -4507,12 +4443,12 @@ void hsync_handler (void)
 	next_lineno = lineno;
 	reset_decisions ();
     }
-#ifdef FILESYS
+
     if (uae_int_requested) {
 	set_uae_int_flag ();
 	INTREQ (0x8000 | 0x0008);
     }
-#endif
+
     /* See if there's a chance of a copper wait ending this line.  */
     cop_state.hpos = 0;
     cop_state.last_write = 0;
@@ -4542,14 +4478,13 @@ void customreset (void)
 		current_colors.color_regs_ecs[i] = 0;
 		current_colors.acolors[i] = xcolors[0];
 	    }
-#ifdef AGA
+
 	} else {
 	    unsigned int i;
 	    for (i = 0; i < 256; i++) {
 		current_colors.color_regs_aga[i] = 0;
 		current_colors.acolors[i] = CONVERT_RGB (zero);
 	    }
-#endif
 	}
 
 	clxdat = 0;
@@ -4574,15 +4509,13 @@ void customreset (void)
 	CLXCON (0);
     }
 
-#ifdef AUTOCONFIG
     expamem_reset ();
-#endif
     a1000_reset ();
     DISK_reset ();
     CIA_reset ();
-#ifdef JIT
+
     compemu_reset ();
-#endif
+
     unset_special (&regs, ~(SPCFLAG_BRK | SPCFLAG_MODE_CHANGE));
 
     vpos = 0;
@@ -4653,7 +4586,7 @@ void customreset (void)
 		current_colors.color_regs_ecs[i] = vv;
 		current_colors.acolors[i] = xcolors[vv];
 	    }
-#ifdef AGA
+
 	} else {
 	    for(i = 0 ; i < 256 ; i++)  {
 		vv = current_colors.color_regs_aga[i];
@@ -4663,7 +4596,6 @@ void customreset (void)
 		current_colors.color_regs_aga[i] = vv;
 		current_colors.acolors[i] = CONVERT_RGB(vv);
 	    }
-#endif
 	}
 	CLXCON (clxcon);
 	CLXCON2 (clxcon2);
@@ -4679,13 +4611,10 @@ void customreset (void)
     }
     expand_sprres ();
 
-    #ifdef ACTION_REPLAY
     /* Doing this here ensures we can use the 'reset' command from within AR */
     action_replay_reset ();
-    #endif
-    #if defined(ENFORCER)
+
     enforcer_disable();
-    #endif
 }
 
 void dumpcustom (void)
@@ -4781,7 +4710,6 @@ int custom_init (void)
 	return 0;
     }
 
-#ifdef AUTOCONFIG
     {
 	uaecptr pos;
 	pos = here ();
@@ -4796,7 +4724,6 @@ int custom_init (void)
 
 	org (pos);
     }
-#endif
 
     gen_custom_tables ();
     build_blitfilltable ();
@@ -4829,9 +4756,9 @@ addrbank custom_bank = {
 STATIC_INLINE uae_u32 REGPARAM2 custom_wget_1 (uaecptr addr, int noput)
 {
     uae_u16 v;
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     addr &= 0xfff;
 #ifdef CUSTOM_DEBUG
     write_log ("%d:%d:wget: %04.4X=%04.4X pc=%p\n", current_hpos(), vpos, addr, addr & 0x1fe, m68k_getpc (&regs));
@@ -4857,7 +4784,6 @@ STATIC_INLINE uae_u32 REGPARAM2 custom_wget_1 (uaecptr addr, int noput)
 
      case 0x02E: v = 0xffff; break; /* temporary hack */
 
-#ifdef AGA
      case 0x180: case 0x182: case 0x184: case 0x186: case 0x188: case 0x18A:
      case 0x18C: case 0x18E: case 0x190: case 0x192: case 0x194: case 0x196:
      case 0x198: case 0x19A: case 0x19C: case 0x19E: case 0x1A0: case 0x1A2:
@@ -4866,7 +4792,6 @@ STATIC_INLINE uae_u32 REGPARAM2 custom_wget_1 (uaecptr addr, int noput)
      case 0x1BC: case 0x1BE:
 	v = COLOR_READ ((addr & 0x3E) / 2);
 	break;
-#endif
 
      default:
 	/* reading write-only register causes write with last value in bus */
@@ -4896,13 +4821,13 @@ STATIC_INLINE uae_u32 custom_wget2 (uaecptr addr)
 	     return 0xffff;
     }
     v = custom_wget_1 (addr, 0);
-#ifdef ACTION_REPLAY
+
 #ifdef ACTION_REPLAY_COMMON
     addr &= 0x1ff;
     ar_custom[addr + 0] = (uae_u8)(v >> 8);
     ar_custom[addr + 1] = (uae_u8)(v);
 #endif
-#endif
+
     return v;
 }
 
@@ -4922,17 +4847,15 @@ uae_u32 REGPARAM2 custom_wget (uaecptr addr)
 
 uae_u32 REGPARAM2 custom_bget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     return custom_wget2 (addr & ~1) >> (addr & 1 ? 0 : 8);
 }
 
 uae_u32 REGPARAM2 custom_lget (uaecptr addr)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_READ;
-#endif
+
     return ((uae_u32)custom_wget (addr) << 16) | custom_wget (addr + 2);
 }
 
@@ -4940,12 +4863,12 @@ int REGPARAM2 custom_wput_1 (unsigned int hpos, uaecptr addr, uae_u32 value, int
 {
     addr &= 0x1FE;
     value &= 0xffff;
-#ifdef ACTION_REPLAY
+
 #ifdef ACTION_REPLAY_COMMON
     ar_custom[addr+0]=(uae_u8)(value>>8);
     ar_custom[addr+1]=(uae_u8)(value);
 #endif
-#endif
+
     last_custom_value = value;
     switch (addr) {
      case 0x00E: CLXDAT (); break;
@@ -5055,15 +4978,13 @@ int REGPARAM2 custom_wput_1 (unsigned int hpos, uaecptr addr, uae_u32 value, int
      case 0x100: BPLCON0 (hpos, value); break;
      case 0x102: BPLCON1 (hpos, value); break;
      case 0x104: BPLCON2 (hpos, value); break;
-#ifdef AGA
+
      case 0x106: BPLCON3 (hpos, value); break;
-#endif
 
      case 0x108: BPL1MOD (hpos, value); break;
      case 0x10A: BPL2MOD (hpos, value); break;
-#ifdef AGA
+
      case 0x10E: CLXCON2 (value); break;
-#endif
 
      case 0x110: BPL1DAT (hpos, value); break;
 
@@ -5105,9 +5026,8 @@ int REGPARAM2 custom_wput_1 (unsigned int hpos, uaecptr addr, uae_u32 value, int
      case 0x5C: BLTSIZV (value); break;
      case 0x5E: BLTSIZH (value); break;
      case 0x1E4: DIWHIGH (hpos, value); break;
-#ifdef AGA
+
      case 0x10C: BPLCON4 (hpos, value); break;
-#endif
 
 #ifndef CUSTOM_SIMPLE
      case 0x1DC: BEAMCON0 (value); break;
@@ -5124,9 +5044,7 @@ int REGPARAM2 custom_wput_1 (unsigned int hpos, uaecptr addr, uae_u32 value, int
      case 0x1E2: if (hcenter != value) { hcenter = value; varsync (); } break;
 #endif
 
-#ifdef AGA
      case 0x1FC: FMODE (value); break;
-#endif
 
      /* writing to read-only register causes read access */
      default:
@@ -5142,9 +5060,9 @@ int REGPARAM2 custom_wput_1 (unsigned int hpos, uaecptr addr, uae_u32 value, int
 void REGPARAM2 custom_wput (uaecptr addr, uae_u32 value)
 {
     unsigned int hpos = current_hpos ();
-#ifdef JIT
+
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
 #ifdef CUSTOM_DEBUG
     write_log ("%d:%d:wput: %04.4X %04.4X pc=%p\n", hpos, vpos, addr & 0x01fe, value & 0xffff, m68k_getpc (&regs));
 #endif
@@ -5163,9 +5081,8 @@ void REGPARAM2 custom_bput (uaecptr addr, uae_u32 value)
     uae_u16 rval = (value << 8) | (value & 0xFF);
     static int warned;
 
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     custom_wput (addr & ~1, rval);
     if (warned < 10) {
 	if (m68k_getpc (&regs) < 0xe00000 || m68k_getpc (&regs) >= 0x10000000) {
@@ -5177,16 +5094,12 @@ void REGPARAM2 custom_bput (uaecptr addr, uae_u32 value)
 
 void REGPARAM2 custom_lput(uaecptr addr, uae_u32 value)
 {
-#ifdef JIT
     special_mem |= SPECIAL_MEM_WRITE;
-#endif
+
     custom_wput (addr & 0xfffe, value >> 16);
     custom_wput ((addr + 2) & 0xfffe, (uae_u16)value);
 }
 
-
-
-#ifdef SAVESTATE
 
 void custom_prepare_savestate (void)
 {
@@ -5332,9 +5245,7 @@ const uae_u8 *restore_custom (const uae_u8 *src)
     return src;
 }
 
-#endif /* SAVESTATE */
-
-#if defined SAVESTATE || defined DEBUGGER
+#ifdef DEBUGGER
 
 #define SB save_u8
 #define SW save_u16
@@ -5492,20 +5403,16 @@ uae_u8 *save_custom (uae_u32 *len, uae_u8 *dstptr, int full)
     return dstbak;
 }
 
-#endif /* SAVESTATE || DEBUGGER */
-
-#ifdef SAVESTATE
+#endif /* DEBUGGER */
 
 const uae_u8 *restore_custom_agacolors (const uae_u8 *src)
 {
     unsigned int i;
 
     for (i = 0; i < 256; i++)
-#ifdef AGA
+
 	current_colors.color_regs_aga[i] = RL;
-#else
-	RL;
-#endif
+
     return src;
 }
 
@@ -5519,11 +5426,9 @@ uae_u8 *save_custom_agacolors (uae_u32 *len, uae_u8 *dstptr)
     else
 	dstbak = dst = malloc (256 * 4);
     for (i = 0; i < 256; i++)
-#ifdef AGA
+
     SL (current_colors.color_regs_aga[i]);
-#else
-    SL (0);
-#endif
+
     *len = dst - dstbak;
     return dstbak;
 }
@@ -5569,8 +5474,6 @@ uae_u8 *save_custom_sprite (unsigned int num, uae_u32 *len, uae_u8 *dstptr)
     return dstbak;
 }
 
-#endif /* SAVESTATE */
-
 
 void check_prefs_changed_custom (void)
 {
@@ -5602,8 +5505,6 @@ void check_prefs_changed_custom (void)
     currprefs.gfx_filter_filtermode = changed_prefs.gfx_filter_filtermode;
 #endif
 }
-
-#ifdef CPUEMU_6
 
 STATIC_INLINE void sync_copper (unsigned int hpos)
 {
@@ -5689,4 +5590,3 @@ void do_cycles_ce (long cycles)
     }
 }
 
-#endif

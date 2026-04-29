@@ -26713,12 +26713,11 @@ unsigned long REGPARAM2 CPUFUNC(op_f200_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
+
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26728,12 +26727,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f208_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26743,12 +26740,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f210_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26758,12 +26753,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f218_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26773,12 +26766,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f220_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26788,12 +26779,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f228_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26803,12 +26792,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f230_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26817,12 +26804,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f230_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f238_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26831,12 +26816,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f238_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f239_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26846,12 +26829,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f23a_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = 2;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26861,12 +26842,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f23b_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = 3;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26875,12 +26854,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f23b_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f23c_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fpp_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26890,12 +26867,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f240_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26905,12 +26880,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f248_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fdbcc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26920,12 +26893,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f250_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26935,12 +26906,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f258_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26950,12 +26919,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f260_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26965,12 +26932,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f268_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26980,12 +26945,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f270_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 dstreg = opcode & 7;
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -26994,12 +26957,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f270_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f278_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -27008,12 +26969,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f278_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f279_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 {	uae_s16 extra = get_iword (regs, 2);
 	m68k_incpc (regs, 4);
 	fscc_opp (opcode, regs, extra);
 }
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -27022,14 +26981,12 @@ unsigned long REGPARAM2 CPUFUNC(op_f279_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f27a_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 {	uaecptr oldpc = m68k_getpc (regs);
 {	uae_s16 dummy = get_iword (regs, 0);
 	m68k_incpc (regs, 2);
 	ftrapcc_opp (opcode, regs, oldpc);
 }}
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -27038,14 +26995,12 @@ unsigned long REGPARAM2 CPUFUNC(op_f27a_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f27b_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 {	uaecptr oldpc = m68k_getpc (regs);
 {	uae_s32 dummy = get_ilong (regs, 0);
 	m68k_incpc (regs, 4);
 	ftrapcc_opp (opcode, regs, oldpc);
 }}
-#endif
 }return CYCLE_UNIT / 2 * 12;
 }
 #endif
@@ -27054,12 +27009,10 @@ unsigned long REGPARAM2 CPUFUNC(op_f27b_0)(uae_u32 opcode, struct regstruct *reg
 unsigned long REGPARAM2 CPUFUNC(op_f27c_0)(uae_u32 opcode, struct regstruct *regs)
 {
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 {	uaecptr oldpc = m68k_getpc (regs);
 	ftrapcc_opp (opcode, regs, oldpc);
 }
-#endif
 }return CYCLE_UNIT / 2 * 4;
 }
 #endif
@@ -27069,14 +27022,12 @@ unsigned long REGPARAM2 CPUFUNC(op_f280_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 srcreg = (opcode & 63);
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 {	uaecptr pc = m68k_getpc (regs);
 {	uae_s16 extra = get_iword (regs, 0);
 	m68k_incpc (regs, 2);
 	fbcc_opp (opcode, regs, pc,extra);
 }}
-#endif
 }return CYCLE_UNIT / 2 * 8;
 }
 #endif
@@ -27086,14 +27037,12 @@ unsigned long REGPARAM2 CPUFUNC(op_f2c0_0)(uae_u32 opcode, struct regstruct *reg
 {
 	uae_u32 srcreg = (opcode & 63);
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 {	uaecptr pc = m68k_getpc (regs);
 {	uae_s32 extra = get_ilong (regs, 0);
 	m68k_incpc (regs, 4);
 	fbcc_opp (opcode, regs, pc,extra);
 }}
-#endif
 }return CYCLE_UNIT / 2 * 12;
 }
 #endif
@@ -27104,11 +27053,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f310_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1827; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1827: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27120,11 +27067,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f320_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1828; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1828: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27136,11 +27081,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f328_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1829; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1829: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27152,11 +27095,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f330_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1830; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1830: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27167,11 +27108,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f338_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1831; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1831: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27182,11 +27121,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f339_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1832; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	fsave_opp (opcode, regs);
 
-#endif
 }}endlabel1832: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27198,11 +27135,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f350_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1833; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1833: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27214,11 +27149,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f358_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1834; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1834: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27230,11 +27163,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f368_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1835; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1835: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27246,11 +27177,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f370_0)(uae_u32 opcode, struct regstruct *reg
 	uae_u32 srcreg = (opcode & 7);
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1836; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1836: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27261,11 +27190,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f378_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1837; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1837: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27276,11 +27203,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f379_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1838; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1838: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27291,11 +27216,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f37a_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1839; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1839: ;
 return CYCLE_UNIT / 2 * 4;
 }
@@ -27306,11 +27229,9 @@ unsigned long REGPARAM2 CPUFUNC(op_f37b_0)(uae_u32 opcode, struct regstruct *reg
 {
 {if (!regs->s) { Exception (8, regs, 0); goto endlabel1840; }
 {
-#ifdef FPUEMU
 	m68k_incpc (regs, 2);
 	frestore_opp (opcode, regs);
 
-#endif
 }}endlabel1840: ;
 return CYCLE_UNIT / 2 * 4;
 }

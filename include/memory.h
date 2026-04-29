@@ -9,7 +9,6 @@
 extern void memory_reset (void);
 extern void a1000_reset (void);
 
-#ifdef JIT
 extern int special_mem;
 #define SPECIAL_MEM_READ 1
 #define SPECIAL_MEM_WRITE 2
@@ -21,7 +20,6 @@ void init_shm (void);
 
 //PowerPC cache flush function
 extern void ppc_cacheflush(void* start, int length);
-#endif
 
 #ifdef ADDRESS_SPACE_24BIT
 # define MEMORY_BANKS		256
@@ -116,14 +114,11 @@ extern uae_u8 *default_xlate(uaecptr addr) REGPARAM;
 #define bankindex(addr) (((uaecptr)(addr)) >> 16)
 
 extern addrbank *mem_banks[MEMORY_BANKS];
-
-#ifdef JIT
 extern uae_u8 *baseaddr[MEMORY_BANKS];
-#endif
 
 #define get_mem_bank(addr) (*mem_banks[bankindex(addr)])
 
-#ifdef JIT
+
 # define put_mem_bank(addr, b, realstart) do { \
     (mem_banks[bankindex(addr)] = (b)); \
     if ((b)->baseaddr) \
@@ -131,10 +126,7 @@ extern uae_u8 *baseaddr[MEMORY_BANKS];
     else \
 	baseaddr[bankindex(addr)] = (uae_u8*)(((long)b)+1); \
 } while (0)
-#else
-# define put_mem_bank(addr, b, realstart) \
-    (mem_banks[bankindex(addr)] = (b));
-#endif
+
 
 extern void memory_init (void);
 extern void memory_cleanup (void);

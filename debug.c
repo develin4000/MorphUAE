@@ -30,18 +30,18 @@
 #include "akiko.h"
 #include "inputdevice.h"
 #include "audio.h"
-#ifdef JIT
+
 #include "ppc_disasm.h"
-#endif
+
 
 static int debugger_active;
 static uaecptr skipaddr_start, skipaddr_end;
 static int skipaddr_doskip;
 static uae_u32 skipins;
 static int do_skip;
-#ifdef SAVESTATE
+
 static int debug_rewind;
-#endif
+
 static int memwatch_enabled, memwatch_triggered;
 int debugging;
 int exception_debugging;
@@ -53,12 +53,9 @@ extern int audio_channel_mask;
 
 static FILE *logfile;
 
-#ifndef _WIN32
 #define console_out               printf
 #define console_flush()           fflush( stdout )
 #define console_get( input, len ) fgets( input, len, stdin )
-#endif
-
 
 #define MAX_HIST 100
 
@@ -128,9 +125,9 @@ static const char help[] = {
     "                        Search for string/bytes\n"
     "  T                     Show exec tasks and their PCs\n"
     "  h,?                   Show this help page\n"
-#ifdef SAVESTATE
+
     "  b                     Step to previous state capture position\n"
-#endif
+
     "  am <channel mask>     Enable or disable audio channels\n"
     "  sm <sprite mask>      Enable or disable sprites\n"
     "  di <mode> [<track>]   Break on disk access. R=DMA read,W=write,RW=both,P=PIO\n"
@@ -685,10 +682,9 @@ static void illg_init (void)
 #endif
     if (cloanto_rom)
 	memset (illgdebug + 0xe00000, 1, 512 * 1024);
-#ifdef FILESYS
+
     if (nr_units (currprefs.mountinfo) > 0) /* filesys "rom" */
 	memset (illgdebug + RTAREA_BASE, 1, 0x10000);
-#endif
 }
 
 /* add special custom register check here */
@@ -1275,7 +1271,7 @@ static void searchmem (const char **cc)
     console_out ("\n");
 }
 
-#ifdef SAVESTATE
+
 static int staterecorder (const char **cc)
 {
     char nc;
@@ -1294,7 +1290,6 @@ static int staterecorder (const char **cc)
     }
     return 0;
 }
-#endif
 
 static void disk_debug (const char **inptr)
 {
@@ -1548,12 +1543,12 @@ static void debug_1 (void)
 		    console_out ("Plane %d offset %d\n", i, bpl_off[i]);
 	    }
 	    break;
-#ifdef SAVESTATE
+
 	case 'b':
 	    if (staterecorder (&inptr))
 		return;
 	    break;
-#endif
+
 	case 'a':
 	    if (more_params (&inptr)) {
 		char nc = next_char (&inptr);
@@ -1584,10 +1579,8 @@ void debug (void)
 {
     int i;
 
-#ifdef SAVESTATE
     if (savestate_state)
 	return;
-#endif
 
     bogusframe = 1;
     addhistory ();
@@ -1672,7 +1665,6 @@ void debug (void)
     skipaddr_doskip = 0;
     exception_debugging = 0;
 
-#ifdef SAVESTATE
     debug_rewind = 0;
 #if 0
     if (!currprefs.statecapture) {
@@ -1680,22 +1672,18 @@ void debug (void)
 	savestate_init ();
     }
 #endif
-#endif
 
     debug_1 ();
 
-#ifdef SAVESTATE
+
     if (!debug_rewind
-#ifdef JIT
+
 	&& !currprefs.cachesize
-#endif
-#ifdef FILESYS
+
 	&& nr_units (currprefs.mountinfo) == 0
-#endif
 	) {
 	savestate_capture (1);
     }
-#endif
 
     for (i = 0; i < BREAKPOINT_TOTAL; i++) {
 	if (bpnodes[i].enabled)

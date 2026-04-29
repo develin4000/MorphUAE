@@ -26,12 +26,11 @@
 #include "ar.h"
 #include "sleep.h"
 
-#ifdef JIT
 //JIT compiled code executed indicators
 uae_u32 jit_indicator_compiled_executed = 0;
 uae_u32 jit_indicator_interpreted_executed = 0;
 #include "compemu.h"
-#endif
+
 
 #define f_out fprintf
 #define console_out printf
@@ -54,11 +53,9 @@ int movem_index1[256];
 int movem_index2[256];
 int movem_next[256];
 
-#ifdef FPUEMU
 int fpp_movem_index1[256];
 int fpp_movem_index2[256];
 int fpp_movem_next[256];
-#endif
 
 cpuop_func *cpufunctbl[65536];
 
@@ -142,7 +139,6 @@ static void build_cpufunctbl (void)
     const struct cputbl *tbl = 0;
 
     switch (currprefs.cpu_level) {
-#ifdef CPUEMU_0
 #ifndef CPUEMU_68000_ONLY
 	case 4:
 	case 6:
@@ -158,17 +154,15 @@ static void build_cpufunctbl (void)
 	tbl = op_smalltbl_3_ff;
 	break;
 #endif
-#endif
 	case 0:
 	tbl = op_smalltbl_4_ff;
-#ifdef CPUEMU_5
+
 	if (currprefs.cpu_compatible)
 	    tbl = op_smalltbl_5_ff; /* prefetch */
-#endif
-#ifdef CPUEMU_6
+
+
 	if (currprefs.cpu_cycle_exact)
 	    tbl = op_smalltbl_6_ff; /* prefetch and cycle-exact */
-#endif
 	break;
     }
 
@@ -201,24 +195,20 @@ static void build_cpufunctbl (void)
 	opcnt, currprefs.cpu_level,
 	currprefs.cpu_cycle_exact ? -1 : currprefs.cpu_compatible ? 1 : 0,
 	currprefs.address_space_24);
-#ifdef JIT
+
     build_comp ();
-#endif
 }
 
 void fill_prefetch_slow (struct regstruct *regs)
 {
-#ifdef CPUEMU_6
     if (currprefs.cpu_cycle_exact) {
 	regs->ir  = get_word_ce (m68k_getpc (regs));
 	regs->irc = get_word_ce (m68k_getpc (regs) + 2);
     } else {
-#endif
+
 	regs->ir  = get_word (m68k_getpc (regs));
 	regs->irc = get_word (m68k_getpc (regs) + 2);
-#ifdef CPUEMU_6
     }
-#endif
 }
 
 unsigned long cycles_mask, cycles_val;
@@ -282,7 +272,7 @@ void init_m68k (void)
 	movem_index2[i] = 7-j;
 	movem_next[i] = i & (~(1 << j));
     }
-#ifdef FPUEMU
+
     for (i = 0 ; i < 256 ; i++) {
 	int j;
 	for (j = 7 ; j >= 0 ; j--) {
@@ -292,7 +282,6 @@ void init_m68k (void)
 	fpp_movem_index2[i] = j;
 	fpp_movem_next[i] = i & (~(1 << j));
     }
-#endif
 #if COUNT_INSTRS
     {
 	FILE *f = fopen (icountfilename (), "r");
@@ -359,11 +348,9 @@ void init_m68k (void)
 
     build_cpufunctbl ();
 
-#ifdef JIT
     /* We need to check whether NATMEM settings have changed
      * before starting the CPU */
     check_prefs_changed_comp ();
-#endif
 
     reset_frame_rate_hack ();
     update_68k_cycles ();
@@ -723,8 +710,6 @@ static void exception_debug (int nr)
 #endif
 }
 
-#ifdef CPUEMU_6
-
 /* cycle-exact exception handler, 68000 only */
 
 STATIC_INLINE void Exception_ce (int nr, struct regstruct *regs, uaecptr oldpc)
@@ -835,7 +820,6 @@ kludge_me_do:
     set_special (regs, SPCFLAG_END_COMPILE);
     trace_exception (regs, nr);
 }
-#endif
 
 STATIC_INLINE void Exception_normal (int nr, struct regstruct *regs, uaecptr oldpc)
 {
@@ -968,11 +952,11 @@ void REGPARAM2 Exception (int nr, struct regstruct *regs, uaecptr oldpc)
 	write_log ("exception %2d %08x %08x (%04x %04x)\n",
 	    nr, oldpc, m68k_getpc (regs), intena, intreq);
 #endif
-#ifdef CPUEMU_6
+
     if (currprefs.cpu_cycle_exact && currprefs.cpu_level == 0)
 	Exception_ce (nr, regs, oldpc);
     else
-#endif
+
 	Exception_normal (nr, regs, oldpc);
 }
 
@@ -1039,7 +1023,7 @@ int m68k_move2c (int regno, uae_u32 *regp)
 	case 1: regs.dfc = *regp & 7; break;
 	case 2:
 	    cacr = *regp & (currprefs.cpu_level < 4 ? 0x3 :  0x80008000);
-#ifdef JIT
+
 	    if (currprefs.cpu_level < 4) {
 		set_cache_state (cacr & 1);
 		if (*regp & 0x08) {
@@ -1051,7 +1035,7 @@ int m68k_move2c (int regno, uae_u32 *regp)
 		    flush_icache (2);
 		}
 	    }
-#endif
+
 	    break;
 	case 3: tc = *regp & 0xc000; break;
 	    /* Mask out fields that should be zero.  */
@@ -1375,7 +1359,6 @@ void m68k_reset (void)
     regs.kick_mask = 0x00F80000;
     regs.spcflags = 0;
 
-#ifdef SAVESTATE
     if (savestate_state == STATE_RESTORE || savestate_state == STATE_REWIND) {
 	m68k_setpc (&regs, regs.pc);
 	/* MakeFromSR() must not swap stack pointer */
@@ -1388,7 +1371,6 @@ void m68k_reset (void)
 	    m68k_areg (&regs, 7) = regs.usp;
 	return;
     }
-#endif
 
     m68k_areg  (&regs, 7) = get_long (0x00f80000);
     m68k_setpc (&regs, get_long (0x00f80004));
@@ -1404,11 +1386,11 @@ void m68k_reset (void)
     SET_NFLG (&regs.ccrflags, 0);
     regs.intmask = 7;
     regs.vbr = regs.sfc = regs.dfc = 0;
-#ifdef FPUEMU
+
     regs.fpcr = regs.fpsr = regs.fpiar = 0;
     regs.fp_result=1;
     regs.irc = 0xffff;
-#endif
+
     fill_prefetch_slow (&regs);
 
     warned_cpu68020 = 0;
@@ -1444,7 +1426,6 @@ unsigned long REGPARAM2 op_illg (uae_u32 opcode, struct regstruct *regs)
 	uae_restart (-1, NULL);
     }
 
-#ifdef AUTOCONFIG
     if (opcode == 0xFF0D) {
 	if (inrom) {
 	    /* This is from the dummy Kickstart replacement */
@@ -1467,7 +1448,6 @@ unsigned long REGPARAM2 op_illg (uae_u32 opcode, struct regstruct *regs)
 	fill_prefetch_slow (regs);
 	return 4;
     }
-#endif
 
     if ((opcode & 0xF000) == 0xF000) {
 	if (warned < 20) {
@@ -1478,12 +1458,12 @@ unsigned long REGPARAM2 op_illg (uae_u32 opcode, struct regstruct *regs)
 	return 4;
     }
     if ((opcode & 0xF000) == 0xA000) {
-#ifdef AUTOCONFIG
+
 	if (inrt) {
 	    /* Calltrap. */
 	    m68k_handle_trap (opcode & 0xFFF, regs);
 	}
-#endif
+
 	Exception (0xA, regs, 0);
 	return 4;
     }
@@ -1495,8 +1475,6 @@ unsigned long REGPARAM2 op_illg (uae_u32 opcode, struct regstruct *regs)
     Exception (4, regs, 0);
     return 4;
 }
-
-#ifdef CPUEMU_0
 
 void mmu_op(uae_u32 opcode, struct regstruct *regs, uae_u16 extra)
 {
@@ -1510,8 +1488,6 @@ void mmu_op(uae_u32 opcode, struct regstruct *regs, uae_u16 extra)
     } else
 	op_illg (opcode, regs);
 }
-
-#endif
 
 static uaecptr last_trace_ad = 0;
 
@@ -1620,7 +1596,6 @@ static NOINLINE void do_stop (struct regstruct *regs)
 
 STATIC_INLINE int do_specialties (int cycles, struct regstruct *regs)
 {
-    #ifdef ACTION_REPLAY
     #ifdef ACTION_REPLAY_HRTMON
     if ((regs->spcflags & SPCFLAG_ACTION_REPLAY) && hrtmon_flag != ACTION_REPLAY_INACTIVE) {
 	int isinhrt = (m68k_getpc (regs) >= hrtmem_start && m68k_getpc (regs) < hrtmem_start + hrtmem_size);
@@ -1654,15 +1629,12 @@ STATIC_INLINE int do_specialties (int cycles, struct regstruct *regs)
 	    }
 	}
     }
-    #endif
 
     if (regs->spcflags & SPCFLAG_COPPER)
 	do_copper ();
 
     /*n_spcinsns++;*/
-#ifdef JIT
     unset_special (regs, SPCFLAG_END_COMPILE);   /* has done its job */
-#endif
 
     while ((regs->spcflags & SPCFLAG_BLTNASTY) && dmaen (DMA_BLITTER) && cycles > 0 && !currprefs.blitter_cycle_exact) {
 	unsigned int c = blitnasty ();
@@ -1736,13 +1708,6 @@ STATIC_INLINE int do_specialties (int cycles, struct regstruct *regs)
 }
 
 
-#ifndef CPUEMU_5
-
-static void m68k_run_1 (void)
-{
-}
-
-#else
 
 /* It's really sad to have two almost identical functions for this, but we
    do it all for performance... :(
@@ -1770,15 +1735,6 @@ static void m68k_run_1 (void)
     }
 }
 
-#endif /* CPUEMU_5 */
-
-#ifndef CPUEMU_6
-
-static void m68k_run_1_ce (void)
-{
-}
-
-#else
 
 /* cycle-exact m68k_run() */
 
@@ -1796,9 +1752,8 @@ static void m68k_run_1_ce (void)
 	}
     }
 }
-#endif /* CPUEMU_6 */
 
-#ifdef JIT  /* Completely different run_2 replacement */
+/* Completely different run_2 replacement */
 
 /* Do the required environmental emulation steps without processor emulation
  * for the accumulated cycles */
@@ -1928,19 +1883,6 @@ static void m68k_run_2a (void)
 		}
 	}
 }
-#endif /* JIT */
-
-#ifndef CPUEMU_0
-
-static void m68k_run_2 (void)
-{
-}
-
-static void m68k_run_2p (void)
-{
-}
-
-#else
 
 /* emulate simple prefetch  */
 static void m68k_run_2p (void)
@@ -2002,9 +1944,6 @@ static void m68k_run_2 (void)
     }
 }
 
-#endif /* CPUEMU_0 */
-
-
 static void exception2_handle (uaecptr addr, uaecptr fault)
 {
     last_addr_for_exception_3 = addr;
@@ -2040,18 +1979,13 @@ void m68k_go (int may_quit)
 	    }
 	}
 
-#ifndef JIT
-	run_func = (currprefs.cpu_level == 0 && currprefs.cpu_cycle_exact	? m68k_run_1_ce :
-		    currprefs.cpu_level == 0 && currprefs.cpu_compatible	? m68k_run_1 :
-		    currprefs.cpu_compatible					? m68k_run_2p :
-										  m68k_run_2);
-#else
+
 	run_func = (currprefs.cpu_cycle_exact && currprefs.cpu_level == 0	? m68k_run_1_ce :
 		    currprefs.cpu_compatible > 0 && currprefs.cpu_level == 0	? m68k_run_1 :
 		    currprefs.cpu_level >= 2 && currprefs.cachesize		? m68k_run_2a :
 		    currprefs.cpu_compatible					? m68k_run_2p :
 										  m68k_run_2);
-#endif
+
 	run_func ();
 
 	if (uae_state_change_pending ())
@@ -2060,7 +1994,7 @@ void m68k_go (int may_quit)
 }
 
 
-#if defined(DEBUGGER) || defined (ENFORCER)
+#ifdef DEBUGGER
 
 static const char * const ccnames[] =
 { "T","F","HI","LS","CC","CS","NE","EQ",
@@ -2241,10 +2175,8 @@ void m68k_dumpstate (void *f, uaecptr *nextpc)
 {
     int i;
 
-#ifndef WIN32
     if (!f)
 	f = stderr;
-#endif
 
     for (i = 0; i < 8; i++){
 	f_out (f, "D%d: %08x ", i, m68k_dreg (&regs, i));
@@ -2264,7 +2196,7 @@ void m68k_dumpstate (void *f, uaecptr *nextpc)
 	     GET_XFLG(&regs.ccrflags), GET_NFLG(&regs.ccrflags),
 	     GET_ZFLG(&regs.ccrflags), GET_VFLG(&regs.ccrflags),
 	     GET_CFLG(&regs.ccrflags), regs.intmask);
-#ifdef FPUEMU
+
     if (currprefs.cpu_level >= 2) {
 	uae_u32 fpsr;
 	for (i = 0; i < 8; i++){
@@ -2278,7 +2210,7 @@ void m68k_dumpstate (void *f, uaecptr *nextpc)
 		(fpsr & 0x2000000) != 0,
 		(fpsr & 0x1000000) != 0);
     }
-#endif
+
     if (currprefs.cpu_compatible) {
 	struct instr *dp;
 	struct mnemolookup *lookup1, *lookup2;
@@ -2294,16 +2226,8 @@ void m68k_dumpstate (void *f, uaecptr *nextpc)
 	f_out (f, "next PC: %08x\n", *nextpc);
 }
 
-#else
-
-void m68k_dumpstate (void *f, uaecptr *nextpc)
-{
-}
-
 #endif
 
-
-#ifdef SAVESTATE
 
 /* CPU save/restore code */
 
@@ -2424,8 +2348,6 @@ uae_u8 *save_cpu (uae_u32 *len, uae_u8 *dstptr)
     return dstbak;
 }
 
-#endif /* SAVESTATE */
-
 static void exception3f (uae_u32 opcode, uaecptr addr, uaecptr fault, int writeaccess, int instructionaccess)
 {
     last_addr_for_exception_3 = addr;
@@ -2454,9 +2376,9 @@ void exception2 (uaecptr addr, uaecptr fault)
     regs.panic = 2;
     set_special (&regs, SPCFLAG_BRK);
     m68k_setpc (&regs, 0xf80000);
-#ifdef JIT
+
     set_special (&regs, SPCFLAG_END_COMPILE);
-#endif
+
     fill_prefetch_slow (&regs);
 }
 
