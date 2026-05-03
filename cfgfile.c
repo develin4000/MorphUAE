@@ -50,9 +50,9 @@ static const struct cfg_lines opttable[] =
     {"config_description", "" },
     {"config_info", "" },
     {"use_gui", "Enable the GUI?  If no, then goes straight to emulator" },
-#ifdef DEBUGGER
+
     {"use_debugger", "Enable the debugger?" },
-#endif
+
     {"cpu_speed", "can be max, real, or a number between 1 and 20" },
     {"cpu_type", "Can be 68000, 68010, 68020, 68020/68881" },
     {"cpu_compatible", "yes enables compatibility-mode" },
@@ -346,9 +346,8 @@ void save_options (FILE *f, const struct uae_prefs *p, int type)
     audio_save_options (f, p);
 
     cfgfile_write (f, "use_gui=%s\n", guimode1[p->start_gui]);
-#ifdef DEBUGGER
+
     cfgfile_write (f, "use_debugger=%s\n", p->start_debugger ? "true" : "false");
-#endif
 
     cfgfile_write_file_option (f, "kickstart_rom_file",     "rom_path", p->romfile);
     cfgfile_write_file_option (f, "kickstart_ext_rom_file", "rom_path", p->romextfile);
@@ -839,10 +838,8 @@ static int cfgfile_parse_host (struct uae_prefs *p, char *option, char *value)
 	|| cfgfile_string (option, value, "config_description", p->description, 256))
 	return 1;
 
-#ifdef DEBUGGER
     if    (cfgfile_yesno (option, value, "use_debugger", &p->start_debugger))
 	return 1;
-#endif
 
     if    (cfgfile_yesno (option, value, "log_illegal_mem", &p->illegal_mem)
 	|| cfgfile_yesno (option, value, "filesys_no_fsdb", &p->filesys_no_uaefsdb)
@@ -1864,9 +1861,8 @@ int parse_cmdline_option (struct uae_prefs *p, char c, char *arg)
 
 	/* case 'g': p->use_gfxlib = 1; break; */
     case 'G': p->start_gui = 0; break;
-#ifdef DEBUGGER
+
     case 'D': p->start_debugger = 1; break;
-#endif
 
     case 'n':
 	if (strchr (arg, 'i') != 0)
@@ -2271,9 +2267,7 @@ void default_prefs (struct uae_prefs *p, int type)
     strcpy (p->description, "UAE default configuration");
 
     p->start_gui = 1;
-#ifdef DEBUGGER
     p->start_debugger = 0;
-#endif
 
     p->all_lines = 0;
     /* Note to porters: please don't change any of these options! UAE is supposed

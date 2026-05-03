@@ -162,7 +162,7 @@ static int have_rexx = 0;
 int gui_open (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    return -1;
+   return -1;
 }
 
 /****************************************************************************/
@@ -241,5 +241,6 @@ void gui_display (int shortcut)
 
 void gui_message (const char *format,...)
 {
+   //MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work\nPlease adjust the settings!");
    debug_print("%s (%d)\n", __func__, __LINE__);
 }

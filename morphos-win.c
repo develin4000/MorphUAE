@@ -90,6 +90,7 @@
 #include <LEDmcc.h>
 //#include <Settings_mcc.h>
 #include <gfx-icons.h>
+#include <gfx-logo.h> // Test
 
 /****************************************************************************/
 
@@ -120,8 +121,6 @@ static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_li
 
 static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no);
 static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line);
-
-//BEGIN MUI-Test
 
 #ifdef USEDEBUG
    #include <clib/debug_protos.h>
@@ -674,7 +673,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         //redshift = 8;  greenshift = 16; blueshift = 24;
                         redshift = 16;  greenshift = 8; blueshift = 0;
-                        //byte_swap = TRUE;
                         break;
                      case PIXFMT_ARGB32:
                         debug_print("%s (%d)\n", __func__, __LINE__);
@@ -691,7 +689,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                   if (found)
                   {
-                     //alloc_colors64k (redbits, greenbits, bluebits, redshift, greenshift, blueshift, 0, 0, 0, byte_swap);
                      alloc_colors64k (redbits, greenbits, bluebits, redshift, greenshift, blueshift, 8, 24, 0xff, 0);
                         write_log ("MUIGFX: Using a %d-bit true-colour display.\n", redbits + greenbits + bluebits);
                   }
@@ -802,7 +799,8 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          if (data->render_state == MUIV_FlushClearScreen)
          {
             if (_rp(obj))
-               FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), 0x00000000); //render_bottom-render_top, 0x00000000); //0);
+               WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), RECTFMT_ARGB);
+               //FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), 0x00ffff00); //render_bottom-render_top, 0x00000000); //0);
          }
 /*
 count = WritePixelArray(srcRect,SrcX ,SrcY ,SrcMod,RastPort,DestX,
@@ -828,7 +826,6 @@ count = ScalePixelArray(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
 //ScalePixelArray(data->Buffer, data->WinWidth, data->WinHeigth, data->WinHeigth*3, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, data->WinWidth, data->WinHeigth, RECTFMT_RAW);
          else if (data->render_state == MUIV_FlushLineCGX)
          {
-
             //debug_print("%s (%d) - LINE\n", __func__, __LINE__);
             //if (!data->FullScreen)
                WritePixelArray(data->Buffer, 0, tmp_line_no, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, tmp_gfxinfo->width, 1, RECTFMT_RAW);

@@ -44,6 +44,13 @@
 #include "sleep.h"
 #include "version.h"
 
+#ifdef USEDEBUG
+   #include <clib/debug_protos.h>
+   #define debug_print(args...) { KPrintF((CONST_STRPTR)args); }
+#else
+   #define debug_print(...)
+#endif
+
 struct uae_prefs currprefs, changed_prefs;
 
 static int restart_program;
@@ -101,6 +108,8 @@ static void fixup_prefs_joysticks (struct uae_prefs *prefs)
 static void fix_options (void)
 {
     int err = 0;
+
+debug_print("%s (%d)\n", __func__, __LINE__);
 
     if ((currprefs.chipmem_size & (currprefs.chipmem_size - 1)) != 0
 	|| currprefs.chipmem_size < 0x40000
@@ -285,17 +294,20 @@ static void fix_options (void)
 
 void usage (void)
 {
+debug_print("%s (%d)\n", __func__, __LINE__);
     cfgfile_show_usage ();
 }
 
 static void show_version (void)
 {
+debug_print("%s (%d)\n", __func__, __LINE__);
     write_log (UAE_VERSION_STRING "\n");
     write_log ("Build date: " __DATE__ " " __TIME__ "\n");
 }
 
 static void show_version_full (void)
 {
+debug_print("%s (%d)\n", __func__, __LINE__);
     write_log ("\n");
     show_version ();
     write_log ("\nCopyright 2003-2007 Richard Drummond and contributors.\n");
@@ -311,6 +323,7 @@ static void show_version_full (void)
 static void parse_cmdline (int argc, char **argv)
 {
     int i;
+debug_print("%s (%d)\n", __func__, __LINE__);
 
     for (i = 1; i < argc; i++) {
 	if (strcmp (argv[i], "-cfgparam") == 0) {
@@ -364,7 +377,7 @@ static void parse_cmdline (int argc, char **argv)
 static void parse_cmdline_and_init_file (int argc, char **argv)
 {
     char *home;
-
+debug_print("%s (%d)\n", __func__, __LINE__);
     strcpy (optionsfile, "");
 
 #ifdef OPTIONS_IN_HOME
@@ -407,7 +420,7 @@ void uae_save_config (void)
 {
     FILE *f;
     char tmp[257];
-
+debug_print("%s (%d)\n", __func__, __LINE__);
     /* Back up the old file.  */
     strcpy (tmp, optionsfile);
     strcat (tmp, "~");
@@ -440,55 +453,66 @@ static int uae_target_state;
 
 int uae_get_state (void)
 {
-    return uae_state;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   return uae_state;
 }
 
 static void set_state (int state)
 {
-    uae_state = state;
-    gui_notify_state (state);
-    graphics_notify_state (state);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   uae_state = state;
+   gui_notify_state (state);
+   graphics_notify_state (state);
 }
 
 int uae_state_change_pending (void)
 {
-    return uae_state != uae_target_state;
+//debug_print("%s (%d)\n", __func__, __LINE__);
+   return uae_state != uae_target_state;
 }
 
 void uae_start (void)
 {
-    uae_target_state = UAE_STATE_COLD_START;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   uae_target_state = UAE_STATE_COLD_START;
 }
 
 void uae_pause (void)
 {
-    if (uae_target_state == UAE_STATE_RUNNING)
-	uae_target_state = UAE_STATE_PAUSED;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (uae_target_state == UAE_STATE_RUNNING)
+      uae_target_state = UAE_STATE_PAUSED;
 }
 
 void uae_resume (void)
 {
-    if (uae_target_state == UAE_STATE_PAUSED)
-	uae_target_state = UAE_STATE_RUNNING;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (uae_target_state == UAE_STATE_PAUSED)
+      uae_target_state = UAE_STATE_RUNNING;
 }
 
 void uae_quit (void)
 {
-    if (uae_target_state != UAE_STATE_QUITTING) {
-	uae_target_state = UAE_STATE_QUITTING;
-    }
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (uae_target_state != UAE_STATE_QUITTING)
+   {
+      uae_target_state = UAE_STATE_QUITTING;
+   }
 }
 
 void uae_stop (void)
 {
-    if (uae_target_state != UAE_STATE_QUITTING && uae_target_state != UAE_STATE_STOPPED) {
-	uae_target_state = UAE_STATE_STOPPED;
-	restart_config[0] = 0;
-    }
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (uae_target_state != UAE_STATE_QUITTING && uae_target_state != UAE_STATE_STOPPED)
+   {
+      uae_target_state = UAE_STATE_STOPPED;
+      restart_config[0] = 0;
+   }
 }
 
 void uae_reset (int hard_reset)
 {
+debug_print("%s (%d)\n", __func__, __LINE__);
     switch (uae_target_state) {
 	case UAE_STATE_QUITTING:
 	case UAE_STATE_STOPPED:
@@ -504,11 +528,12 @@ void uae_reset (int hard_reset)
 /* This needs to be rethought */
 void uae_restart (int opengui, char *cfgfile)
 {
-    uae_stop ();
-    restart_program = opengui > 0 ? 1 : (opengui == 0 ? 2 : 3);
-    restart_config[0] = 0;
-    if (cfgfile)
-	strcpy (restart_config, cfgfile);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   uae_stop ();
+   restart_program = opengui > 0 ? 1 : (opengui == 0 ? 2 : 3);
+   restart_config[0] = 0;
+   if (cfgfile)
+      strcpy (restart_config, cfgfile);
 }
 
 
@@ -520,36 +545,40 @@ void uae_restart (int opengui, char *cfgfile)
  */
 static int do_preinit_machine (int argc, char **argv)
 {
-    if (! graphics_setup ()) {
-	exit (1);
-    }
-    if (restart_config[0]) {
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (! graphics_setup ())
+   {
+      exit (1);
+   }
 
-	free_mountinfo (currprefs.mountinfo);
+   if (restart_config[0])
+   {
+      free_mountinfo (currprefs.mountinfo);
 
-	default_prefs (&currprefs, 0);
-	fix_options ();
-    }
+      default_prefs (&currprefs, 0);
+      fix_options ();
+   }
 
-    rtarea_init ();
-    hardfile_install ();
+   rtarea_init ();
+   hardfile_install ();
 
-    if (restart_config[0])
-	parse_cmdline_and_init_file (argc, argv);
-    else
-	currprefs = changed_prefs;
+   if (restart_config[0])
+      parse_cmdline_and_init_file (argc, argv);
+   else
+      currprefs = changed_prefs;
 
-    uae_inithrtimer ();
+   uae_inithrtimer ();
 
-    machdep_init ();
+   machdep_init ();
 
-    if (! audio_setup ()) {
-	write_log ("Sound driver unavailable: Sound output disabled\n");
-	currprefs.produce_sound = 0;
-    }
-    inputdevice_init ();
+   if (! audio_setup ())
+   {
+      write_log ("Sound driver unavailable: Sound output disabled\n");
+      currprefs.produce_sound = 0;
+   }
+   inputdevice_init ();
 
-    return 1;
+   return 1;
 }
 
 /*
@@ -557,59 +586,60 @@ static int do_preinit_machine (int argc, char **argv)
  */
 static int do_init_machine (void)
 {
-    if (!(( currprefs.cpu_level >= 2 ) && ( currprefs.address_space_24 == 0 ) && ( currprefs.cachesize )))
-	canbang = 0;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (!(( currprefs.cpu_level >= 2 ) && ( currprefs.address_space_24 == 0 ) && ( currprefs.cachesize )))
+      canbang = 0;
 
-    savestate_init ();
+   savestate_init ();
 #ifdef SCSIEMU
-    scsidev_install ();
+   scsidev_install ();
 #endif
 
-    /* Install resident module to get 8MB chipmem, if requested */
-    rtarea_setup ();
-    keybuf_init (); /* Must come after init_joystick */
+   /* Install resident module to get 8MB chipmem, if requested */
+   rtarea_setup ();
+   keybuf_init (); /* Must come after init_joystick */
 
-    expansion_init ();
+   expansion_init ();
 
-    memory_init ();
-    memory_reset ();
+   memory_init ();
+   memory_reset ();
 
-    filesys_install ();
+   filesys_install ();
 
-    bsdlib_install ();
-    emulib_install ();
-    uaeexe_install ();
-    native2amiga_install ();
+   bsdlib_install ();
+   emulib_install ();
+   uaeexe_install ();
+   native2amiga_install ();
 
-    if (custom_init ()) { /* Must come after memory_init */
+   if (custom_init ())
+   { /* Must come after memory_init */
 #ifdef SERIAL_PORT
-	serial_init ();
+      serial_init ();
 #endif
-	DISK_init ();
+      DISK_init ();
 
-	reset_frame_rate_hack ();
-	init_m68k(); /* must come after reset_frame_rate_hack (); */
+      reset_frame_rate_hack ();
+      init_m68k(); /* must come after reset_frame_rate_hack (); */
 
-	gui_update ();
+      gui_update ();
 
-	if (graphics_init ()) {
+      if (graphics_init ())
+      {
+         setup_brkhandler ();
 
-#ifdef DEBUGGER
-	    setup_brkhandler ();
+         if (currprefs.start_debugger && debuggable ())
+            activate_debugger ();
 
-	    if (currprefs.start_debugger && debuggable ())
-		activate_debugger ();
-#endif
+         if (sound_available && currprefs.produce_sound > 1 && ! audio_init ())
+         {
+            write_log ("Sound driver unavailable: Sound output disabled\n");
+            currprefs.produce_sound = 0;
+         }
 
-	    if (sound_available && currprefs.produce_sound > 1 && ! audio_init ()) {
-		write_log ("Sound driver unavailable: Sound output disabled\n");
-		currprefs.produce_sound = 0;
-	    }
-
-	    return 1;
-	}
-    }
-    return 0;
+      return 1;
+      }
+   }
+   return 0;
 }
 
 /*
@@ -617,20 +647,21 @@ static int do_init_machine (void)
  */
 static void reset_all_systems (void)
 {
-    init_eventtab ();
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   init_eventtab ();
 
-    memory_reset ();
+   memory_reset ();
 #ifdef BSDSOCKET
-    bsdlib_reset ();
+   bsdlib_reset ();
 #endif
 
-    filesys_reset ();
-    filesys_start_threads ();
-    hardfile_reset ();
+   filesys_reset ();
+   filesys_start_threads ();
+   hardfile_reset ();
 
 #ifdef SCSIEMU
-    scsidev_reset ();
-    scsidev_start_threads ();
+   scsidev_reset ();
+   scsidev_start_threads ();
 #endif
 }
 
@@ -639,36 +670,38 @@ static void reset_all_systems (void)
  */
 static void do_reset_machine (int hardreset)
 {
-    if (savestate_state == STATE_RESTORE)
-	restore_state (savestate_fname);
-    else if (savestate_state == STATE_REWIND)
-	savestate_rewind ();
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   if (savestate_state == STATE_RESTORE)
+      restore_state (savestate_fname);
+   else if (savestate_state == STATE_REWIND)
+      savestate_rewind ();
 
-    /* following three lines must not be reordered or
-     * fastram state restore breaks
-     */
-    reset_all_systems ();
-    customreset ();
-    m68k_reset ();
-    if (hardreset) {
-	memset (chipmemory, 0, allocated_chipmem);
-	write_log ("chipmem cleared\n");
-    }
+   /* following three lines must not be reordered or
+    * fastram state restore breaks
+    */
+   reset_all_systems ();
+   customreset ();
+   m68k_reset ();
+   if (hardreset)
+   {
+      memset (chipmemory, 0, allocated_chipmem);
+      write_log ("chipmem cleared\n");
+   }
 
-    /* We may have been restoring state, but we're done now.  */
-    if (savestate_state == STATE_RESTORE || savestate_state == STATE_REWIND)
-    {
-	map_overlay (1);
-	fill_prefetch_slow (&regs); /* compatibility with old state saves */
-    }
-    savestate_restore_finish ();
+   /* We may have been restoring state, but we're done now.  */
+   if (savestate_state == STATE_RESTORE || savestate_state == STATE_REWIND)
+   {
+      map_overlay (1);
+      fill_prefetch_slow (&regs); /* compatibility with old state saves */
+   }
+   savestate_restore_finish ();
 
-    fill_prefetch_slow (&regs);
-    if (currprefs.produce_sound == 0)
-	eventtab[ev_audio].active = 0;
-    handle_active_events ();
+   fill_prefetch_slow (&regs);
+   if (currprefs.produce_sound == 0)
+      eventtab[ev_audio].active = 0;
+   handle_active_events ();
 
-    inputdevice_updateconfig (&currprefs);
+   inputdevice_updateconfig (&currprefs);
 }
 
 /*
@@ -676,7 +709,8 @@ static void do_reset_machine (int hardreset)
  */
 static void do_run_machine (void)
 {
-	m68k_go (1);
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   m68k_go (1);
 }
 
 /*
@@ -684,35 +718,36 @@ static void do_run_machine (void)
  */
 static void do_exit_machine (void)
 {
-    graphics_leave ();
-    inputdevice_close ();
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   graphics_leave ();
+   inputdevice_close ();
 
-    compemu_cleanup();
+   compemu_cleanup();
 
 #ifdef SCSIEMU
-    scsidev_exit ();
+   scsidev_exit ();
 #endif
-    DISK_free ();
+   DISK_free ();
 
-    audio_close ();
-    dump_counts ();
+   audio_close ();
+   dump_counts ();
 #ifdef SERIAL_PORT
-    serial_exit ();
+   serial_exit ();
 #endif
 #ifdef CD32
-    akiko_free ();
+   akiko_free ();
 #endif
-    gui_exit ();
+   gui_exit ();
 
-    expansion_cleanup ();
+   expansion_cleanup ();
 
-    filesys_cleanup ();
-    hardfile_cleanup ();
+   filesys_cleanup ();
+   hardfile_cleanup ();
 
-    savestate_free ();
+   savestate_free ();
 
-    memory_cleanup ();
-    cfgfile_addcfgparam (0);
+   memory_cleanup ();
+   cfgfile_addcfgparam (0);
 }
 
 
@@ -721,146 +756,186 @@ static void do_exit_machine (void)
  */
 void real_main (int argc, char **argv)
 {
-    show_version ();
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   //show_version ();
 
-    currprefs.mountinfo = changed_prefs.mountinfo = &options_mountinfo;
+   currprefs.mountinfo = changed_prefs.mountinfo = &options_mountinfo;
 
-    restart_program = 1;
+   restart_program = 1;
 
-    strcat (restart_config, OPTIONSFILENAME);
+   strcat (restart_config, OPTIONSFILENAME);
 
-    /* Initial state is stopped */
-    uae_target_state = UAE_STATE_STOPPED;
+   /* Initial state is stopped */
+   uae_target_state = UAE_STATE_STOPPED;
 
-    while (uae_target_state != UAE_STATE_QUITTING) {
-	int want_gui;
+   while (uae_target_state != UAE_STATE_QUITTING)
+   {
+      //int want_gui;
 
-	set_state (uae_target_state);
+      set_state (uae_target_state);
 
-	do_preinit_machine (argc, argv);
+      do_preinit_machine (argc, argv);
 
-	/* Should we open the GUI? TODO: This mess needs to go away */
-	want_gui = currprefs.start_gui;
-	if (restart_program == 2)
-	    want_gui = 0;
-	else if (restart_program == 3)
-	    want_gui = 1;
+/*
+51030.046| real_main (759)
+51030.046| set_state (462)
+51030.046| gui_notify_state (209)
+51030.046| graphics_notify_state (1477)
+51030.046| do_preinit_machine (548)
+51030.046| graphics_setup (1272)
+51030.046| Init_Render (1037)
+51030.069| gfx_default_options (1843)
+51030.071| init_mouse (1632)
+51030.071| input_get_default_mouse (1727)
+51030.071| input_get_default_mouse (1727)
+51030.071| input_get_default_mouse (1727)
+51030.071| input_get_default_mouse (1727)
+51030.071| input_get_default_mouse (1727)
+51030.071| fix_options (112)
+51030.071| parse_cmdline_and_init_file (380)
+51030.076| fix_options (112)
+51030.076| parse_cmdline (326)
+51030.076| fix_options (112)
+51030.078| init_mouse (1632)
+51030.079| gui_open (164)
+*/
+      /* Should we open the GUI? TODO: This mess needs to go away */
+/*
+      want_gui = currprefs.start_gui;
+      if (restart_program == 2)
+         want_gui = 0;
+      else if (restart_program == 3)
+         want_gui = 1;
+*/
+      changed_prefs = currprefs;
 
-	changed_prefs = currprefs;
+/*
+      if (want_gui)
+      {
+         // Handle GUI at start-up
+         int err = gui_open ();
 
+         if (err >= 0)
+         {
+            do
+            {
+               gui_handle_events ();
 
-	if (want_gui) {
-	    /* Handle GUI at start-up */
-	    int err = gui_open ();
+               uae_msleep (10);
 
-	    if (err >= 0) {
-		do {
-		    gui_handle_events ();
+            } while (!uae_state_change_pending ());
 
-		    uae_msleep (10);
+         }
+         else if (err == - 1)
+         {
+            if (restart_program == 3)
+            {
+               restart_program = 0;
+               uae_quit ();
+            }
+         }
+         else
+            uae_quit ();
 
-		} while (!uae_state_change_pending ());
-	    } else if (err == - 1) {
-		if (restart_program == 3) {
-		    restart_program = 0;
-		    uae_quit ();
-		}
-	    } else
-		uae_quit ();
+         currprefs = changed_prefs;
+         fix_options ();
+         inputdevice_init ();
+      }
+*/
+      restart_program = 0;
 
-	    currprefs = changed_prefs;
-	    fix_options ();
-	    inputdevice_init ();
-	}
+      if (uae_target_state == UAE_STATE_QUITTING)
+         break;
 
-	restart_program = 0;
+      uae_target_state = UAE_STATE_COLD_START;
 
-	if (uae_target_state == UAE_STATE_QUITTING)
-	    break;
+      /* Start emulator proper. */
+      if (!do_init_machine ())
+         break;
 
-	uae_target_state = UAE_STATE_COLD_START;
+      while (uae_target_state != UAE_STATE_QUITTING && uae_target_state != UAE_STATE_STOPPED)
+      {
+         /* Reset */
+         set_state (uae_target_state);
+         do_reset_machine (uae_state == UAE_STATE_COLD_START);
+         uae_msleep (1000);
+         /* Running */
+         uae_target_state = UAE_STATE_RUNNING;
 
-	/* Start emulator proper. */
-	if (!do_init_machine ())
-	    break;
+         /*
+          * Main Loop
+         */
+         do
+         {
+            set_state (uae_target_state);
 
-	while (uae_target_state != UAE_STATE_QUITTING && uae_target_state != UAE_STATE_STOPPED) {
-	    /* Reset */
-	    set_state (uae_target_state);
-	    do_reset_machine (uae_state == UAE_STATE_COLD_START);
+            /* Run emulator. */
+            do_run_machine ();
 
-	    /* Running */
-	    uae_target_state = UAE_STATE_RUNNING;
+            if (uae_target_state == UAE_STATE_PAUSED) 
+            {
+               /* Paused */
+               set_state (uae_target_state);
 
-	    /*
-	     * Main Loop
-	     */
-	    do {
-		set_state (uae_target_state);
+               audio_pause ();
 
-		/* Run emulator. */
-		do_run_machine ();
+               /* While UAE is paused we have to handle
+                * input events, etc. ourselves.
+               */
+               do
+               {
+                  gui_handle_events ();
+                  handle_events ();
 
-		if (uae_target_state == UAE_STATE_PAUSED) {
-		    /* Paused */
-		    set_state (uae_target_state);
+                  /* Manually pump input device */
+                  inputdevicefunc_keyboard.read ();
+                  inputdevicefunc_mouse.read ();
+                  inputdevicefunc_joystick.read ();
+                  inputdevice_handle_inputcode ();
 
-		    audio_pause ();
+                  /* Don't busy wait. */
+                  uae_msleep (10);
 
-		    /* While UAE is paused we have to handle
-		     * input events, etc. ourselves.
-		     */
-		    do {
-			gui_handle_events ();
-			handle_events ();
+               } while (!uae_state_change_pending ());
 
-			/* Manually pump input device */
-			inputdevicefunc_keyboard.read ();
-			inputdevicefunc_mouse.read ();
-			inputdevicefunc_joystick.read ();
-			inputdevice_handle_inputcode ();
+               audio_resume ();
+            }
 
-			/* Don't busy wait. */
-			uae_msleep (10);
+         } while (uae_target_state == UAE_STATE_RUNNING);
 
-		    } while (!uae_state_change_pending ());
+         /*
+          * End of Main Loop
+          *
+          * We're no longer running or paused.
+         */
 
-		    audio_resume ();
-		}
+         set_inhibit_frame (IHF_QUIT_PROGRAM);
 
-	    } while (uae_target_state == UAE_STATE_RUNNING);
-	    /*
-	     * End of Main Loop
-	     *
-	     * We're no longer running or paused.
-	     */
+         /* Ensure any cached changes to virtual filesystem are flushed before
+          * resetting or exitting. */
+         filesys_prepare_reset ();
 
-	    set_inhibit_frame (IHF_QUIT_PROGRAM);
+      } /* while (!QUITTING && !STOPPED) */
 
-	    /* Ensure any cached changes to virtual filesystem are flushed before
-	     * resetting or exitting. */
-	    filesys_prepare_reset ();
+      do_exit_machine ();
 
-	} /* while (!QUITTING && !STOPPED) */
-
-	do_exit_machine ();
-
-	/* TODO: This stuff is a hack. What we need to do is
-	 * check whether a config GUI is available. If not,
-	 * then quit.
-	 */
-	restart_program = 3;
-    }
-    zfile_exit ();
+      /* TODO: This stuff is a hack. What we need to do is
+       * check whether a config GUI is available. If not,
+       * then quit.
+      */
+      restart_program = 3;
+   }
+   zfile_exit ();
 }
 
 #ifndef NO_MAIN_IN_MAIN_C
 int main (int argc, char **argv)
 {
-    //gui_init (argc, argv);
-    gui_init ();
-    real_main (argc, argv);
-    return 0;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+   //gui_init (argc, argv);
+   gui_init ();
+   real_main (argc, argv);
+   return 0;
 }
 #endif
 

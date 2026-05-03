@@ -281,12 +281,8 @@ static uae_u32 emulib_GetDisk (uae_u32 drive, uaecptr name)
  */
 static uae_u32 emulib_Debug (void)
 {
-#ifdef DEBUGGER
     activate_debugger ();
     return 1;
-#else
-    return 0;
-#endif
 }
 
 /* We simply find the first "text" hunk, get the offset of its actual code segment (20 bytes away)

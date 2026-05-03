@@ -2573,7 +2573,7 @@ uae_u16 DSKBYTR (unsigned int hpos)
 	v |= 0x2000;
     if (disk_debug_logging > 1)
 	write_log ("DSKBYTR=%04.4X hpos=%d\n", v, hpos);
-#ifdef DEBUGGER
+
     if (disk_debug_mode & DISK_DEBUG_PIO) {
 	unsigned int dr;
 	for (dr = 0; dr < MAX_FLOPPY_DRIVES; dr++) {
@@ -2590,7 +2590,6 @@ uae_u16 DSKBYTR (unsigned int hpos)
 	    }
 	}
     }
-#endif
 
     return v;
 }
@@ -2733,7 +2732,6 @@ void DSKLEN (uae_u16 v, unsigned int hpos)
     if (dsklength == 1)
 	dsklength = 0;
 
-#ifdef DEBUGGER
     if (((disk_debug_mode & DISK_DEBUG_DMA_READ) && dskdmaen == 2) ||
 	((disk_debug_mode & DISK_DEBUG_DMA_WRITE) && dskdmaen == 3))
     {
@@ -2750,7 +2748,6 @@ void DSKLEN (uae_u16 v, unsigned int hpos)
 	    }
 	}
     }
-#endif
 
     if (disk_debug_logging > 0) {
 	for (dr = 0; dr < MAX_FLOPPY_DRIVES; dr++) {
@@ -2990,8 +2987,6 @@ end:
 
 /* Disk save/restore code */
 
-#ifdef DEBUGGER
-
 void DISK_save_custom (uae_u32 *pdskpt, uae_u16 *pdsklength, uae_u16 *pdsksync, uae_u16 *pdskbytr)
 {
     if (pdskpt) *pdskpt = dskpt;
@@ -2999,8 +2994,6 @@ void DISK_save_custom (uae_u32 *pdskpt, uae_u16 *pdsklength, uae_u16 *pdsksync, 
     if (pdsksync) *pdsksync = dsksync;
     if (pdskbytr) *pdskbytr = dskbytr_val;
 }
-
-#endif /* DEBUGGER */
 
 void DISK_restore_custom (uae_u32 pdskpt, uae_u16 pdsklength, uae_u16 pdskbytr)
 {

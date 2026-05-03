@@ -7,8 +7,6 @@
   *
   */
 
-#ifdef DEBUGGER
-
 extern int debugging;
 extern int exception_debugging;
 extern int debug_copper;
@@ -22,6 +20,4 @@ extern void record_copper_reset (void);
 
 #ifdef JIT_DEBUG
 extern void disassemble_compiled(void* startaddress, void* endaddress);
-#endif
-
 #endif

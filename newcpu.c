@@ -703,11 +703,9 @@ STATIC_INLINE void trace_exception (struct regstruct *regs, unsigned int nr)
 
 static void exception_debug (int nr)
 {
-#ifdef DEBUGGER
     if (!exception_debugging)
 	return;
     console_out ("Exception %d, PC=%08x\n", nr, m68k_getpc (&regs));
-#endif
 }
 
 /* cycle-exact exception handler, 68000 only */
@@ -1958,10 +1956,8 @@ void m68k_go (int may_quit)
     for (;;) {
 	void (*run_func)(void);
 
-#ifdef DEBUGGER
 	if (debugging)
 	    debug ();
-#endif
 
 	if (regs.panic) {
 	    regs.panic = 0;
@@ -1993,8 +1989,6 @@ void m68k_go (int may_quit)
     }
 }
 
-
-#ifdef DEBUGGER
 
 static const char * const ccnames[] =
 { "T","F","HI","LS","CC","CS","NE","EQ",
@@ -2226,7 +2220,6 @@ void m68k_dumpstate (void *f, uaecptr *nextpc)
 	f_out (f, "next PC: %08x\n", *nextpc);
 }
 
-#endif
 
 
 /* CPU save/restore code */

@@ -1160,11 +1160,11 @@ void inputdevice_handle_inputcode (void)
     case AKS_TOGGLEMOUSEGRAB:
 	toggle_mousegrab ();
 	break;
-#ifdef DEBUGGER
+
     case AKS_ENTERDEBUGGER:
 	activate_debugger ();
 	break;
-#endif
+
     case AKS_STATESAVEDIALOG:
 	gui_display (5);
 	break;

@@ -56,9 +56,8 @@ struct uae_prefs {
     int parallel_demand;
     int socket_emu;
 
-#ifdef DEBUGGER
     int start_debugger;
-#endif
+
     int start_gui;
 
     KbdLang keyboard_lang;

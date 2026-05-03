@@ -68,8 +68,8 @@ INCDIR		= ./include
 #
 # Platform specific compiler and linker flags 
 #
-CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wall -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes
-CPPFLG_MOS	= -DDEBUGGER
+CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wall -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes -Wimplicit-function-declaration
+CPPFLG_MOS	= -DUSEDEBUG
 LFLG_MOS	= -lz -lm -ldebug
 
 

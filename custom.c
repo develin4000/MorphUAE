@@ -1925,10 +1925,8 @@ static void decide_sprites (unsigned int hpos)
 	unsigned int j;
 	unsigned int bestp;
 
-#if DEBUGGER
 	if (!((debug_sprite_mask) & (1 << i)))
 	    continue;
-#endif
 
 	if (! spr[i].armed || hw_xp <= last_sprite_point || hw_xp > point)
 	    continue;
@@ -3358,10 +3356,8 @@ static void perform_copper_write (unsigned int old_hpos)
 {
     unsigned int address = cop_state.saved_i1 & 0x1FE;
 
-#ifdef DEBUGGER
     if (debug_copper)
 	record_copper (cop_state.saved_ip - 4, old_hpos, vpos);
-#endif
 
     if (test_copper_dangerous (address))
 	return;
@@ -3608,10 +3604,8 @@ static void update_copper (unsigned int until_hpos)
 		goto out;
 	    }
 
-#ifdef DEBUGGER
 	    if (debug_copper)
 		record_copper (cop_state.ip - 4, old_hpos, vpos);
-#endif
 
 	    cop_state.state = COP_read1;
 	    break;
@@ -3646,10 +3640,8 @@ static void update_copper (unsigned int until_hpos)
 		test_copper_dangerous (chipmem_wget(cop_state.ip));
 	    }
 
-#ifdef DEBUGGER
 	    if (debug_copper)
 		record_copper (cop_state.ip - 4, old_hpos, vpos);
-#endif
 
 	    break;
 	}
@@ -4262,10 +4254,8 @@ static void vsync_handler (void)
 	cnt--;
     }
 
-#ifdef DEBUGGER
     if (debug_copper)
 	record_copper_reset();
-#endif
 
     vsync_handle_redraw (lof, lof_changed);
 
@@ -5245,8 +5235,6 @@ const uae_u8 *restore_custom (const uae_u8 *src)
     return src;
 }
 
-#ifdef DEBUGGER
-
 #define SB save_u8
 #define SW save_u16
 #define SL save_u32
@@ -5402,8 +5390,6 @@ uae_u8 *save_custom (uae_u32 *len, uae_u8 *dstptr, int full)
     *len = dst - dstbak;
     return dstbak;
 }
-
-#endif /* DEBUGGER */
 
 const uae_u8 *restore_custom_agacolors (const uae_u8 *src)
 {

@@ -1272,8 +1272,6 @@ const uae_u8 *restore_audio (unsigned int channel, const uae_u8 *src)
     return src;
 }
 
-#ifdef DEBUGGER
-
 uae_u8 *save_audio (unsigned int channel, uae_u32 *len, uae_u8 *dstptr)
 {
     const struct audio_channel_data *acd = &audio_channel[channel];
@@ -1300,5 +1298,3 @@ uae_u8 *save_audio (unsigned int channel, uae_u32 *len, uae_u8 *dstptr)
     *len = dst - dstbak;
     return dstbak;
 }
-
-#endif /* DEBUGGER */

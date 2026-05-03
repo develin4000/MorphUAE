@@ -1258,136 +1258,143 @@ void map_overlay (int chip)
 
 void memory_reset (void)
 {
-    unsigned int bnk;
+   unsigned int bnk;
 
-    be_cnt = 0;
-    currprefs.chipmem_size = changed_prefs.chipmem_size;
-    currprefs.bogomem_size = changed_prefs.bogomem_size;
-    currprefs.a3000mem_size = changed_prefs.a3000mem_size;
+   be_cnt = 0;
+   currprefs.chipmem_size = changed_prefs.chipmem_size;
+   currprefs.bogomem_size = changed_prefs.bogomem_size;
+   currprefs.a3000mem_size = changed_prefs.a3000mem_size;
 
-    init_mem_banks ();
-    allocate_memory ();
+   init_mem_banks ();
+   allocate_memory ();
 
-    if (strlen (currprefs.romfile) == 0 || strcmp (currprefs.romfile, changed_prefs.romfile) != 0
-	|| strcmp (currprefs.keyfile, changed_prefs.keyfile) != 0)
-    {
-	if (strlen (changed_prefs.romfile) == 0) {
+   if (strlen (currprefs.romfile) == 0 || strcmp (currprefs.romfile, changed_prefs.romfile) != 0 || strcmp (currprefs.keyfile, changed_prefs.keyfile) != 0)
+   {
+      if (strlen (changed_prefs.romfile) == 0)
+      {
 
-	    init_ersatz_rom (kickmemory);
-	    kickmem_mask = kickmem_size - 1;
-	    ersatzkickfile = 1;
+         init_ersatz_rom (kickmemory);
+         kickmem_mask = kickmem_size - 1;
+         ersatzkickfile = 1;
 
-	} else {
-	    ersatzkickfile = 0;
-	    memcpy (currprefs.romfile, changed_prefs.romfile, sizeof currprefs.romfile);
-	    memcpy (currprefs.keyfile, changed_prefs.keyfile, sizeof currprefs.keyfile);
-	    if (savestate_state != STATE_RESTORE)
-		clearexec ();
+      }
+      else
+      {
+         ersatzkickfile = 0;
+         memcpy (currprefs.romfile, changed_prefs.romfile, sizeof currprefs.romfile);
+         memcpy (currprefs.keyfile, changed_prefs.keyfile, sizeof currprefs.keyfile);
+         if (savestate_state != STATE_RESTORE)
+            clearexec ();
 #if defined CDTV || defined CD32
-	    load_extendedkickstart ();
+         load_extendedkickstart ();
 #endif
-	    if (!load_kickstart ()) {
-		gui_message ("Failed to load Kickstart image '%s'\n", currprefs.romfile);
-		uae_restart (-1, NULL);
-		return;
-	    }
-	}
-    }
+         if (!load_kickstart ())
+         {
+            //gui_message ("Failed to load Kickstart image '%s'\n", currprefs.romfile);
+            MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work as intended\nPlease adjust the settings accordingly!");
+            //uae_restart (-1, NULL);
+            return;
+         }
+      }
+   }
 
-    /* Map custom chips at at 0xC00000 - 0xDFFFFF */
-    map_banks (&custom_bank, 0xC0, 32, 0);
+   /* Map custom chips at at 0xC00000 - 0xDFFFFF */
+   map_banks (&custom_bank, 0xC0, 32, 0);
 
-    /* Map CIAs at 0xA00000 - 0xBFFFFF */
-    map_banks (&cia_bank, 0xA0, 32, 0);
+   /* Map CIAs at 0xA00000 - 0xBFFFFF */
+   map_banks (&cia_bank, 0xA0, 32, 0);
 
-    /* Map "nothing" from top of ZorroII memory to 0x9FFFFF.
-     *
-     * This should be redundant because the entire memory map
-     * has already been initialized to "nothing" above.
-     */
-    bnk = allocated_chipmem >> 16;
-    if (bnk < 0x20 + (currprefs.fastmem_size >> 16))
-	bnk = 0x20 + (currprefs.fastmem_size >> 16);
-    map_banks (&dummy_bank, bnk, 0xA0 - bnk, 0);
+   /* Map "nothing" from top of ZorroII memory to 0x9FFFFF.
+    *
+    * This should be redundant because the entire memory map
+    * has already been initialized to "nothing" above.
+    */
+   bnk = allocated_chipmem >> 16;
+   if (bnk < 0x20 + (currprefs.fastmem_size >> 16))
+      bnk = 0x20 + (currprefs.fastmem_size >> 16);
 
-    /* Map "slow" memory from at 0xC00000 to max 0xDBFFFF, or 0xCFFFFF on an AGA machine. */
-    if (bogomemory != 0) {
-	int t = allocated_bogomem >> 16;
-	if (t > 0x1C)
-	    t = 0x1C;
-	if (t > 0x10 && ((currprefs.chipset_mask & CSMASK_AGA) || currprefs.cpu_level >= 2))
-	    t = 0x10;
-	map_banks (&bogomem_bank, 0xC0, t, 0);
-    }
+   map_banks (&dummy_bank, bnk, 0xA0 - bnk, 0);
 
-    /* Real-time clock at 0xDC0000 - 0xDCFFFF. */
-    map_banks (&clock_bank, 0xDC, 1, 0);
+   /* Map "slow" memory from at 0xC00000 to max 0xDBFFFF, or 0xCFFFFF on an AGA machine. */
+   if (bogomemory != 0)
+   {
+      int t = allocated_bogomem >> 16;
+      if (t > 0x1C)
+         t = 0x1C;
+      if (t > 0x10 && ((currprefs.chipset_mask & CSMASK_AGA) || currprefs.cpu_level >= 2))
+         t = 0x10;
+      map_banks (&bogomem_bank, 0xC0, t, 0);
+   }
+
+   /* Real-time clock at 0xDC0000 - 0xDCFFFF. */
+   map_banks (&clock_bank, 0xDC, 1, 0);
 
 #ifdef A3000MBRES
-    map_banks (&mbres_bank, 0xDE, 1, 0);
+   map_banks (&mbres_bank, 0xDE, 1, 0);
 #endif
 
-    /* 32-bit memory on A3000 motherboard. */
-    if (a3000memory != 0)
-	map_banks (&a3000mem_bank, a3000mem_start >> 16, allocated_a3000mem >> 16,
-		   allocated_a3000mem);
+   /* 32-bit memory on A3000 motherboard. */
+   if (a3000memory != 0)
+      map_banks (&a3000mem_bank, a3000mem_start >> 16, allocated_a3000mem >> 16,
+   allocated_a3000mem);
 
-    /* Map UAE 'boot rom' at 0xF00000 - 0xF0FFFF. */
-    map_banks (&rtarea_bank, RTAREA_BASE >> 16, 1, 0);
+   /* Map UAE 'boot rom' at 0xF00000 - 0xF0FFFF. */
+   map_banks (&rtarea_bank, RTAREA_BASE >> 16, 1, 0);
 
-    /* Map primary Kickstart at 0xF80000 - 0xFFFFFF. */
-    map_banks (&kickmem_bank, 0xF8, 8, 0);
-    if (currprefs.maprom)
-	map_banks (&kickram_bank, currprefs.maprom >> 16, 8, 0);
+   /* Map primary Kickstart at 0xF80000 - 0xFFFFFF. */
+   map_banks (&kickmem_bank, 0xF8, 8, 0);
+   if (currprefs.maprom)
+      map_banks (&kickram_bank, currprefs.maprom >> 16, 8, 0);
 
-    if (a1000_bootrom)
-	a1000_handle_kickstart (1);
+   if (a1000_bootrom)
+      a1000_handle_kickstart (1);
 
-    /* Map Autoconfig space at 0xE80000 - 0xE8FFFF. */
-    map_banks (&expamem_bank, 0xE8, 1, 0);
+   /* Map Autoconfig space at 0xE80000 - 0xE8FFFF. */
+   map_banks (&expamem_bank, 0xE8, 1, 0);
 
-    /* Map chip memory from 0x0 to 0x1FFFFF or to size of
-     * chip memory if more than 2 MB. */
-    map_overlay (1);
+   /* Map chip memory from 0x0 to 0x1FFFFF or to size of
+    * chip memory if more than 2 MB. */
+   map_overlay (1);
 
 #ifdef CDTV
-    cdtv_enabled = 0;
+   cdtv_enabled = 0;
 #endif
 #ifdef CD32
-    cd32_enabled = 0;
+   cd32_enabled = 0;
 #endif
 
 #if defined CDTV || CD32
-    switch (extromtype ()) {
+   switch (extromtype ())
+   {
 
 #ifdef CDTV
-    case EXTENDED_ROM_CDTV:
-	map_banks (&extendedkickmem_bank, 0xF0, 4, 0);
-	cdtv_enabled = 1;
-	break;
+   case EXTENDED_ROM_CDTV:
+      map_banks (&extendedkickmem_bank, 0xF0, 4, 0);
+      cdtv_enabled = 1;
+      break;
 #endif
 #ifdef CD32
-    case EXTENDED_ROM_CD32:
-	map_banks (&extendedkickmem_bank, 0xE0, 8, 0);
-	cd32_enabled = 1;
-	break;
+   case EXTENDED_ROM_CD32:
+      map_banks (&extendedkickmem_bank, 0xE0, 8, 0);
+      cd32_enabled = 1;
+      break;
 #endif
-    default:
+   default:
 #else
-    {
+   {
 #endif
-	if (cloanto_rom && !currprefs.maprom)
-	    map_banks (&kickmem_bank, 0xE0, 8, 0);
-    }
+      if (cloanto_rom && !currprefs.maprom)
+         map_banks (&kickmem_bank, 0xE0, 8, 0);
+   }
 
-    action_replay_memory_reset();
-    #ifdef ACTION_REPLAY_HRTMON
-    hrtmon_map_banks();
-    #endif
+   action_replay_memory_reset();
+   #ifdef ACTION_REPLAY_HRTMON
+   hrtmon_map_banks();
+   #endif
 
-    #ifndef ACTION_REPLAY_HIDE_CARTRIDGES
-    action_replay_map_banks();
-    #endif
+   #ifndef ACTION_REPLAY_HIDE_CARTRIDGES
+   action_replay_map_banks();
+   #endif
 }
 
 void memory_init (void)

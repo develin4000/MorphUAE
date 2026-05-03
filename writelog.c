@@ -69,12 +69,17 @@ void write_jit_log(const char *fmt, ...)
 
 void write_log (const char *fmt, ...)
 {
+   // Just make it silent...
+}
+
+void write_log_orginal (const char *fmt, ...)
+{
     va_list ap;
     va_start (ap, fmt);
 #ifdef HAVE_VFPRINTF
     vfprintf (logfile ? logfile : stderr, fmt, ap);
 #else
-    /* Technique stolen from GCC.  */
+    // Technique stolen from GCC.
     {
 	int x1, x2, x3, x4, x5, x6, x7, x8;
 	x1 = va_arg (ap, int);
