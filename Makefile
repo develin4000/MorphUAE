@@ -107,7 +107,7 @@ morphos: $(LIB_MACHDEP) $(LIB_THREADDEP) $(LIB_GFXDEP) $(LIB_SOUNDDEP) $(LIB_JOY
 	@echo ""
 
 	$(CC_MORPHOS) $(CFLG_MOS) -o $(APPNAME) main.o newcpu.o memory.o events.o custom.o serial.o cia.o blitter.o autoconf.o traps.o ersatz.o keybuf.o expansion.o zfile.o cfgfile.o picasso96.o inputdevice.o gfxutil.o audio.o sinctable.o drawing.o native2amiga.o disk.o crc32.o savestate.o unzip.o uaeexe.o uaelib.o fdi2raw.o hotkeys.o ar.o driveclick.o enforcer.o misc.o missing.o readcpu.o libmachdep.a libjoydep.a libsounddep.a libgfxdep.a libguidep.a libkeymap.a libdms.a libcaps.a blitfunc.o blittable.o cpustbl.o cpudefs.o libcpuemu.a writelog.o filesys.o fsdb.o fsusage.o hardfile.o filesys_unix.o fsdb_unix.o hardfile_unix.o bsdsocket.o scsi-none.o debug.o ppc_disasm.o identify.o libthreaddep.a libosdep.a -lz -lm -lz -ldebug
-
+	$(STRIP_MORPHOS) $(APPNAME)
 	@echo "MorphOS binary sucessfully built..."
 	@echo ""
 

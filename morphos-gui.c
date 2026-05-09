@@ -57,95 +57,107 @@ static char *last_savestate_dir;
 static void free_last_floppy_dir (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (last_floppy_dir) {
-	free (last_floppy_dir);
-	last_floppy_dir = 0;
-    }
+   if (last_floppy_dir)
+   {
+      free (last_floppy_dir);
+      last_floppy_dir = 0;
+   }
 }
 
 static void free_last_savestate_dir (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (last_savestate_dir) {
-	free (last_savestate_dir);
-	last_savestate_dir = 0;
-    }
+   if (last_savestate_dir)
+   {
+      free (last_savestate_dir);
+       last_savestate_dir = 0;
+   }
 }
 
 static const char *get_last_floppy_dir (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (!last_floppy_dir) {
-	static int done = 0;
-	unsigned int len;
+   if (!last_floppy_dir)
+   {
+      static int done = 0;
+      unsigned int len;
 
-	if (!done) {
-	    done = 1;
-	    atexit (free_last_floppy_dir);
-	}
+      if (!done)
+      {
+         done = 1;
+         atexit (free_last_floppy_dir);
+      }
 
-	last_floppy_dir = my_strdup (prefs_get_attr ("floppy_path"));
-    }
-    return last_floppy_dir;
+      last_floppy_dir = my_strdup (prefs_get_attr ("floppy_path"));
+   }
+   return last_floppy_dir;
 }
 
 static const char *get_last_savestate_dir (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (!last_savestate_dir) {
-	static int done = 0;
-	unsigned int len;
+   if (!last_savestate_dir)
+   {
+      static int done = 0;
+      unsigned int len;
 
-	if (!done) {
-	    done = 1;
-	    atexit (free_last_savestate_dir);
-	}
+      if (!done)
+      {
+         done = 1;
+         atexit (free_last_savestate_dir);
+      }
 
-	last_savestate_dir = my_strdup (prefs_get_attr ("savestate_path"));
-    }
-    return last_savestate_dir;
+      last_savestate_dir = my_strdup (prefs_get_attr ("savestate_path"));
+   }
+   return last_savestate_dir;
 }
 
 static void set_last_floppy_dir (const char *path)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (last_floppy_dir) {
-	free (last_floppy_dir);
-	last_floppy_dir = 0;
-    }
+   if (last_floppy_dir)
+   {
+      free (last_floppy_dir);
+      last_floppy_dir = 0;
+   }
 
-    if (path) {
-	unsigned int len = strlen (path);
-	if (len) {
-	    last_floppy_dir = malloc (len + 1);
-	    if (last_floppy_dir)
-		strcpy (last_floppy_dir, path);
-	}
-    }
+   if (path)
+   {
+      unsigned int len = strlen (path);
+      if (len)
+      {
+         last_floppy_dir = malloc (len + 1);
+         if (last_floppy_dir)
+            strcpy (last_floppy_dir, path);
+      }
+   }
 }
 
 static void set_last_savestate_dir (const char *path)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    if (last_savestate_dir) {
-	free (last_savestate_dir);
-	last_savestate_dir = 0;
-    }
+   if (last_savestate_dir)
+   {
+      free (last_savestate_dir);
+      last_savestate_dir = 0;
+   }
 
-    if (path) {
-	unsigned int len = strlen (path);
-	if (len) {
-	    last_savestate_dir = malloc (len + 1);
-	    if (last_savestate_dir)
-		strcpy (last_savestate_dir, path);
-	}
-    }
+   if (path)
+   {
+      unsigned int len = strlen (path);
+      if (len)
+      {
+         last_savestate_dir = malloc (len + 1);
+         if (last_savestate_dir)
+            strcpy (last_savestate_dir, path);
+      }
+   }
 }
 
 static void do_file_dialog (unsigned int type)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-    return;
+   return;
 }
 
 /****************************************************************************/
@@ -156,8 +168,6 @@ void gui_init (void)
 }
 
 /****************************************************************************/
-
-static int have_rexx = 0;
 
 int gui_open (void)
 {
