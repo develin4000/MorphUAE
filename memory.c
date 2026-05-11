@@ -1291,7 +1291,7 @@ void memory_reset (void)
          if (!load_kickstart ())
          {
             //gui_message ("Failed to load Kickstart image '%s'\n", currprefs.romfile);
-            MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work as intended\nPlease adjust the settings accordingly!");
+            //MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work as intended\nPlease adjust the settings accordingly!");
             //uae_restart (-1, NULL);
             return;
          }

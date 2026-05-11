@@ -32,6 +32,13 @@
 
 #define CONFIG_BLEN 2560
 
+#ifdef USEDEBUG
+   #include <clib/debug_protos.h>
+   #define debug_print(args...) { KPrintF((CONST_STRPTR)args); }
+#else
+   #define debug_print(...)
+#endif
+
 static int config_newfilesystem;
 static struct strlist *temp_lines;
 
@@ -2250,6 +2257,7 @@ uae_u32 cfgfile_uaelib (int mode, uae_u32 name, uae_u32 dst, uae_u32 maxlen)
 
 static void default_prefs_mini (struct uae_prefs *p, int type)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
     strcpy (p->description, "UAE default A500 configuration");
 
     p->nr_floppies = 1;
@@ -2263,6 +2271,7 @@ static void default_prefs_mini (struct uae_prefs *p, int type)
 
 void default_prefs (struct uae_prefs *p, int type)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
     memset (p, 0, sizeof (*p));
     strcpy (p->description, "UAE default configuration");
 

@@ -97,7 +97,7 @@
 /****************************************************************************/
 
 extern xcolnr xcolors[4096];
-
+extern struct uae_prefs currprefs;
 /****************************************************************************/
 /*
  * prototypes & global vars
@@ -114,6 +114,7 @@ struct vidbuf_description *tmp_gfxinfo;
 int tmp_line_no;
 int tmp_first_line;
 int tmp_last_line;
+BOOL uae_restarted = FALSE;
 
 static int init_colors(void);
 static int dummy_lock (struct vidbuf_description *gfxinfo);
@@ -281,7 +282,16 @@ struct RenderData
 #define MUIV_Toolbar_On        1
 #define MUIV_Toolbar_Toggle    2
 
-
+#define MUIA_Settings_Adjust   (TAGBASE_DEVELIN | 0x0030)
+#define MUIV_Reset_All         0
+#define MUIV_Reset_General     1
+#define MUIV_Reset_OCS         2
+#define MUIV_Reset_ECS         3
+#define MUIV_Reset_AGA         4
+#define MUIV_Reset_Custom      5
+#define MUIV_Settings_Use      6
+#define MUIV_Settings_Save     7
+#define MUIV_Settings_Cancel   8
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
@@ -355,10 +365,9 @@ void reset_tab(unsigned int tab)
          set(but_gen_sound, MUIA_Cycle_Active, 2);     // Normal
          set(but_gen_channels, MUIA_Cycle_Active, 1);  // Stereo
          set(but_gen_frequency, MUIA_Cycle_Active, 2); // 44100Hz
-         set(but_gen_bits, MUIA_Cycle_Active, 1);      // 16
          set(but_gen_joy0, MUIA_Cycle_Active, 0);      // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);      // Joy1
-         set(but_gen_floppy, MUIA_Cycle_Active, 1);    // Normal
+         set(but_gen_floppy, MUIA_Cycle_Active, 0);    // Normal
          set(but_gen_blitter, MUIA_Cycle_Active, 0);   // On - Check this!
          set(but_gen_sprite, MUIA_Cycle_Active, 1);    // None - Check this!
          set(but_gen_resetmode, MUIA_Cycle_Active, 0); // Soft!
@@ -367,6 +376,7 @@ void reset_tab(unsigned int tab)
       case ID_BUT_OCS_RESET :
       {
          set(ocs_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick1.rom");
+         set(ocs_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
          set(but_ocs_chipmem, MUIA_Cycle_Active, 0);   // 0,5Mb
          set(but_ocs_fastmem, MUIA_Cycle_Active, 0);   // 0 Mb
       }  break;
@@ -374,6 +384,7 @@ void reset_tab(unsigned int tab)
       case ID_BUT_ECS_RESET :
       {
          set(ecs_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick2.rom");
+         set(ecs_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
          set(but_ecs_mode, MUIA_Cycle_Active, 0);   // ECS Agnus
          set(but_ecs_chipmem, MUIA_Cycle_Active, 1);   // 2 Mb
          set(but_ecs_fastmem, MUIA_Cycle_Active, 0);   // 0 Mb
@@ -383,6 +394,7 @@ void reset_tab(unsigned int tab)
       case ID_BUT_AGA_RESET :
       {
          set(aga_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
+         set(aga_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
          set(but_aga_fastmem, MUIA_Cycle_Active, 4);   // 8 Mb
          set(but_aga_zorromem, MUIA_Cycle_Active, 0);   // 0 Mb
       }  break;
@@ -390,6 +402,7 @@ void reset_tab(unsigned int tab)
       case ID_BUT_CUS_RESET :
       {
          set(cus_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
+         set(cus_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
          set(but_cus_cpu, MUIA_Cycle_Active, 4);      // 68040
          set(but_cus_speed, MUIA_Cycle_Active, 0);    // Max
          set(but_cus_jit, MUIA_Cycle_Active, 2);      // On - 8 Mb
@@ -411,6 +424,72 @@ void reset_all(void)
    reset_tab(ID_BUT_CUS_RESET);
 }
 
+void setup_specific(int conf)
+{
+   STRPTR ks, ksk;
+
+   if (conf == 0) // OCS
+   {
+      GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&ks);
+      GetAttr(MUIA_String_Contents, ocs_kickstartkey_str, (ULONG *)&ksk);
+      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+   }
+   else if (conf == 1) // ECS
+   {
+      GetAttr(MUIA_String_Contents, ecs_kickstart_str, (ULONG *)&ks);
+      GetAttr(MUIA_String_Contents, ecs_kickstartkey_str, (ULONG *)&ksk);
+      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+   }
+   else if (conf == 2) // AGA
+   {
+      GetAttr(MUIA_String_Contents, aga_kickstart_str, (ULONG *)&ks);
+      GetAttr(MUIA_String_Contents, aga_kickstartkey_str, (ULONG *)&ksk);
+      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+   }
+   else // Custom
+   {
+      GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&ks);
+      GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&ksk);
+      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+   }
+   strcpy(changed_prefs.romfile, ks);
+   strcpy(changed_prefs.keyfile, ksk);
+}
+
+void setup_generic(void)
+{
+   LONG mpos, spos, jpos, val;
+   get(but_gen_machine, MUIA_Cycle_Active, &mpos);
+
+   setup_specific(mpos);
+
+   //Sound
+   get(but_gen_sound, MUIA_Cycle_Active, &spos);
+   changed_prefs.produce_sound = spos;
+   get(but_gen_channels, MUIA_Cycle_Active, &spos);
+   changed_prefs.sound_stereo = spos;
+   get(but_gen_frequency, MUIA_Cycle_Active, &spos);
+   if (spos == 0) val = 11025; else if (spos == 1) val = 22055; else if (spos == 2) val = 44100; else val = 48000;
+   changed_prefs.sound_freq = val;
+
+   // IO Devices
+      // Mouse = 200, Joy0 = 100, Joy1 = 101, kbd1 = 0, kbd2 = 1, kbd3 = 2
+   get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
+   if (jpos == 0) val = 200; else if (jpos == 1) val = 100; else if (jpos == 2) val = 101; else if (jpos == 3) val = 0; else if (jpos == 4) val = 1; else val = 2;
+   changed_prefs.jport0 = val;
+   get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
+   if (jpos == 0) val = 200; else if (jpos == 1) val = 100; else if (jpos == 2) val = 101; else if (jpos == 3) val = 0; else if (jpos == 4) val = 1; else val = 2;
+   changed_prefs.jport1 = val;
+   get(but_gen_floppy, MUIA_Cycle_Active, &jpos);
+   if (jpos == 0) val = 100; else if (jpos == 1) val = 500; else val = 1000;
+   changed_prefs.floppy_speed = val;
+   debug_print("%s (%d) - jport0 = %d ; jport1 = %d\n", __func__, __LINE__, currprefs.jport0, currprefs.jport1);
+
+  //produce_sound
+  //sound_stereo
+  //sound_freq
+   
+}
 
 
 /*=----------------------------- openfile() ----------------------------------*
@@ -829,6 +908,42 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                {
                   closepseudodevices ();
                }  break;
+            case MUIA_Settings_Adjust :
+               if (tag->ti_Data == MUIV_Reset_General)
+                  reset_tab(ID_BUT_GEN_RESET);
+               else if (tag->ti_Data == MUIV_Reset_OCS)
+                  reset_tab(ID_BUT_OCS_RESET);
+               else if (tag->ti_Data == MUIV_Reset_ECS)
+                  reset_tab(ID_BUT_ECS_RESET);
+               else if (tag->ti_Data == MUIV_Reset_AGA)
+                  reset_tab(ID_BUT_AGA_RESET);
+               else if (tag->ti_Data == MUIV_Reset_Custom)
+                  reset_tab(ID_BUT_CUS_RESET);
+               else if (tag->ti_Data == MUIV_Reset_All)
+                  reset_all();
+               else if (tag->ti_Data == MUIV_Settings_Use)
+               {
+                  DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
+                  //uae_stop();//uae_restart (0, NULL);//uae_stop();
+                  //setup_generic();
+                  //do_rerun_machine();
+                  //do_reset_machine(1);
+                  //uae_start();
+                  setup_generic();
+                  uae_restarted = TRUE;
+                  set(win_settings, MUIA_Window_Open, FALSE);
+                  //do_rerun_machine();
+                  uae_restart (-1, NULL);
+               }
+               else if (tag->ti_Data == MUIV_Settings_Save)
+               {
+                  DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
+                  DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENVARC);
+                  set(win_settings, MUIA_Window_Open, FALSE);
+               }
+               else // MUIV_Settings_Cancel
+                  set(win_settings, MUIA_Window_Open, FALSE);
+               break;
          }
       }
    }
@@ -1327,207 +1442,211 @@ static int mui_setup_window(void)
                               MUIA_Window_Title,          "MorphUAE - Settings",
                               MUIA_Window_ID,             MAKE_ID('S','U','A','E'),
                               MUIA_Window_AppWindow,      FALSE,
-                              //MUIA_Window_DisableKeys,    MUIKEYF_WINDOW_CLOSE,
-//                           End,
-//
-                               WindowContents, HGroup, NoFrame,
 
-                                  Child, VGroup, NoFrame,
-                                     InnerSpacing(0, 0),
-                                     Child, RegisterGroup(Pages),
-                                        MUIA_Register_Frame, TRUE,
+                              WindowContents, HGroup, NoFrame,
 
-                                       // General Tab...
-                                       Child, HGroup,  // General Tab
-                                          //Child, HSpace(0),
-                                          Child, ColGroup(2),
-                                             Child, but_gen_reset = TextObject, ButtonFrame,
-                                                MUIA_Background, MUII_ButtonBack,
-                                                MUIA_Weight, 0,
-                                                MUIA_Text_PreParse, "\33c",
-                                                MUIA_Text_Contents, "Reset to Default",
-                                                MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             End,
-                                             Child, HSpace(0),
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, Label1("Machine Type :" ), Child, but_gen_machine = CycleObject, MUIA_Cycle_Entries, cyc_gen_machine, MUIA_ObjectID, ID_PRFS_GEN_MACHINE, MUIA_UserData, ID_PRFS_GEN_MACHINE, End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Sound", MUIA_FixHeight, 8, End,
-                                             Child, Label1("Output :"), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_gen_sound, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
-                                             Child, Label1("Channels:"), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_gen_channels, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
-                                             Child, Label1("Frequency :"), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
-                                             Child, Label1("Bits :"), Child, but_gen_bits = CycleObject, MUIA_Cycle_Entries, cyc_gen_bits, MUIA_ObjectID, ID_PRFS_GEN_BITS, MUIA_UserData, ID_PRFS_GEN_BITS, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "I/O Devices", MUIA_FixHeight, 8, End,
-                                             Child, Label1("Joystick Port 0 :"), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                             Child, Label1("Joystick Port 1 :"), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
-                                             Child, Label1("Floppy Speed :"), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_gen_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Chipset", MUIA_FixHeight, 8, End,
-                                             Child, Label1("Immediate Blits :"), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_gen_blitter, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
-                                             Child, Label1("Sprite Collisions :"), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_gen_sprite, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                             Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Misc", MUIA_FixHeight, 8, End,
-                                             Child, Label1("Reset Type :"), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_gen_resetmode, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                          End,
-                                          //Child, HSpace(0),
-                                       End,
-                                       Child, HGroup,  // OCS Tab
-                                          //Child, HSpace(0),
-                                          Child, ColGroup(2),
-                                             Child, but_ocs_reset = TextObject, ButtonFrame,
-                                                MUIA_Background, MUII_ButtonBack,
-                                                MUIA_Weight, 0,
-                                                MUIA_Text_PreParse, "\33c",
-                                                MUIA_Text_Contents, "Reset to Default",
-                                                MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             End,
-                                             Child, HSpace(0),
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, KeyLabel2("Kickstart File :",'f'),
-                                             Child, cyc_ocs_kickstart = PopaslObject,
-                                                MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART),
-                                                MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                                ASLFR_TitleText, "Please select a kickstart file...",
-                                             End,
-                                             Child, Label1("Chip Memory :" ), Child, but_ocs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_chipmem, MUIA_ObjectID, ID_PRFS_OCS_CHIPMEM, MUIA_UserData, ID_PRFS_OCS_CHIPMEM, End,
-                                             Child, Label1("Fast Memory :"), Child, but_ocs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_fastmem, MUIA_ObjectID, ID_PRFS_OCS_FASTMEM, MUIA_UserData, ID_PRFS_OCS_FASTMEM,  End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                          End,
-                                          //Child, HSpace(0),
-                                       End,
-                                       Child, HGroup,  // ECS Tab
-                                          //Child, HSpace(0),
-                                          Child, ColGroup(2),
-                                             Child, but_ecs_reset = TextObject, ButtonFrame,
-                                                MUIA_Background, MUII_ButtonBack,
-                                                MUIA_Weight, 0,
-                                                MUIA_Text_PreParse, "\33c",
-                                                MUIA_Text_Contents, "Reset to Default",
-                                                MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             End,
-                                             Child, HSpace(0),
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, KeyLabel2("Kickstart File :",'f'),
-                                             Child, cyc_ecs_kickstart = PopaslObject,
-                                                MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART),
-                                                MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                                ASLFR_TitleText, "Please select a kickstart file...",
-                                             End,
-                                             Child, Label1("ESC Mode :"), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
-                                             Child, Label1("Chip Memory :" ), Child, but_ecs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_chipmem, MUIA_ObjectID, ID_PRFS_ECS_CHIPMEM, MUIA_UserData, ID_PRFS_ECS_CHIPMEM, End,
-                                             Child, Label1("Fast Memory :"), Child, but_ecs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_fastmem, MUIA_ObjectID, ID_PRFS_ECS_FASTMEM, MUIA_UserData, ID_PRFS_ECS_FASTMEM, End,
-                                             Child, Label1("Zorro3 Memory :"), Child, but_ecs_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_zorromem, MUIA_ObjectID, ID_PRFS_ECS_ZORROMEM, MUIA_UserData, ID_PRFS_ECS_ZORROMEM, End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                          End,
-                                          //Child, HSpace(0),
-                                       End,
-                                       Child, HGroup,  // AGA Tab
-                                          //Child, HSpace(0),
-                                          Child, ColGroup(2),
-                                             Child, but_aga_reset = TextObject, ButtonFrame,
-                                                MUIA_Background, MUII_ButtonBack,
-                                                MUIA_Weight, 0,
-                                                MUIA_Text_PreParse, "\33c",
-                                                MUIA_Text_Contents, "Reset to Default",
-                                                MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             End,
-                                             Child, HSpace(0),
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, KeyLabel2("Kickstart File :",'f'),
-                                             Child, cyc_aga_kickstart = PopaslObject,
-                                                MUIA_Popstring_String, aga_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART),
-                                                MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                                ASLFR_TitleText, "Please select a kickstart file...",
-                                             End,
-                                             Child, Label1("Fast Memory :"), Child, but_aga_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_aga_fastmem, MUIA_ObjectID, ID_PRFS_AGA_FASTMEM, MUIA_UserData, ID_PRFS_AGA_FASTMEM, End,
-                                             Child, Label1("Zorro3 Memory :"), Child, but_aga_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_aga_zorromem, MUIA_ObjectID, ID_PRFS_AGA_ZORROMEM, MUIA_UserData, ID_PRFS_AGA_ZORROMEM, End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                          End,
-                                          //Child, HSpace(0),
-                                       End,
-                                       Child, HGroup,  // Custom Tab
-                                          //Child, HSpace(0),
-                                          Child, ColGroup(2),
-                                             Child, but_cus_reset = TextObject, ButtonFrame,
-                                                MUIA_Background, MUII_ButtonBack,
-                                                MUIA_Weight, 0,
-                                                MUIA_Text_PreParse, "\33c",
-                                                MUIA_Text_Contents, "Reset to Default",
-                                                MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             End,
-                                             Child, HSpace(0),
-                                             Child, VSpace(0), Child, VSpace(0),
-                                             Child, KeyLabel2("Kickstart File :",'f'),
-                                             Child, cyc_cus_kickstart = PopaslObject,
-                                                MUIA_Popstring_String, cus_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART),
-                                                MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                                ASLFR_TitleText, "Please select a kickstart file...",
-                                             End,
-                                             Child, Label1("CPU Model :" ), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
-                                             Child, Label1("CPU Speed :" ), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_cus_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
-                                             Child, Label1("JIT Compiler :" ), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_cus_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
-                                             Child, Label1("Chipset :" ), Child, but_cus_chipset = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipset, MUIA_ObjectID, ID_PRFS_CUS_CHIPSET, MUIA_UserData, ID_PRFS_CUS_CHIPSET, End,
-                                             Child, Label1("Chip Memory :"), Child, but_cus_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipmem, MUIA_ObjectID, ID_PRFS_CUS_CHIPMEM, MUIA_UserData, ID_PRFS_CUS_CHIPMEM, End,
-                                             Child, Label1("Fast Memory :"), Child, but_cus_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_fastmem, MUIA_ObjectID, ID_PRFS_CUS_FASTMEM, MUIA_UserData, ID_PRFS_CUS_FASTMEM, End,
-                                             Child, Label1("Zorro3 Memory :"), Child, but_cus_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_cus_zorromem, MUIA_ObjectID, ID_PRFS_CUS_ZORROMEM, MUIA_UserData, ID_PRFS_CUS_ZORROMEM, End,
-                                             Child, VSpace(0), Child, VSpace(0),
-                                          End,
-                                          //Child, HSpace(0),
-                                       End,
-                                       Child, VGroup,  // About Tab
-                                          Child, RawimageObject,
-                                             MUIA_DoubleBuffer, 0,
-                                             MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
-                                             MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
-                                             //MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                             MUIA_Rawimage_Data, small_logo,
-                                          End,
-                                          Child, TextObject, NoFrame,
-                                             //MUIA_Background, MUII_ButtonBack,
-                                             MUIA_Weight, 0,
-                                             MUIA_Text_PreParse, "\33c",
-                                             MUIA_Text_Contents, about_text,
-                                          End,
-                                          Child, VSpace(0),
-                                          Child, TextObject, NoFrame,
-                                             //MUIA_Background, MUII_ButtonBack,
-                                             MUIA_Weight, 0,
-                                             MUIA_Text_PreParse, "\33c",
-                                             MUIA_Text_Contents, "Amiga are trademark of Amiga Corporation",
-                                          End,
-                                       End,
-                                    End,
-                                    Child, HGroup,
-                                       Child, but_use = TextObject, ButtonFrame,
-                                          MUIA_Background, MUII_ButtonBack,
-                                          //MUIA_Weight, 0,
-                                          MUIA_Text_PreParse, "\33c",
-                                          MUIA_Text_Contents, "Use",
-                                          MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                       End,
-                                       Child, but_save = TextObject, ButtonFrame,
-                                          MUIA_Background, MUII_ButtonBack,
-                                          //MUIA_Weight, 0,
-                                          MUIA_Text_PreParse, "\33c",
-                                          MUIA_Text_Contents, "Save",
-                                          MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                       End,
-                                       Child, but_cancel = TextObject, ButtonFrame,
-                                          MUIA_Background, MUII_ButtonBack,
-                                          //MUIA_Weight, 0,
-                                          MUIA_Text_PreParse, "\33c",
-                                          MUIA_Text_Contents, "Cancel",
-                                          MUIA_InputMode, MUIV_InputMode_RelVerify,
-                                       End,
-                                    End,
-                                 End,
-                              End,
-                           End,
-//
-                        End;
+                               Child, VGroup, NoFrame,
+                                  InnerSpacing(0, 0),
+                                  Child, RegisterGroup(Pages),
+                                     MUIA_Register_Frame, TRUE,
+
+                                     // General Tab...
+                                     Child, HGroup,  // General Tab
+                                        Child, ColGroup(2),
+                                           Child, but_gen_reset = TextObject, ButtonFrame,
+                                              MUIA_Background, MUII_ButtonBack,
+                                              MUIA_Weight, 0,
+                                              MUIA_Text_PreParse, "\33c",
+                                              MUIA_Text_Contents, "Reset to Default",
+                                              MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                           End,
+                                           Child, HSpace(0),
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, Label1("Machine Type :" ), Child, but_gen_machine = CycleObject, MUIA_Cycle_Entries, cyc_gen_machine, MUIA_ObjectID, ID_PRFS_GEN_MACHINE, MUIA_UserData, ID_PRFS_GEN_MACHINE, End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Sound", MUIA_FixHeight, 8, End,
+                                           Child, Label1("Output :"), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_gen_sound, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
+                                           Child, Label1("Channels:"), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_gen_channels, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
+                                           Child, Label1("Frequency :"), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "I/O Devices", MUIA_FixHeight, 8, End,
+                                           Child, Label1("Joystick Port 0 :"), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                           Child, Label1("Joystick Port 1 :"), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                           Child, Label1("Floppy Speed :"), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_gen_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Chipset", MUIA_FixHeight, 8, End,
+                                           Child, Label1("Immediate Blits :"), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_gen_blitter, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
+                                           Child, Label1("Sprite Collisions :"), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_gen_sprite, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Misc", MUIA_FixHeight, 8, End,
+                                           Child, Label1("Reset Type :"), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_gen_resetmode, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                        End,
+                                     End,
+                                     Child, HGroup,  // OCS Tab
+                                        Child, ColGroup(2),
+                                           Child, but_ocs_reset = TextObject, ButtonFrame,
+                                              MUIA_Background, MUII_ButtonBack,
+                                              MUIA_Weight, 0,
+                                              MUIA_Text_PreParse, "\33c",
+                                              MUIA_Text_Contents, "Reset to Default",
+                                              MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                           End,
+                                           Child, HSpace(0),
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, KeyLabel2("Kickstart File :",'f'),
+                                           Child, cyc_ocs_kickstart = PopaslObject,
+                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart file...",
+                                           End,
+                                           Child, KeyLabel2("Kickstart Key File :",'f'),
+                                           Child, cyc_ocs_kickstartkey = PopaslObject,
+                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart key file...",
+                                           End,
+                                           Child, Label1("Chip Memory :" ), Child, but_ocs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_chipmem, MUIA_ObjectID, ID_PRFS_OCS_CHIPMEM, MUIA_UserData, ID_PRFS_OCS_CHIPMEM, End,
+                                           Child, Label1("Fast Memory :"), Child, but_ocs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_fastmem, MUIA_ObjectID, ID_PRFS_OCS_FASTMEM, MUIA_UserData, ID_PRFS_OCS_FASTMEM,  End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                        End,
+                                     End,
+                                     Child, HGroup,  // ECS Tab
+                                        Child, ColGroup(2),
+                                           Child, but_ecs_reset = TextObject, ButtonFrame,
+                                              MUIA_Background, MUII_ButtonBack,
+                                              MUIA_Weight, 0,
+                                              MUIA_Text_PreParse, "\33c",
+                                              MUIA_Text_Contents, "Reset to Default",
+                                              MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                           End,
+                                           Child, HSpace(0),
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, KeyLabel2("Kickstart File :",'f'),
+                                           Child, cyc_ecs_kickstart = PopaslObject,
+                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart file...",
+                                           End,
+                                           Child, KeyLabel2("Kickstart Key File :",'f'),
+                                           Child, cyc_ecs_kickstartkey = PopaslObject,
+                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart key file...",
+                                           End,
+                                           Child, Label1("ESC Mode :"), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
+                                           Child, Label1("Chip Memory :" ), Child, but_ecs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_chipmem, MUIA_ObjectID, ID_PRFS_ECS_CHIPMEM, MUIA_UserData, ID_PRFS_ECS_CHIPMEM, End,
+                                           Child, Label1("Fast Memory :"), Child, but_ecs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_fastmem, MUIA_ObjectID, ID_PRFS_ECS_FASTMEM, MUIA_UserData, ID_PRFS_ECS_FASTMEM, End,
+                                           Child, Label1("Zorro3 Memory :"), Child, but_ecs_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_zorromem, MUIA_ObjectID, ID_PRFS_ECS_ZORROMEM, MUIA_UserData, ID_PRFS_ECS_ZORROMEM, End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                        End,
+                                     End,
+                                     Child, HGroup,  // AGA Tab
+                                        Child, ColGroup(2),
+                                           Child, but_aga_reset = TextObject, ButtonFrame,
+                                              MUIA_Background, MUII_ButtonBack,
+                                              MUIA_Weight, 0,
+                                              MUIA_Text_PreParse, "\33c",
+                                              MUIA_Text_Contents, "Reset to Default",
+                                              MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                           End,
+                                           Child, HSpace(0),
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, KeyLabel2("Kickstart File :",'f'),
+                                           Child, cyc_aga_kickstart = PopaslObject,
+                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart file...",
+                                           End,
+                                           Child, KeyLabel2("Kickstart Key File :",'f'),
+                                           Child, cyc_aga_kickstartkey = PopaslObject,
+                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart key file...",
+                                           End,
+                                           Child, Label1("Fast Memory :"), Child, but_aga_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_aga_fastmem, MUIA_ObjectID, ID_PRFS_AGA_FASTMEM, MUIA_UserData, ID_PRFS_AGA_FASTMEM, End,
+                                           Child, Label1("Zorro3 Memory :"), Child, but_aga_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_aga_zorromem, MUIA_ObjectID, ID_PRFS_AGA_ZORROMEM, MUIA_UserData, ID_PRFS_AGA_ZORROMEM, End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                        End,
+                                     End,
+                                     Child, HGroup,  // Custom Tab
+                                        Child, ColGroup(2),
+                                           Child, but_cus_reset = TextObject, ButtonFrame,
+                                              MUIA_Background, MUII_ButtonBack,
+                                              MUIA_Weight, 0,
+                                              MUIA_Text_PreParse, "\33c",
+                                              MUIA_Text_Contents, "Reset to Default",
+                                              MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                           End,
+                                           Child, HSpace(0),
+                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, KeyLabel2("Kickstart File :",'f'),
+                                           Child, cyc_cus_kickstart = PopaslObject,
+                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart file...",
+                                           End,
+                                           Child, KeyLabel2("Kickstart Key File :",'f'),
+                                           Child, cyc_cus_kickstartkey = PopaslObject,
+                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY),
+                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                              ASLFR_TitleText, "Please select a kickstart key file...",
+                                           End,
+                                           Child, Label1("CPU Model :" ), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
+                                           Child, Label1("CPU Speed :" ), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_cus_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
+                                           Child, Label1("JIT Compiler :" ), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_cus_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
+                                           Child, Label1("Chipset :" ), Child, but_cus_chipset = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipset, MUIA_ObjectID, ID_PRFS_CUS_CHIPSET, MUIA_UserData, ID_PRFS_CUS_CHIPSET, End,
+                                           Child, Label1("Chip Memory :"), Child, but_cus_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipmem, MUIA_ObjectID, ID_PRFS_CUS_CHIPMEM, MUIA_UserData, ID_PRFS_CUS_CHIPMEM, End,
+                                           Child, Label1("Fast Memory :"), Child, but_cus_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_fastmem, MUIA_ObjectID, ID_PRFS_CUS_FASTMEM, MUIA_UserData, ID_PRFS_CUS_FASTMEM, End,
+                                           Child, Label1("Zorro3 Memory :"), Child, but_cus_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_cus_zorromem, MUIA_ObjectID, ID_PRFS_CUS_ZORROMEM, MUIA_UserData, ID_PRFS_CUS_ZORROMEM, End,
+                                           Child, VSpace(0), Child, VSpace(0),
+                                        End,
+                                     End,
+                                     Child, VGroup,  // About Tab
+                                        Child, RawimageObject,
+                                           MUIA_DoubleBuffer, 0,
+                                           MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                           MUIA_Frame, MUIV_Frame_None,
+                                           MUIA_Rawimage_Data, small_logo,
+                                        End,
+                                        Child, TextObject, NoFrame,
+                                           MUIA_Weight, 0,
+                                           MUIA_Text_PreParse, "\33c",
+                                           MUIA_Text_Contents, about_text,
+                                        End,
+                                        Child, VSpace(0),
+                                        Child, TextObject, NoFrame,
+                                           MUIA_Weight, 0,
+                                           MUIA_Text_PreParse, "\33c",
+                                           MUIA_Text_Contents, "Amiga are trademark of Amiga Corporation",
+                                        End,
+                                     End,
+                                  End,
+                                  Child, HGroup,
+                                     Child, but_use = TextObject, ButtonFrame,
+                                        MUIA_Background, MUII_ButtonBack,
+                                        MUIA_Text_PreParse, "\33c",
+                                        MUIA_Text_Contents, "Use",
+                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                     End,
+                                     Child, but_save = TextObject, ButtonFrame,
+                                        MUIA_Background, MUII_ButtonBack,
+                                        MUIA_Text_PreParse, "\33c",
+                                        MUIA_Text_Contents, "Save",
+                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                     End,
+                                     Child, but_cancel = TextObject, ButtonFrame,
+                                        MUIA_Background, MUII_ButtonBack,
+                                        MUIA_Text_PreParse, "\33c",
+                                        MUIA_Text_Contents, "Cancel",
+                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                     End,
+                                  End,
+                               End,
+                            End,
+                         End,
+                      End;
 
    if (!app)
    {
@@ -1565,15 +1684,26 @@ static int mui_setup_window(void)
 
    DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, win_settings, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_settings, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_settings, 3, MUIM_Set, MUIA_Window_Open, FALSE);
-/*
-#define MUIA_Toolbar_Active    (TAGBASE_DEVELIN | 0x0020)
-#define MUIV_Toolbar_Off       0
-#define MUIV_Toolbar_On        1
-#define MUIV_Toolbar_Toggle    2
-*/
-   reset_all();
-   DoMethod(app, MUIM_Application_Load, MUIV_Application_Load_ENV);
+   DoMethod(but_gen_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_General);
+   DoMethod(but_ocs_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_OCS);
+   DoMethod(but_ecs_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_ECS);
+   DoMethod(but_aga_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_AGA);
+   DoMethod(but_cus_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_Custom);
+   
+   DoMethod(but_use, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Use);
+   DoMethod(but_save, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Save);
+   DoMethod(but_cancel, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Cancel);
 
+   //DoMethod(ocs_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_ocs_kick);
+   //DoMethod(ecs_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_ecs_kick);
+   //DoMethod(aga_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_aga_kick);
+   //DoMethod(cus_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_cus_kick);
+
+   set(obj_rendermcc, MUIA_Settings_Adjust, MUIV_Reset_All); //reset_all();
+   DoMethod(app, MUIM_Application_Load, MUIV_Application_Load_ENV);
+   setup_generic();
+   uae_restarted = TRUE;
+   uae_restart (-1, NULL);
    set(win_main, MUIA_Window_Open, TRUE);
 
    gfxvidinfo.width  = currprefs.gfx_width_win;
@@ -1654,43 +1784,50 @@ static APTR setup_cgx_buffer (struct vidbuf_description *gfxinfo)
 
 int graphics_init(void)  // TEST
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
 
-   gfxvidinfo.width  = DEFAULT_GFX_WIDTH;
-   gfxvidinfo.height = DEFAULT_GFX_HEIGHT;
-
-   gfxvidinfo.width += 7;
-   gfxvidinfo.width &= ~7;
- 
-   if (!mui_setup_window ())
-      return 0;
-
-   gfxvidinfo.emergmem = 0;
-   gfxvidinfo.linemem  = 0;
-
-   setup_cgx_buffer (&gfxvidinfo);
-
-   gfxvidinfo.flush_clear_screen = flush_clear_screen_gfxlib;
-   gfxvidinfo.flush_screen       = dummy_flush_screen;
-   gfxvidinfo.lockscr            = dummy_lock;
-   gfxvidinfo.unlockscr          = dummy_unlock;
-
-
-   if (!gfxvidinfo.bufmem)
+   if (!uae_restarted)
    {
-      write_log ("MUIGFX: Not enough memory for video bufmem.\n");
-      return 0;
+      gfxvidinfo.width  = DEFAULT_GFX_WIDTH;
+      gfxvidinfo.height = DEFAULT_GFX_HEIGHT;
+
+      gfxvidinfo.width += 7;
+      gfxvidinfo.width &= ~7;
+
+      if (!mui_setup_window ())
+            return 0;
+
+      gfxvidinfo.emergmem = 0;
+      gfxvidinfo.linemem  = 0;
+
+      setup_cgx_buffer (&gfxvidinfo);
+
+      gfxvidinfo.flush_clear_screen = flush_clear_screen_gfxlib;
+      gfxvidinfo.flush_screen       = dummy_flush_screen;
+      gfxvidinfo.lockscr            = dummy_lock;
+      gfxvidinfo.unlockscr          = dummy_unlock;
+
+
+      if (!gfxvidinfo.bufmem)
+      {
+            write_log ("MUIGFX: Not enough memory for video bufmem.\n");
+            return 0;
+      }
+
+      gfxvidinfo.maxblocklines = MAXBLOCKLINES_MAX;
+
+      if (!init_colors ())
+      {
+            write_log ("MUIGFX: Failed to init colors.\n");
+            return 0;
+      }
    }
+   else
+      uae_restarted = FALSE;
 
-   gfxvidinfo.maxblocklines = MAXBLOCKLINES_MAX;
-
-   if (!init_colors ())
-   {
-      write_log ("MUIGFX: Failed to init colors.\n");
-      return 0;
-   }
-
+   setup_generic();
    reset_drawing ();
+   debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
    //set_default_hotkeys (ami_hotkeys);
    //pointer_state = DONT_KNOW;
 
@@ -1702,54 +1839,59 @@ int graphics_init(void)  // TEST
 
 void graphics_leave (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) - Restarted = %d\n", __func__, __LINE__, uae_restarted);
    set(obj_rendermcc, MUIA_Cleanup_Gfx, MUIV_CleanupGraphics);
 
-   if (app)
+   if (!uae_restarted)
    {
-      MUI_DisposeObject(app);
-      app = NULL;
-   }
-   if (render_mcc) Cleanup_Render(render_mcc);
+      if (app)
+      {
+            MUI_DisposeObject(app);
+            app = NULL;
+      }
+      if (render_mcc) Cleanup_Render(render_mcc);
 
-   for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
-      if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
-   
-   if (AslBase) 
-   {
-      CloseLibrary( (void*) AslBase);
-      AslBase = NULL;
-   }
+      for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
+            if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
 
-   if (GfxBase)
-   {
-      CloseLibrary ((void*)GfxBase);
-      GfxBase = NULL;
-   }
+      if (AslBase)
+      {
+            CloseLibrary( (void*) AslBase);
+            AslBase = NULL;
+      }
 
-   if (LayersBase)
-   {
-      CloseLibrary (LayersBase);
-      LayersBase = NULL;
-   }
- 
-   if (IntuitionBase)
-   {
-      CloseLibrary ((void*)IntuitionBase);
-      IntuitionBase = NULL;
-   }
+      if (GfxBase)
+      {
+            CloseLibrary ((void*)GfxBase);
+            GfxBase = NULL;
+      }
 
-   if (MUIMasterBase)
-   {
-      CloseLibrary(MUIMasterBase);
-      MUIMasterBase = NULL;
-   }
+      if (LayersBase)
+      {
+            CloseLibrary (LayersBase);
+            LayersBase = NULL;
+      }
 
-   if (CyberGfxBase)
-   {
-      CloseLibrary((void*)CyberGfxBase);
-      CyberGfxBase = NULL;
+      if (IntuitionBase)
+      {
+            CloseLibrary ((void*)IntuitionBase);
+            IntuitionBase = NULL;
+      }
+
+      if (MUIMasterBase)
+      {
+            CloseLibrary(MUIMasterBase);
+            MUIMasterBase = NULL;
+      }
+
+      if (CyberGfxBase)
+      {
+            CloseLibrary((void*)CyberGfxBase);
+            CyberGfxBase = NULL;
+      }
    }
+   //else
+   //   uae_restarted = FALSE;
 }
 
 /****************************************************************************/
@@ -2139,8 +2281,9 @@ void gfx_default_options (struct uae_prefs *p)
    p->amiga_use_grey        = 0;
    p->amiga_use_overlay     = 0;
 */
+   //strcpy(currprefs.romfile, "Kickstarts/Kick3.rom");
    debug_print("%s (%d)\n", __func__, __LINE__);
-
+   //setup_generic();
 }
 
 void gfx_save_options (FILE *f, const struct uae_prefs *p)
