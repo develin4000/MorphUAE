@@ -144,12 +144,4 @@ static char *cyc_cus_chipmem[]  = { "0.5 Mb", "1 Mb", "2 Mb", NULL };
 static char *cyc_cus_fastmem[]  = { "0 Mb", "1 Mb", "2 Mb", "4 Mb", "8 Mb", NULL };
 static char *cyc_cus_zorromem[]  = { "0 Mb", "1 Mb", "2 Mb", "4 Mb", "8 Mb", "16 Mb", "32 Mb", "64 Mb", "128 Mb", "256 Mb", NULL };
 
-static const char about_text[] = "\33c\
-\n\33bMorphUAE\n\n\33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft\n\n\
-This software is based on work previous done by :\n\n\
-Richard Drummond, E-UAE\n\
-Bernd Schmidt, original UAE\n\
-Toni Wilen, WinUAE\n\
-";
-
 #endif /* MORPHOSGUI_H_ */

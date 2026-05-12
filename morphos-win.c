@@ -89,6 +89,11 @@
 #include <mui/Rawimage_mcc.h>
 #include <LEDmcc.h>
 
+#define VERS     "1.0"
+#define DATE     __AMIGADATE__
+#define VSTRING  VERS" ("DATE") "
+
+#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n\n \33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n\ Bernd Schmidt, original UAE \n\ Toni Wilen, WinUAE"
 
 /****************************************************************************/
 
@@ -1141,7 +1146,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          if (data->render_state == MUIV_FlushClearScreen)
          {
             if (_rp(obj))
-               WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), RECTFMT_ARGB);
+               WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
                //FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), 0x00ffff00); //render_bottom-render_top, 0x00000000); //0);
          }
          else if (data->render_state == MUIV_FlushLineCGX)
@@ -1685,7 +1690,7 @@ static int mui_setup_window(void)
                                         Child, TextObject, NoFrame,
                                            MUIA_Weight, 0,
                                            MUIA_Text_PreParse, "\33c",
-                                           MUIA_Text_Contents, about_text,
+                                           MUIA_Text_Contents, ABOUTSTR, //about_text,
                                         End,
                                         Child, VSpace(0),
                                         Child, TextObject, NoFrame,
