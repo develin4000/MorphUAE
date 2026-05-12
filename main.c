@@ -725,7 +725,8 @@ static void do_reset_machine (int hardreset)
 static void do_run_machine (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-   m68k_go (1);
+   if (uae_get_kick_status())
+      m68k_go (1);
 }
 
 /*
@@ -790,29 +791,7 @@ void real_main (int argc, char **argv)
 
       do_preinit_machine (argc, argv);
 
-/*
-51030.046| real_main (759)
-51030.046| set_state (462)
-51030.046| gui_notify_state (209)
-51030.046| graphics_notify_state (1477)
-51030.046| do_preinit_machine (548)
-51030.046| graphics_setup (1272)
-51030.046| Init_Render (1037)
-51030.069| gfx_default_options (1843)
-51030.071| init_mouse (1632)
-51030.071| input_get_default_mouse (1727)
-51030.071| input_get_default_mouse (1727)
-51030.071| input_get_default_mouse (1727)
-51030.071| input_get_default_mouse (1727)
-51030.071| input_get_default_mouse (1727)
-51030.071| fix_options (112)
-51030.071| parse_cmdline_and_init_file (380)
-51030.076| fix_options (112)
-51030.076| parse_cmdline (326)
-51030.076| fix_options (112)
-51030.078| init_mouse (1632)
-51030.079| gui_open (164)
-*/
+
       /* Should we open the GUI? TODO: This mess needs to go away */
 /*
       want_gui = currprefs.start_gui;

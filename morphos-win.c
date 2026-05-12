@@ -30,9 +30,6 @@
 #include "sysconfig.h"
 #include "sysdeps.h"
 
-//#define USEDEBUG
-
-
 /****************************************************************************/
 
 #include <exec/execbase.h>
@@ -96,7 +93,7 @@
 /****************************************************************************/
 
 extern xcolnr xcolors[4096];
-extern struct uae_prefs currprefs;
+//extern struct uae_prefs currprefs;
 /****************************************************************************/
 /*
  * prototypes & global vars
@@ -283,8 +280,9 @@ struct RenderData
 #define MUIV_Toolbar_On        1
 #define MUIV_Toolbar_Toggle    2
 
-#define MUIA_Control_UAE       (TAGBASE_DEVELIN | 0x0025)
-#define MUIV_Control_UAE_Pause 0
+#define MUIA_Control_UAE        (TAGBASE_DEVELIN | 0x0025)
+#define MUIV_Control_UAE_Pause  0
+#define MUIV_Control_UAE_Resume 1
 
 
 #define MUIA_Settings_Adjust   (TAGBASE_DEVELIN | 0x0030)
@@ -624,7 +622,7 @@ void insertimagefile(UBYTE unit)
 static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
 {
    struct RenderData *data;
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    obj = DoSuperNew(cl, obj,
                     InnerSpacing(0, 0),
@@ -675,7 +673,7 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
 static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    data->Active = FALSE;
 
@@ -734,7 +732,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                {
                   if (!data->showpointer)
                   {
-                     debug_print("%s (%d)\n", __func__, __LINE__);
+                     //debug_print("%s (%d)\n", __func__, __LINE__);
                      SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_NORMAL, WM_ObtainEvents, TRUE, TAG_DONE);
                      data->showpointer = TRUE;
                   }
@@ -743,7 +741,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                {
                   if (data->showpointer)
                   {
-                     debug_print("%s (%d)\n", __func__, __LINE__);
+                     //debug_print("%s (%d)\n", __func__, __LINE__);
                      SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_DOT, WM_ObtainEvents, TRUE, TAG_DONE);
                      data->showpointer = FALSE;
                   }
@@ -758,7 +756,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                break;
 
             case MUIA_Reset_Type :
-               debug_print("%s (%d)\n", __func__, __LINE__);
+               //debug_print("%s (%d)\n", __func__, __LINE__);
                if (tag->ti_Data == MUIV_Reset_Custom)
                {
                   get(but_gen_sprite, MUIA_Cycle_Active, &val);
@@ -796,7 +794,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else
                {
                   data->modeid = BestCModeIDTags(CYBRBIDTG_NominalWidth,  data->WinWidth, CYBRBIDTG_NominalHeight, data->WinHeight, CYBRBIDTG_Depth, data->Depth, TAG_DONE);
-                  debug_print("%s (%d) - ModeID : %d\n", __func__, __LINE__, data->modeid);
+                  //debug_print("%s (%d) - ModeID : %d\n", __func__, __LINE__, data->modeid);
                   if (data->modeid != INVALID_ID)
                   {
                      struct Screen *tmpscreen;
@@ -901,7 +899,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   }
 
                   data->Buffer = buffer;
-//debug_print("%s (%d) - BPR=%d\n", __func__, __LINE__, tmp_gfxinfo->rowbytes);
+
                   if (!data->Buffer)
                   {
                      write_log ("Unable to allocate off-screen buffer.\n");
@@ -944,39 +942,39 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   switch (pixfmt)
                   {
                      case PIXFMT_RGB15PC:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         byte_swap = TRUE;
                      case PIXFMT_RGB15:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 5;  greenbits  = 5; bluebits  = 5;
                         redshift = 10; greenshift = 5; blueshift = 0;
                         break;
                      case PIXFMT_RGB16PC:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         byte_swap = TRUE;
                      case PIXFMT_RGB16:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 5;  greenbits  = 6;  bluebits  = 5;
                         redshift = 11; greenshift = 5;  blueshift = 0;
                         break;
                      case PIXFMT_RGBA32:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         redshift = 24; greenshift = 16; blueshift = 8;
                         break;
                      case PIXFMT_BGRA32: // //RGBA
-                        debug_print("%s (%d) - %d bpp\n", __func__, __LINE__, data->Depth);
+                        //debug_print("%s (%d) - %d bpp\n", __func__, __LINE__, data->Depth);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         //redshift = 8;  greenshift = 16; blueshift = 24;
                         redshift = 16;  greenshift = 8; blueshift = 0;
                         break;
                      case PIXFMT_ARGB32:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         redshift = 16; greenshift = 8;  blueshift = 0;
                         break;
                      default:
-                        debug_print("%s (%d)\n", __func__, __LINE__);
+                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 0;  greenbits  = 0;  bluebits  = 0;
                         redshift = 0;  greenshift = 0;  blueshift = 0;
                         found = FALSE;
@@ -1040,9 +1038,18 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
             case MUIA_Control_UAE :
                if (tag->ti_Data == MUIV_Control_UAE_Pause)
                {
-                  //uae_pause();
+                  if (data->Active)
+                     uae_pause();
+                  data->Active = FALSE;
                   MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work as intended\nIf you have a ROM from Cloantos AmigaForever you might need to add the rom.key!\n\nPlease adjust the settings accordingly!");
-               }  break;
+               }
+               else // MUIV_Control_UAE_Resume
+               {
+                  if (data->Active == FALSE)
+                     uae_resume();
+                  data->Active = TRUE;
+               }
+               break;
          }
       }
    }
@@ -1056,7 +1063,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (!DoSuperMethodA(cl, obj, msg))
       return(FALSE);
 
@@ -1096,25 +1103,18 @@ static ULONG Render_Cleanup(struct IClass *cl, Object *obj, Msg msg)
 static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMinMax *msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   //debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width_win, currprefs.gfx_height_win);
-   //debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width, currprefs.gfx_height);
    
    DoSuperMethodA(cl, obj, (Msg)msg);
-   
-   //if ((data.screen = _screen(obj)) != NULL)
-      
-   //if (_screen(obj) != NULL)
+
    if ((data->screen = _screen(obj)) != NULL)
    {
-      debug_print("%s (%d) : FS = %d - %d x %d : %d x %d\n", __func__, __LINE__, data->FullScreen, data->ScrWidth, data->ScrHeight, currprefs.gfx_width_win, currprefs.gfx_height_win);
-      msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
-      msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
-      msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
-      msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
-      msg->MinMaxInfo->MaxWidth  += (data->FullScreen) ? data->ScrWidth : DEFAULT_GFX_WIDTH; //currprefs.gfx_width_win;
-      msg->MinMaxInfo->MaxHeight += (data->FullScreen) ? data->ScrHeight : DEFAULT_GFX_HEIGHT; //currprefs.gfx_height_win;
-      //msg->MinMaxInfo->MaxWidth  += data->ScrWidth = data->screen->Width;
-      //msg->MinMaxInfo->MaxHeight += data->ScrHeight = data->screen->Height;
+      //debug_print("%s (%d) : FS = %d - %d x %d : %d x %d\n", __func__, __LINE__, data->FullScreen, data->ScrWidth, data->ScrHeight, currprefs.gfx_width_win, currprefs.gfx_height_win);
+      msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH;
+      msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH;
+      msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT;
+      msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT;
+      msg->MinMaxInfo->MaxWidth  += (data->FullScreen) ? data->ScrWidth : DEFAULT_GFX_WIDTH;
+      msg->MinMaxInfo->MaxHeight += (data->FullScreen) ? data->ScrHeight : DEFAULT_GFX_HEIGHT;
    }
 
    debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width_win, currprefs.gfx_height_win);
@@ -1144,31 +1144,8 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
                WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), RECTFMT_ARGB);
                //FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj), 0x00ffff00); //render_bottom-render_top, 0x00000000); //0);
          }
-/*
-count = WritePixelArray(srcRect,SrcX ,SrcY ,SrcMod,RastPort,DestX,
-    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
-                DestY,SizeX,SizeY,SrcFormat)
-                D4:16 D5:16 D6:16    D7
-
-INPUTS
-    srcRect - pointer to an array of pixels from which to fetch the
-              pixel data. The pixel format is specified in SrcFormat
-    (SrcX,SrcY) - starting point in the source rectangle
-    SrcMod - The number of bytes per row in the source rectangle.
-    RastPort -  pointer to a RastPort structure
-    (DestX,DestY) - starting point in the RastPort
-    (SizeX,SizeY) - size of the rectangle that should be transfered
-    SrcFormat - pixel format in the source rectangle
-         
-count = ScalePixelArray(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
-    D0             A0   D0:16 D1:16 D2:16     A1    D3:16
-                DestY,DestW,DestH,SrcFormat)
-                D4:16 D5:16 D6:16    D7
-*/
-//ScalePixelArray(data->Buffer, data->WinWidth, data->WinHeigth, data->WinHeigth*3, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, data->WinWidth, data->WinHeigth, RECTFMT_RAW);
          else if (data->render_state == MUIV_FlushLineCGX)
          {
-            //debug_print("%s (%d) - LINE\n", __func__, __LINE__);
             //if (!data->FullScreen)
                WritePixelArray(data->Buffer, 0, tmp_line_no, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, tmp_gfxinfo->width, 1, RECTFMT_RAW);
 //            else
@@ -1199,7 +1176,7 @@ count = ScalePixelArray(srcRect,SrcW,SrcH ,SrcMod,RastPort,DestX,
 static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    data->Active = FALSE;
 
    return(DoSuperMethodA(cl, obj, (Msg)msg));
@@ -1212,7 +1189,7 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
 static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    data->screen = _screen(obj);
    data->window = (struct Window *)_window(obj);
@@ -1438,7 +1415,7 @@ static void flush_clear_screen_gfxlib (struct vidbuf_description *gfxinfo)
 static int init_colors (void)
 {
    int success = TRUE;  // This really doesn't do anything... TODO...
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    set(obj_rendermcc, MUIA_Initializing_Gfx, MUIV_InitColours);
    return success;
 }
@@ -1449,8 +1426,6 @@ static int init_colors (void)
 
 static int mui_setup_window(void)
 {
-   char *pubscreen = strlen (currprefs.amiga_publicscreen) ? currprefs.amiga_publicscreen : NULL;
-
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    app = ApplicationObject,MUIA_Application_Title          , "MorphUAE",
@@ -1473,7 +1448,7 @@ static int mui_setup_window(void)
                               MUIA_Window_AppWindow,      TRUE,
                               MUIA_Window_DisableKeys,    MUIKEYF_WINDOW_CLOSE,
                               //MUIA_Application_DiskObject,  dobj = GetDiskObject("uae"), 
-//SimpleButton
+
                               WindowContents, VGroup,
 
                                  Child, obj_rendermcc = NewObject(render_mcc->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_Background, MUII_WindowBack, TAG_DONE),
@@ -1514,7 +1489,6 @@ static int mui_setup_window(void)
                                        MUIA_Rawimage_Data, gfx_camera,
                                     End,
 
-                                    //Child, obj_settingsmcc = NewObject(Settings_mcc->mcc_Class, NULL, ButtonFrame, MUIA_Text_Contents, " * ",  MUIA_Weight, 1, TAG_DONE),
                                     Child, HVSpace,
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
@@ -1549,7 +1523,6 @@ static int mui_setup_window(void)
                                   Child, RegisterGroup(Pages),
                                      MUIA_Register_Frame, TRUE,
 
-                                     // General Tab...
                                      Child, HGroup,  // General Tab
                                         Child, ColGroup(2),
                                            Child, but_gen_reset = TextObject, ButtonFrame,
@@ -1779,7 +1752,7 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[2], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
-   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Custom);//MUIV_Reset_Soft);
+   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Custom);
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
 
    DoMethod(btn_fullscreen, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
@@ -1800,11 +1773,6 @@ static int mui_setup_window(void)
    DoMethod(but_save, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Save);
    DoMethod(but_cancel, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Cancel);
 
-   //DoMethod(ocs_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_ocs_kick);
-   //DoMethod(ecs_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_ecs_kick);
-   //DoMethod(aga_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_aga_kick);
-   //DoMethod(cus_kickstart_str, MUIM_Notify, MUIA_String_Contents, MUIV_EveryTime, app, 3, MUIM_WriteString, MUIV_TriggerValue, str_cus_kick);
-
    set(obj_rendermcc, MUIA_Settings_Adjust, MUIV_Reset_All); //reset_all();
    DoMethod(app, MUIM_Application_Load, MUIV_Application_Load_ENV);
    setup_generic();
@@ -1822,7 +1790,6 @@ static int mui_setup_window(void)
    return 1;
 }
 
-// END - MUI-Test
 
 /****************************************************************************/
 
@@ -1866,8 +1833,6 @@ int graphics_setup (void)
          return 0;
    }
 
-   //if (!(Settings_mcc = Init_Settings())) return 0;
-
    if (!CyberGfxBase)
       CyberGfxBase = OpenLibrary ("cybergraphics.library", 40);
 
@@ -1885,17 +1850,17 @@ int graphics_setup (void)
 static APTR setup_cgx_buffer (struct vidbuf_description *gfxinfo)
 {
    tmp_gfxinfo = gfxinfo;
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    set(obj_rendermcc, MUIA_Initializing_Gfx, MUIV_InitGraphics);
    return tmp_gfxinfo->bufmem;
 }
 
 int graphics_init(void)  // TEST
 {
-   debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
+   //debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
 
    //valid_kick = uae_get_kick_status();
-   debug_print("%s (%d) VALID KickStart = %d\n", __func__, __LINE__, valid_kick);
+   //debug_print("%s (%d) VALID KickStart = %d\n", __func__, __LINE__, valid_kick);
 
    if (!uae_restarted)
    {
@@ -1940,8 +1905,12 @@ int graphics_init(void)  // TEST
    else
    {
       uae_restarted = FALSE;
-//      if (!valid_kick)
-//            set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
+      valid_kick = uae_get_kick_status();
+      debug_print("%s (%d) VALID KickStart = %d\n", __func__, __LINE__, valid_kick);
+      if (!valid_kick)
+         set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
+      else
+         set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Resume);
    }
 
    setup_generic();
@@ -2007,6 +1976,12 @@ void graphics_leave (void)
             CyberGfxBase = NULL;
       }
    }
+   else
+   {
+//      valid_kick = uae_get_kick_status();
+//       if (!valid_kick)
+//          set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
+   }
 }
 
 /****************************************************************************/
@@ -2030,7 +2005,7 @@ int do_inhibit_frame (int onoff)
 
 void graphics_notify_state (int state)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 /***************************************************************************/
@@ -2062,7 +2037,7 @@ int mousehack_allowed (void)
 
 void LED (int on)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 /***************************************************************************/
@@ -2073,34 +2048,34 @@ void LED (int on)
 
 void DX_Invalidate (int first, int last)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 int DX_BitsPerCannon (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 8;
 }
 
 void DX_SetPalette (int start, int count)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 int DX_FillResolutions (uae_u16 *ppixel_format)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 0;
 }
 
 void gfx_set_picasso_modeinfo (int w, int h, int depth)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 void gfx_set_picasso_state (int on)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 #endif
 
@@ -2114,7 +2089,7 @@ void gfx_set_picasso_state (int on)
 
 void main_window_led (int led, int on)                /* is used in amigui.c */
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 /*
 #if 0
    if (led >= 0 && led <= 4)
@@ -2135,13 +2110,13 @@ int check_prefs_changed_gfx (void)
 
 void toggle_mousegrab (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    write_log ("Mouse grab not supported\n");
 }
 
 int is_fullscreen (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    //return fullscreen;
 }
 
@@ -2153,12 +2128,12 @@ int is_vsync (void)
 
 void toggle_fullscreen (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 void screenshot (int type)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    write_log ("Screenshot not implemented yet\n");
 }
 
@@ -2174,49 +2149,49 @@ void screenshot (int type)
 
 static int init_mouse (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static void close_mouse (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return;
 }
 
 static int acquire_mouse (unsigned int num, int flags)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static void unacquire_mouse (unsigned int num)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return;
 }
 
 static unsigned int get_mouse_num (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static const char *get_mouse_name (unsigned int mouse)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return "Default mouse";
 }
 
 static unsigned int get_mouse_widget_num (unsigned int mouse)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return MAX_AXES + MAX_BUTTONS;
 }
 
 static int get_mouse_widget_first (unsigned int mouse, int type)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    switch (type)
    {
       case IDEV_WIDGET_BUTTON:
@@ -2229,7 +2204,7 @@ static int get_mouse_widget_first (unsigned int mouse, int type)
 
 static int get_mouse_widget_type (unsigned int mouse, unsigned int num, char *name, uae_u32 *code)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (num >= MAX_AXES && num < MAX_AXES + MAX_BUTTONS)
    {
       if (name)
@@ -2269,7 +2244,7 @@ struct inputdevice_functions inputdevicefunc_mouse = {
  */
 void input_get_default_mouse (struct uae_input_device *uid)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    /* Supports only one mouse for now */
    uid[0].eventid[ID_AXIS_OFFSET + 0][0]   = INPUTEVENT_MOUSE1_HORIZ;
    uid[0].eventid[ID_AXIS_OFFSET + 1][0]   = INPUTEVENT_MOUSE1_VERT;
@@ -2286,31 +2261,31 @@ void input_get_default_mouse (struct uae_input_device *uid)
  */
 static unsigned int get_kb_num (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static const char *get_kb_name (unsigned int kb)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return "Default keyboard";
 }
 
 static unsigned int get_kb_widget_num (unsigned int kb)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 128;
 }
 
 static int get_kb_widget_first (unsigned int kb, int type)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 0;
 }
 
 static int get_kb_widget_type (unsigned int kb, unsigned int num, char *name, uae_u32 *code)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    // fix me
    *code = num;
    return IDEV_WIDGET_KEY;
@@ -2318,7 +2293,7 @@ static int get_kb_widget_type (unsigned int kb, unsigned int num, char *name, ua
 
 static int keyhack (int scancode, int pressed, int num)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return scancode;
 }
 
@@ -2360,13 +2335,13 @@ struct inputdevice_functions inputdevicefunc_keyboard =
 
 int getcapslockstate (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return 0;
 }
 
 void setcapslockstate (int state)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 /****************************************************************************
@@ -2378,17 +2353,17 @@ void setcapslockstate (int state)
 
 void gfx_default_options (struct uae_prefs *p)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 void gfx_save_options (FILE *f, const struct uae_prefs *p)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 int gfx_parse_option (struct uae_prefs *p, const char *option, const char *value)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 /****************************************************************************/

@@ -24,7 +24,7 @@
 void GenerateGfxData(unsigned long *gfxdata, int tsize, unsigned long tpen, BOOL useflare)
 {
    int tmpw, tmph;
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    //Generate the frame
    for (tmpw = 0; tmpw < tsize-1; tmpw++)
@@ -62,7 +62,7 @@ static ULONG LED_New(struct IClass *cl, Object *obj, struct opSet *msg)
    struct LEDData *data;
    int LED_Size;
    BOOL LED_Flare;
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    obj = DoSuperNew(cl, obj,
          InnerSpacing(0, 0),
@@ -104,7 +104,7 @@ static ULONG LED_New(struct IClass *cl, Object *obj, struct opSet *msg)
 static ULONG LED_Dispose(struct IClass *cl, Object *obj, Msg msg)
 {
    struct LEDData *data = (struct LEDData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    return(DoSuperMethodA(cl, obj, msg));
 }
@@ -154,7 +154,7 @@ static ULONG LED_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 static ULONG LED_Setup(struct IClass *cl, Object *obj, Msg msg)
 {
    struct LEDData *data = (struct LEDData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    if (!DoSuperMethodA(cl, obj, msg))
       return(FALSE);
@@ -172,7 +172,7 @@ static ULONG LED_Setup(struct IClass *cl, Object *obj, Msg msg)
 static ULONG LED_Cleanup(struct IClass *cl, Object *obj, Msg msg)
 {
    //struct LEDData *data = (struct LEDData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    //MUI_RejectIDCMP(obj, IDCMP_MOUSEBUTTONS);
    return(DoSuperMethodA(cl, obj, (Msg)msg));
@@ -251,7 +251,7 @@ static ULONG LED_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
 static ULONG LED_Show(struct IClass *cl, Object *obj, Msg msg)
 {
    struct LEDData *data = (struct LEDData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 
    //data->screen = _screen(obj);
    return(DoSuperMethodA(cl, obj, (Msg)msg));
@@ -286,7 +286,7 @@ DISPATCHER_END
  *----------------------------------------------------------------------------*/
 void Cleanup_LED(struct MUI_CustomClass *mcc)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (mcc) MUI_DeleteCustomClass(mcc);
 }
 /*=*/
@@ -297,7 +297,7 @@ void Cleanup_LED(struct MUI_CustomClass *mcc)
 struct MUI_CustomClass *Init_LED(void)
 {
    struct MUI_CustomClass *mcc = NULL;
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    mcc = MUI_CreateCustomClass(NULL, MUIC_Area, NULL, sizeof(struct LEDData), DISPATCHER_REF(LED));
    return(mcc);
 }

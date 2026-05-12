@@ -71,7 +71,8 @@ INCDIR		= ./include
 CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wall -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes -Wimplicit-function-declaration
 CPPFLG_MOS	= -DUSEDEBUG
 LFLG_MOS	= -lz -lm -ldebug
-
+#CPPFLG_MOS	= 
+#LFLG_MOS	= -lz -lm
 
 .PHONY:	clean usage
 

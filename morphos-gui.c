@@ -37,10 +37,6 @@
 
 /* For remembering last directory used in file requesters */
 
-//
-#ifndef USEDEBUG
- #define USEDEBUG
-#endif
 
 #ifdef USEDEBUG
    #include <clib/debug_protos.h>
@@ -50,13 +46,14 @@
 #endif
 //
 extern void update_led_status(int led, int on);
+//extern void resume_run(void);
 
 static char *last_floppy_dir;
 static char *last_savestate_dir;
 
 static void free_last_floppy_dir (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (last_floppy_dir)
    {
       free (last_floppy_dir);
@@ -66,7 +63,7 @@ static void free_last_floppy_dir (void)
 
 static void free_last_savestate_dir (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (last_savestate_dir)
    {
       free (last_savestate_dir);
@@ -76,7 +73,7 @@ static void free_last_savestate_dir (void)
 
 static const char *get_last_floppy_dir (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (!last_floppy_dir)
    {
       static int done = 0;
@@ -95,7 +92,7 @@ static const char *get_last_floppy_dir (void)
 
 static const char *get_last_savestate_dir (void)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (!last_savestate_dir)
    {
       static int done = 0;
@@ -114,7 +111,7 @@ static const char *get_last_savestate_dir (void)
 
 static void set_last_floppy_dir (const char *path)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (last_floppy_dir)
    {
       free (last_floppy_dir);
@@ -135,7 +132,7 @@ static void set_last_floppy_dir (const char *path)
 
 static void set_last_savestate_dir (const char *path)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    if (last_savestate_dir)
    {
       free (last_savestate_dir);
@@ -156,7 +153,7 @@ static void set_last_savestate_dir (const char *path)
 
 static void do_file_dialog (unsigned int type)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    return;
 }
 
@@ -202,7 +199,7 @@ void gui_led (int led, int on)
 
 void gui_filename (int num, const char *name)
 {
-   debug_print("%s (%d) - %d : %s\n", __func__, __LINE__, num, name);
+   //debug_print("%s (%d) - %d : %s\n", __func__, __LINE__, num, name);
 }
 
 /****************************************************************************/
