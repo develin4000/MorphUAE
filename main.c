@@ -59,10 +59,24 @@ static char optionsfile[256];
 
 int cloanto_rom = 0;
 
+int rom_ok = 1;
+
 int log_scsi;
 
 struct gui_info gui_data;
 
+
+
+int uae_get_kick_status(void)
+{
+   return rom_ok;
+}
+
+void uae_set_kick_status(int value)
+{
+    debug_print("%s (%d) Memory Call SerKickStatus = %d\n", __func__, __LINE__, value);
+    rom_ok = value;
+}
 
 /*
  * Random prefs-related junk that needs to go elsewhere.
@@ -602,6 +616,7 @@ static int do_init_machine (void)
    expansion_init ();
 
    memory_init ();
+   uae_set_kick_status(1);
    memory_reset ();
 
    filesys_install ();
@@ -649,7 +664,7 @@ static void reset_all_systems (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
    init_eventtab ();
-
+   uae_set_kick_status(1);
    memory_reset ();
 #ifdef BSDSOCKET
    bsdlib_reset ();
@@ -748,95 +763,6 @@ static void do_exit_machine (void)
 
    memory_cleanup ();
    cfgfile_addcfgparam (0);
-}
-
-void do_rerun_machine(void)
-{
-   debug_print("%s (%d)\n", __func__, __LINE__);
-
-   // Stop all services...
-   inputdevice_close ();
-
-   compemu_cleanup();
-
-#ifdef SCSIEMU
-   scsidev_exit ();
-#endif
-   DISK_free ();
-
-   audio_close ();
-   dump_counts ();
-#ifdef SERIAL_PORT
-   serial_exit ();
-#endif
-#ifdef CD32
-   akiko_free ();
-#endif
-   gui_exit ();
-
-   expansion_cleanup ();
-
-   filesys_cleanup ();
-   hardfile_cleanup ();
-
-   savestate_free ();
-
-   memory_cleanup ();
-   cfgfile_addcfgparam (0);
-
-   // Now restart all services...
-   if (!(( currprefs.cpu_level >= 2 ) && ( currprefs.address_space_24 == 0 ) && ( currprefs.cachesize )))
-       canbang = 0;
-
-   savestate_init ();
-   #ifdef SCSIEMU
-   scsidev_install ();
-   #endif
-
-   /* Install resident module to get 8MB chipmem, if requested */
-   rtarea_setup ();
-   keybuf_init (); /* Must come after init_joystick */
-
-   expansion_init ();
-
-   memory_init ();
-   memory_reset ();
-
-   filesys_install ();
-
-   bsdlib_install ();
-   emulib_install ();
-   uaeexe_install ();
-   native2amiga_install ();
-
-   if (custom_init ())
-   { /* Must come after memory_init */
-       #ifdef SERIAL_PORT
-       serial_init ();
-       #endif
-       DISK_init ();
-
-       reset_frame_rate_hack ();
-       init_m68k(); /* must come after reset_frame_rate_hack (); */
-
-       gui_update ();
-
-       if (graphics_init ())
-       {
-           setup_brkhandler ();
-
-           if (currprefs.start_debugger && debuggable ())
-               activate_debugger ();
-
-           if (sound_available && currprefs.produce_sound > 1 && ! audio_init ())
-           {
-               write_log ("Sound driver unavailable: Sound output disabled\n");
-               currprefs.produce_sound = 0;
-           }
-
-           //return 1;
-       }
-   }
 }
 
 /*

@@ -30,8 +30,7 @@
 #include "sysconfig.h"
 #include "sysdeps.h"
 
-//#define DEBUG
-#define USEDEBUG
+//#define USEDEBUG
 
 
 /****************************************************************************/
@@ -115,6 +114,7 @@ int tmp_line_no;
 int tmp_first_line;
 int tmp_last_line;
 BOOL uae_restarted = FALSE;
+int valid_kick = 0;
 
 static int init_colors(void);
 static int dummy_lock (struct vidbuf_description *gfxinfo);
@@ -271,6 +271,7 @@ struct RenderData
 #define MUIA_Reset_Type        (TAGBASE_DEVELIN | 0x0019)
 #define MUIV_Reset_Soft        0
 #define MUIV_Reset_Hard        1
+#define MUIV_Reset_Custom      2
 
 #define MUIA_Display_Type      (TAGBASE_DEVELIN | 0x001c)
 #define MUIV_Display_Window    0
@@ -282,6 +283,10 @@ struct RenderData
 #define MUIV_Toolbar_On        1
 #define MUIV_Toolbar_Toggle    2
 
+#define MUIA_Control_UAE       (TAGBASE_DEVELIN | 0x0025)
+#define MUIV_Control_UAE_Pause 0
+
+
 #define MUIA_Settings_Adjust   (TAGBASE_DEVELIN | 0x0030)
 #define MUIV_Reset_All         0
 #define MUIV_Reset_General     1
@@ -290,8 +295,9 @@ struct RenderData
 #define MUIV_Reset_AGA         4
 #define MUIV_Reset_Custom      5
 #define MUIV_Settings_Use      6
-#define MUIV_Settings_Save     7
-#define MUIV_Settings_Cancel   8
+#define MUIV_Settings_SaveUse  7
+#define MUIV_Settings_Save     8
+#define MUIV_Settings_Cancel   9
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
@@ -368,8 +374,8 @@ void reset_tab(unsigned int tab)
          set(but_gen_joy0, MUIA_Cycle_Active, 0);      // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);      // Joy1
          set(but_gen_floppy, MUIA_Cycle_Active, 0);    // Normal
-         set(but_gen_blitter, MUIA_Cycle_Active, 0);   // On - Check this!
-         set(but_gen_sprite, MUIA_Cycle_Active, 1);    // None - Check this!
+         set(but_gen_blitter, MUIA_Cycle_Active, 0);   // Off - Check this!
+         set(but_gen_sprite, MUIA_Cycle_Active, 3);    // Full - Check this!
          set(but_gen_resetmode, MUIA_Cycle_Active, 0); // Soft!
       }  break;
 
@@ -385,10 +391,9 @@ void reset_tab(unsigned int tab)
       {
          set(ecs_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick2.rom");
          set(ecs_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
-         set(but_ecs_mode, MUIA_Cycle_Active, 0);   // ECS Agnus
+         set(but_ecs_mode, MUIA_Cycle_Active, 0);      // ECS Agnus
          set(but_ecs_chipmem, MUIA_Cycle_Active, 1);   // 2 Mb
          set(but_ecs_fastmem, MUIA_Cycle_Active, 0);   // 0 Mb
-         set(but_ecs_zorromem, MUIA_Cycle_Active, 0);   // 0 Mb
       }  break;
 
       case ID_BUT_AGA_RESET :
@@ -396,16 +401,15 @@ void reset_tab(unsigned int tab)
          set(aga_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
          set(aga_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
          set(but_aga_fastmem, MUIA_Cycle_Active, 4);   // 8 Mb
-         set(but_aga_zorromem, MUIA_Cycle_Active, 0);   // 0 Mb
       }  break;
 
       case ID_BUT_CUS_RESET :
       {
          set(cus_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
          set(cus_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
-         set(but_cus_cpu, MUIA_Cycle_Active, 4);      // 68040
-         set(but_cus_speed, MUIA_Cycle_Active, 0);    // Max
-         set(but_cus_jit, MUIA_Cycle_Active, 2);      // On - 8 Mb
+         set(but_cus_cpu, MUIA_Cycle_Active, 1);      // 68040
+         set(but_cus_speed, MUIA_Cycle_Active, 1);    // Max
+         set(but_cus_jit, MUIA_Cycle_Active, 0);      // Off
          set(but_cus_chipset, MUIA_Cycle_Active, 2);  // AGA
          set(but_cus_chipmem, MUIA_Cycle_Active, 2);  // 2 Mb
          set(but_cus_fastmem, MUIA_Cycle_Active, 4);  // 8 Mb
@@ -427,31 +431,114 @@ void reset_all(void)
 void setup_specific(int conf)
 {
    STRPTR ks, ksk;
+   LONG val;
 
    if (conf == 0) // OCS
    {
       GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, ocs_kickstartkey_str, (ULONG *)&ksk);
-      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+      changed_prefs.chipset_mask = 0;
+
+      get(but_ocs_chipmem, MUIA_Cycle_Active, &val);
+      changed_prefs.chipmem_size = (val == 0 ? 0x80000 : 0x100000);
+
+      get(but_ocs_fastmem, MUIA_Cycle_Active, &val);
+      changed_prefs.fastmem_size = (val == 0 ? 0 :
+                                    val == 1 ? 0x100000 :
+                                    val == 2 ? 0x200000 :
+                                    val == 3 ? 0x400000 : 0x800000);
+
+      changed_prefs.cpu_level = 0; // 68000
+      changed_prefs.m68k_speed = 0; // Real
    }
    else if (conf == 1) // ECS
    {
       GetAttr(MUIA_String_Contents, ecs_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, ecs_kickstartkey_str, (ULONG *)&ksk);
-      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+      get(but_ecs_mode, MUIA_Cycle_Active, &val);
+      changed_prefs.chipset_mask = (val == 0 ? 1 : val == 1 ? 2 : 3);
+
+      get(but_ecs_chipmem, MUIA_Cycle_Active, &val);
+      changed_prefs.chipmem_size = (val == 0 ? 0x100000 : 0x200000);
+
+      get(but_ecs_fastmem, MUIA_Cycle_Active, &val);
+      changed_prefs.fastmem_size = (val == 0 ? 0 :
+                                    val == 1 ? 0x100000 :
+                                    val == 2 ? 0x200000 :
+                                    val == 3 ? 0x400000 : 0x800000);
+
+      changed_prefs.cpu_level = 0; // 68000
+      changed_prefs.m68k_speed = 0; // Real
    }
    else if (conf == 2) // AGA
    {
       GetAttr(MUIA_String_Contents, aga_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, aga_kickstartkey_str, (ULONG *)&ksk);
-      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+      changed_prefs.chipset_mask = 7;
+
+      changed_prefs.chipmem_size = 0x200000;
+
+      get(but_aga_fastmem, MUIA_Cycle_Active, &val);
+      changed_prefs.fastmem_size = (val == 0 ? 0 :
+                                    val == 1 ? 0x100000 :
+                                    val == 2 ? 0x200000 :
+                                    val == 3 ? 0x400000 : 0x800000);
+
+      changed_prefs.cpu_level = 2; // 68020
+      changed_prefs.m68k_speed = 0; // Real
    }
    else // Custom
    {
       GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&ksk);
-      debug_print("%s (%d) - POS = %s\n", __func__, __LINE__, ks);
+      get(but_cus_chipset, MUIA_Cycle_Active, &val);
+      changed_prefs.chipset_mask = (val == 0 ? 0 : val == 1 ? 3 : 7);
+
+      get(but_cus_cpu, MUIA_Cycle_Active, &val);
+      changed_prefs.cpu_level = (val == 0 ? 2 :
+                                 val == 1 ? 4 : 6);
+
+      get(but_cus_speed, MUIA_Cycle_Active, &val);
+      changed_prefs.m68k_speed = (val == 0 ? 0 : -1);
+
+      get(but_cus_jit, MUIA_Cycle_Active, &val);
+      if (val > 0)
+      {
+         changed_prefs.m68k_speed = -1;        // Set the speed to Max, overrides the other settings...
+         changed_prefs.cpu_compatible = 0;
+         changed_prefs.cpu_cycle_exact = 0;
+         changed_prefs.blitter_cycle_exact = 0;
+         changed_prefs.cachesize = (val == 1 ? 8192 : 16384);
+         changed_prefs.comp_hardflush = 1;
+         changed_prefs.comp_constjump = 1;
+         changed_prefs.comptrustbyte = 1;
+         changed_prefs.comptrustword = 1;
+         changed_prefs.comptrustlong = 1;
+         changed_prefs.compoptim = 1;
+      }
    }
+
+   get(but_cus_chipmem, MUIA_Cycle_Active, &val);
+   changed_prefs.chipmem_size = (val == 0 ? 0x80000 :
+                                 val == 1 ? 0x100000 : 0x200000);
+
+   get(but_cus_fastmem, MUIA_Cycle_Active, &val);
+   changed_prefs.fastmem_size = (val == 0 ? 0 :
+                                 val == 1 ? 0x100000 :
+                                 val == 2 ? 0x200000 :
+                                 val == 3 ? 0x400000 : 0x800000);
+
+   get(but_cus_zorromem, MUIA_Cycle_Active, &val);
+   changed_prefs.z3fastmem_size = (val == 0 ? 0 :
+                                   val == 1 ? 0x100000 :
+                                   val == 2 ? 0x200000 :
+                                   val == 3 ? 0x400000 :
+                                   val == 4 ? 0x800000 :
+                                   val == 5 ? 0x1000000 :
+                                   val == 6 ? 0x2000000 :
+                                   val == 7 ? 0x4000000 :
+                                   val == 8 ? 0x8000000 : 0x10000000);
+
    strcpy(changed_prefs.romfile, ks);
    strcpy(changed_prefs.keyfile, ksk);
 }
@@ -469,26 +556,21 @@ void setup_generic(void)
    get(but_gen_channels, MUIA_Cycle_Active, &spos);
    changed_prefs.sound_stereo = spos;
    get(but_gen_frequency, MUIA_Cycle_Active, &spos);
-   if (spos == 0) val = 11025; else if (spos == 1) val = 22055; else if (spos == 2) val = 44100; else val = 48000;
-   changed_prefs.sound_freq = val;
+   changed_prefs.sound_freq = (spos == 0 ? 11025 : spos == 1 ? 22055 : spos == 2 ? 44100 : 48000);
 
-   // IO Devices
-      // Mouse = 200, Joy0 = 100, Joy1 = 101, kbd1 = 0, kbd2 = 1, kbd3 = 2
+   // IO Devices...
    get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
-   if (jpos == 0) val = 200; else if (jpos == 1) val = 100; else if (jpos == 2) val = 101; else if (jpos == 3) val = 0; else if (jpos == 4) val = 1; else val = 2;
-   changed_prefs.jport0 = val;
+   changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : jpos == 2 ? 101 : jpos == 3 ? 0 : jpos == 4 ? 1 : 2);
    get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
-   if (jpos == 0) val = 200; else if (jpos == 1) val = 100; else if (jpos == 2) val = 101; else if (jpos == 3) val = 0; else if (jpos == 4) val = 1; else val = 2;
-   changed_prefs.jport1 = val;
+   changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : jpos == 2 ? 101 : jpos == 3 ? 0 : jpos == 4 ? 1 : 2);
    get(but_gen_floppy, MUIA_Cycle_Active, &jpos);
-   if (jpos == 0) val = 100; else if (jpos == 1) val = 500; else val = 1000;
-   changed_prefs.floppy_speed = val;
-   debug_print("%s (%d) - jport0 = %d ; jport1 = %d\n", __func__, __LINE__, currprefs.jport0, currprefs.jport1);
+   changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
 
-  //produce_sound
-  //sound_stereo
-  //sound_freq
-   
+   // Chipset...
+   get(but_gen_blitter, MUIA_Cycle_Active, &val);
+   changed_prefs.immediate_blits = val;
+   get(but_gen_sprite, MUIA_Cycle_Active, &val);
+   changed_prefs.collision_level = val;
 }
 
 
@@ -624,6 +706,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
    struct TagItem *TagList = NULL;
    struct TagItem *tag = NULL;
    struct RastPort *rp = _rp(obj);
+   LONG val;
    int redbits,  greenbits,  bluebits;
    int redshift, greenshift, blueshift;
    int byte_swap = FALSE;
@@ -676,7 +759,13 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
             case MUIA_Reset_Type :
                debug_print("%s (%d)\n", __func__, __LINE__);
-               uae_reset (tag->ti_Data);
+               if (tag->ti_Data == MUIV_Reset_Custom)
+               {
+                  get(but_gen_sprite, MUIA_Cycle_Active, &val);
+                  uae_reset(val);
+               }
+               else
+                  uae_reset (tag->ti_Data);
                break;
 
             case MUIA_Display_Type :
@@ -924,15 +1013,18 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else if (tag->ti_Data == MUIV_Settings_Use)
                {
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
-                  //uae_stop();//uae_restart (0, NULL);//uae_stop();
-                  //setup_generic();
-                  //do_rerun_machine();
-                  //do_reset_machine(1);
-                  //uae_start();
                   setup_generic();
                   uae_restarted = TRUE;
                   set(win_settings, MUIA_Window_Open, FALSE);
-                  //do_rerun_machine();
+                  uae_restart (-1, NULL);
+               }
+               else if (tag->ti_Data == MUIV_Settings_SaveUse)
+               {
+                  DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
+                  DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENVARC);
+                  setup_generic();
+                  uae_restarted = TRUE;
+                  set(win_settings, MUIA_Window_Open, FALSE);
                   uae_restart (-1, NULL);
                }
                else if (tag->ti_Data == MUIV_Settings_Save)
@@ -944,6 +1036,13 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else // MUIV_Settings_Cancel
                   set(win_settings, MUIA_Window_Open, FALSE);
                break;
+
+            case MUIA_Control_UAE :
+               if (tag->ti_Data == MUIV_Control_UAE_Pause)
+               {
+                  //uae_pause();
+                  MUI_Request(NULL, NULL, 0L, "Error Message", "Ok", "MorphUAE needs a valid ROM file to be able to work as intended\nIf you have a ROM from Cloantos AmigaForever you might need to add the rom.key!\n\nPlease adjust the settings accordingly!");
+               }  break;
          }
       }
    }
@@ -1535,10 +1634,10 @@ static int mui_setup_window(void)
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
-                                           Child, Label1("ESC Mode :"), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
+                                           Child, Label1("ECS Mode :"), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
                                            Child, Label1("Chip Memory :" ), Child, but_ecs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_chipmem, MUIA_ObjectID, ID_PRFS_ECS_CHIPMEM, MUIA_UserData, ID_PRFS_ECS_CHIPMEM, End,
                                            Child, Label1("Fast Memory :"), Child, but_ecs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_fastmem, MUIA_ObjectID, ID_PRFS_ECS_FASTMEM, MUIA_UserData, ID_PRFS_ECS_FASTMEM, End,
-                                           Child, Label1("Zorro3 Memory :"), Child, but_ecs_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_zorromem, MUIA_ObjectID, ID_PRFS_ECS_ZORROMEM, MUIA_UserData, ID_PRFS_ECS_ZORROMEM, End,
+                                          // Child, Label1("Zorro3 Memory :"), Child, but_ecs_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_zorromem, MUIA_ObjectID, ID_PRFS_ECS_ZORROMEM, MUIA_UserData, ID_PRFS_ECS_ZORROMEM, End,
                                            Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
@@ -1566,7 +1665,7 @@ static int mui_setup_window(void)
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
                                            Child, Label1("Fast Memory :"), Child, but_aga_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_aga_fastmem, MUIA_ObjectID, ID_PRFS_AGA_FASTMEM, MUIA_UserData, ID_PRFS_AGA_FASTMEM, End,
-                                           Child, Label1("Zorro3 Memory :"), Child, but_aga_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_aga_zorromem, MUIA_ObjectID, ID_PRFS_AGA_ZORROMEM, MUIA_UserData, ID_PRFS_AGA_ZORROMEM, End,
+                                           //Child, Label1("Zorro3 Memory :"), Child, but_aga_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_aga_zorromem, MUIA_ObjectID, ID_PRFS_AGA_ZORROMEM, MUIA_UserData, ID_PRFS_AGA_ZORROMEM, End,
                                            Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
@@ -1630,6 +1729,12 @@ static int mui_setup_window(void)
                                         MUIA_Text_Contents, "Use",
                                         MUIA_InputMode, MUIV_InputMode_RelVerify,
                                      End,
+                                     Child, but_saveuse = TextObject, ButtonFrame,
+                                        MUIA_Background, MUII_ButtonBack,
+                                        MUIA_Text_PreParse, "\33c",
+                                        MUIA_Text_Contents, "Save & Use",
+                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                     End,
                                      Child, but_save = TextObject, ButtonFrame,
                                         MUIA_Background, MUII_ButtonBack,
                                         MUIA_Text_PreParse, "\33c",
@@ -1674,7 +1779,7 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[2], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
-   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Soft);
+   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Custom);//MUIV_Reset_Soft);
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
 
    DoMethod(btn_fullscreen, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
@@ -1691,6 +1796,7 @@ static int mui_setup_window(void)
    DoMethod(but_cus_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_Custom);
    
    DoMethod(but_use, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Use);
+   DoMethod(but_saveuse, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_SaveUse);
    DoMethod(but_save, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Save);
    DoMethod(but_cancel, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Cancel);
 
@@ -1705,6 +1811,10 @@ static int mui_setup_window(void)
    uae_restarted = TRUE;
    uae_restart (-1, NULL);
    set(win_main, MUIA_Window_Open, TRUE);
+
+   //valid_kick = uae_get_kick_status();
+   //if (!valid_kick)
+   //      set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
 
    gfxvidinfo.width  = currprefs.gfx_width_win;
    gfxvidinfo.height = currprefs.gfx_height_win;
@@ -1780,11 +1890,12 @@ static APTR setup_cgx_buffer (struct vidbuf_description *gfxinfo)
    return tmp_gfxinfo->bufmem;
 }
 
-//int fullscreen = 0;
-
 int graphics_init(void)  // TEST
 {
    debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
+
+   //valid_kick = uae_get_kick_status();
+   debug_print("%s (%d) VALID KickStart = %d\n", __func__, __LINE__, valid_kick);
 
    if (!uae_restarted)
    {
@@ -1796,6 +1907,10 @@ int graphics_init(void)  // TEST
 
       if (!mui_setup_window ())
             return 0;
+
+//      valid_kick = uae_get_kick_status();
+//      if (!valid_kick)
+//         set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
 
       gfxvidinfo.emergmem = 0;
       gfxvidinfo.linemem  = 0;
@@ -1823,13 +1938,15 @@ int graphics_init(void)  // TEST
       }
    }
    else
+   {
       uae_restarted = FALSE;
+//      if (!valid_kick)
+//            set(obj_rendermcc, MUIA_Control_UAE, MUIV_Control_UAE_Pause);
+   }
 
    setup_generic();
    reset_drawing ();
    debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
-   //set_default_hotkeys (ami_hotkeys);
-   //pointer_state = DONT_KNOW;
 
    return 1; 
 }
@@ -1890,8 +2007,6 @@ void graphics_leave (void)
             CyberGfxBase = NULL;
       }
    }
-   //else
-   //   uae_restarted = FALSE;
 }
 
 /****************************************************************************/
@@ -2039,17 +2154,6 @@ int is_vsync (void)
 void toggle_fullscreen (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-/*
-   graphics_leave ();
-   currprefs.amiga_screen_type = 2;
-   notice_screen_contents_lost ();
-   XOffset = NULL;
-   YOffset = NULL;
-   usepub = 0;
-   graphics_setup();
-   graphics_init ();
-   notice_new_xcolors();
-*/
 }
 
 void screenshot (int type)
@@ -2274,39 +2378,16 @@ void setcapslockstate (int state)
 
 void gfx_default_options (struct uae_prefs *p)
 {
-/*
-   p->amiga_screen_type     = UAESCREENTYPE_PUBLIC;
-   p->amiga_publicscreen[0] = '\0';
-   p->amiga_use_dither      = 1;
-   p->amiga_use_grey        = 0;
-   p->amiga_use_overlay     = 0;
-*/
-   //strcpy(currprefs.romfile, "Kickstarts/Kick3.rom");
    debug_print("%s (%d)\n", __func__, __LINE__);
-   //setup_generic();
 }
 
 void gfx_save_options (FILE *f, const struct uae_prefs *p)
 {
-/*
-   cfgfile_write (f, GFX_NAME ".screen_type=%s\n",  screen_type[p->amiga_screen_type]);
-   cfgfile_write (f, GFX_NAME ".publicscreen=%s\n", p->amiga_publicscreen);
-   cfgfile_write (f, GFX_NAME ".use_dither=%s\n",   p->amiga_use_dither ? "true" : "false");
-   cfgfile_write (f, GFX_NAME ".use_grey=%s\n",     p->amiga_use_grey ? "true" : "false");
-   cfgfile_write (f, GFX_NAME ".use_overlay=%s\n",     p->amiga_use_overlay ? "true" : "false");
-*/
    debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 int gfx_parse_option (struct uae_prefs *p, const char *option, const char *value)
 {
-/*
-   return (cfgfile_yesno  (option, value, "use_dither",   &p->amiga_use_dither)
-   || cfgfile_yesno  (option, value, "use_grey",    &p->amiga_use_grey)
-   || cfgfile_yesno  (option, value, "use_overlay",   &p->amiga_use_overlay)
-   || cfgfile_strval (option, value, "screen_type",  &p->amiga_screen_type, screen_type, 0)
-   || cfgfile_string (option, value, "publicscreen", &p->amiga_publicscreen[0], 256));
-*/
    debug_print("%s (%d)\n", __func__, __LINE__);
 }
 

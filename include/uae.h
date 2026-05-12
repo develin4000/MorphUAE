@@ -22,6 +22,9 @@ extern void uae_stop (void);
 extern void uae_restart (int, char*);
 extern void uae_save_config (void);
 
+extern int uae_get_kick_status(void);
+extern void uae_set_kick_status(int);
+
 extern void setup_brkhandler (void);
 
 #define UAE_STATE_STOPPED    0
