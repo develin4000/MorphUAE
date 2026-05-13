@@ -25,6 +25,9 @@
   * (c) Bootstrap
   * https://www.svgrepo.com/svg/344427/arrows-fullscreen
   *
+  * Resume SVG Vector
+  * (c) radix-ui
+  * https://www.svgrepo.com/svg/361583/resume
   */
 
 #include "sysconfig.h"
@@ -53,10 +56,11 @@
 # include <proto/exec.h>
 # include <proto/dos.h>
 # include <proto/asl.h>
+# include <proto/icon.h>
+# include <proto/utility.h>
 # include <proto/muimaster.h>
 # include <libraries/mui.h>
 # include <proto/utility.h>
-# include <proto/icon.h>
 
 #include <proto/cybergraphics.h>
 #include <cybergraphx/cybergraphics.h>
@@ -106,6 +110,8 @@ extern xcolnr xcolors[4096];
 
 struct IntuitionBase *IntuitionBase = NULL;
 struct GfxBase       *GfxBase = NULL;
+struct Library       *IconBase = NULL;
+struct Library       *UtilityBase = NULL;
 struct Library       *LayersBase = NULL;
 struct Library       *AslBase = NULL;
 struct Library       *CyberGfxBase = NULL;
@@ -196,9 +202,12 @@ struct Object *btn_camera      = NULL;
 struct Object *btn_reset       = NULL;
 struct Object *btn_eject       = NULL;
 struct Object *btn_fullscreen  = NULL;
+struct Object *btn_pauseresume = NULL;
 struct Object *grp_toolbar     = NULL;
 struct Object *ctm_reset       = NULL;
 struct Object *ctm_eject       = NULL;
+
+struct DiskObject *morphuae_icon = NULL;
 
 #define DEFAULT_GFX_WIDTH 640
 #define DEFAULT_GFX_HEIGHT 512
@@ -288,6 +297,7 @@ struct RenderData
 #define MUIA_Control_UAE        (TAGBASE_DEVELIN | 0x0025)
 #define MUIV_Control_UAE_Pause  0
 #define MUIV_Control_UAE_Resume 1
+#define MUIV_Control_UAE_Toggle 2
 
 
 #define MUIA_Settings_Adjust   (TAGBASE_DEVELIN | 0x0030)
@@ -1041,7 +1051,20 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                break;
 
             case MUIA_Control_UAE :
-               if (tag->ti_Data == MUIV_Control_UAE_Pause)
+               if (tag->ti_Data == MUIV_Control_UAE_Toggle)
+               {
+                  if (uae_get_state() == UAE_STATE_PAUSED)
+                  {
+                     uae_resume();
+                     set(win_main, MUIA_Window_Title, "MorphUAE");
+                  }
+                  else
+                  {
+                     uae_pause();
+                     set(win_main, MUIA_Window_Title, "MorphUAE - Paused");
+                  }
+               }
+               else if (tag->ti_Data == MUIV_Control_UAE_Pause)
                {
                   if (data->Active)
                      uae_pause();
@@ -1439,6 +1462,7 @@ static int mui_setup_window(void)
                            MUIA_Application_Author         , "Stefan Blixth",
                            MUIA_Application_Description    , "MorphUAE",
                            MUIA_Application_Base           , "MorphUAE",
+                           MUIA_Application_DiskObject     , morphuae_icon,
                            MUIA_Application_UseCommodities , FALSE,
 
                            SubWindow, win_main = WindowObject,
@@ -1492,6 +1516,14 @@ static int mui_setup_window(void)
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
                                        MUIA_Rawimage_Data, gfx_camera,
+                                    End,
+
+                                    Child, btn_pauseresume = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_Rawimage_Data, gfx_resume,
                                     End,
 
                                     Child, HVSpace,
@@ -1761,9 +1793,13 @@ static int mui_setup_window(void)
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
 
    DoMethod(btn_fullscreen, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
+   DoMethod(btn_pauseresume, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
+
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "alt return", obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt t", obj_rendermcc, 3, MUIM_Set, MUIA_Toolbar_Active, MUIV_Toolbar_Toggle);
+
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt p", obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
 
    DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, win_settings, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_settings, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_settings, 3, MUIM_Set, MUIA_Window_Open, FALSE);
@@ -1809,6 +1845,10 @@ int graphics_setup (void)
       return 0;
    } 
 
+   IconBase = OpenLibrary ("icon.library", 37L);
+   if (!IconBase)
+      return 0;
+
    GfxBase = (void*) OpenLibrary ("graphics.library", 0L);
    if (!GfxBase)
    {
@@ -1838,11 +1878,18 @@ int graphics_setup (void)
          return 0;
    }
 
+   CyberGfxBase = OpenLibrary ("cybergraphics.library", 40);
    if (!CyberGfxBase)
-      CyberGfxBase = OpenLibrary ("cybergraphics.library", 40);
+      return 0;
 
-    initpseudodevices ();
-    return 1;
+   UtilityBase = OpenLibrary ("utility.library", 39);
+   if (!UtilityBase)
+         return 0;
+
+   morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
+
+   initpseudodevices ();
+   return 1;
 }
 
 
@@ -1945,6 +1992,12 @@ void graphics_leave (void)
       for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
             if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
 
+      if (UtilityBase)
+      {
+         CloseLibrary ((void*)UtilityBase);
+         UtilityBase = NULL;
+      }
+
       if (AslBase)
       {
             CloseLibrary( (void*) AslBase);
@@ -1955,6 +2008,12 @@ void graphics_leave (void)
       {
             CloseLibrary ((void*)GfxBase);
             GfxBase = NULL;
+      }
+
+      if (IconBase)
+      {
+            CloseLibrary ((void*)IconBase);
+            IconBase = NULL;
       }
 
       if (LayersBase)
@@ -1980,6 +2039,7 @@ void graphics_leave (void)
             CloseLibrary((void*)CyberGfxBase);
             CyberGfxBase = NULL;
       }
+
    }
    else
    {
