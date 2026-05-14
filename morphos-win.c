@@ -65,6 +65,11 @@
 #include <proto/cybergraphics.h>
 #include <cybergraphx/cybergraphics.h>
 
+#include <proto/multimedia.h>
+#include <classes/multimedia/video.h>
+#include <classes/multimedia/metadata.h>
+#include <proto/png.h>
+
 /****************************************************************************/
 
 #include <ctype.h>
@@ -116,6 +121,9 @@ struct Library       *LayersBase = NULL;
 struct Library       *AslBase = NULL;
 struct Library       *CyberGfxBase = NULL;
 struct Library       *MUIMasterBase = NULL;
+struct Library       *RawFilterBase = NULL;
+struct Library       *MemoryStreamBase = NULL;
+struct Library       *FileOutputBase = NULL;
 
 struct vidbuf_description *tmp_gfxinfo;
 int tmp_line_no;
@@ -267,7 +275,7 @@ struct RenderData
 // Render flushes...
 #define MUIV_FlushLineCGX       (TAGBASE_DEVELIN | 0x000e)
 #define MUIV_FlushBlockCGX      (TAGBASE_DEVELIN | 0x000f)
-//#define MUIV_FlushLineOverlay   (TAGBASE_DEVELIN | 0x0010)
+#define MUIV_ScreenShoot        (TAGBASE_DEVELIN | 0x0010)
 //#define MUIV_FlushBlockOverlay  (TAGBASE_DEVELIN | 0x0011)
 #define MUIV_FlushClearScreen   (TAGBASE_DEVELIN | 0x0012)
 
@@ -298,7 +306,6 @@ struct RenderData
 #define MUIV_Control_UAE_Pause  0
 #define MUIV_Control_UAE_Resume 1
 #define MUIV_Control_UAE_Toggle 2
-
 
 #define MUIA_Settings_Adjust   (TAGBASE_DEVELIN | 0x0030)
 #define MUIV_Reset_All         0
@@ -628,6 +635,48 @@ void insertimagefile(UBYTE unit)
 }
 /*=*/
 
+/*=----------------------------- savepng() -----------------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+BOOL savepng(char *fname, UBYTE *imgdata, WORD width, WORD height, WORD depth)
+{
+   Object *saver, *output, *memory_stream, *video_filter, *pngencoder;
+   QUAD slen = width * height * depth;
+   BOOL retval = FALSE;
+
+   if (memory_stream = NewObject(NULL, "memory.stream", MMA_StreamHandle, (IPTR)imgdata, MMA_StreamLength, &slen, TAG_END))
+   {
+      if (video_filter = NewObject(NULL, "rawvideo.filter", MMA_Video_Width, width, MMA_Video_Height, height, TAG_END))
+      {
+         MediaSetPort(video_filter, 1, MMA_Port_Format, MMFC_VIDEO_ARGB32);
+
+         if (MediaConnectTagList(memory_stream, 0, video_filter, 0, NULL))
+         {
+            if (saver = MediaBuildFromArgsTagList("PNG", video_filter, 1, TAG_END))
+            {
+               if (output = NewObject(NULL, "file.output", MMA_StreamName, fname, TAG_END))
+               {
+                  if (MediaConnectTagList(saver, 1, output, 0, NULL))
+                  {
+                     DoMethod(output, MMM_SignalAtEnd, (IPTR)FindTask(NULL), SIGBREAKB_CTRL_C);
+                     DoMethod(output, MMM_Play);
+                     Wait(SIGBREAKF_CTRL_C);
+                     retval = TRUE;
+                  }
+                  DisposeObject(output);
+               }
+            }
+            DisposeObject(saver);
+         }
+         DisposeObject(video_filter);
+      }
+      DisposeObject(memory_stream);
+   }
+
+   return retval;
+}
+
+/*=*/
 
 // Render MCC
 
@@ -1151,6 +1200,7 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
    return(0);
 }
 
+
 /*=----------------------------- Render_Draw() -------------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
@@ -1188,6 +1238,21 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
                //ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 1, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff); //RECTFMT_ARGB); //0xFFFFFFFF);
             else
                ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 0, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff);//RECTFMT_ARGB); //0xFFFFFFFF);
+         }
+         else if (data->render_state == MUIV_ScreenShoot)
+         {
+            ULONG lock;
+            UBYTE *tmpdata = NULL;
+
+            tmpdata = AllocVec(_width(obj)*_height(obj)*4, MEMF_ANY);
+            if (tmpdata)
+            {
+               lock = LockIBase(0);
+               ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
+               savepng("RAM:MorphUAE-Screenshoot.png", tmpdata, _width(obj), _height(obj), 4);
+               UnlockIBase (lock);
+               FreeVec(tmpdata);
+            }
          }
          else
             //FillPixelArray(rp, render_left, render_top, render_right, render_bottom-render_top, 0x00000000);
@@ -1791,6 +1856,7 @@ static int mui_setup_window(void)
 
    DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Custom);
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
+   DoMethod(btn_camera, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
 
    DoMethod(btn_fullscreen, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Display_Type, MUIV_Display_Toggle);
    DoMethod(btn_pauseresume, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
@@ -1800,6 +1866,8 @@ static int mui_setup_window(void)
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt t", obj_rendermcc, 3, MUIM_Set, MUIA_Toolbar_Active, MUIV_Toolbar_Toggle);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt p", obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
+
+   DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt s", obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
 
    DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, win_settings, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_settings, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_settings, 3, MUIM_Set, MUIA_Window_Open, FALSE);
@@ -1838,53 +1906,23 @@ int graphics_setup (void)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
 
-   IntuitionBase = (void*) OpenLibrary ("intuition.library", 0L);
-   if (!IntuitionBase)
-   {
-      write_log ("No intuition.library ?\n");
-      return 0;
-   } 
-
-   IconBase = OpenLibrary ("icon.library", 37L);
-   if (!IconBase)
-      return 0;
-
-   GfxBase = (void*) OpenLibrary ("graphics.library", 0L);
-   if (!GfxBase)
-   {
-      write_log ("No graphics.library ?\n");
-      return 0;
-   }
-
-   LayersBase = OpenLibrary ("layers.library", 0L);
-   if (!LayersBase)
-   {
-      write_log ("No layers.library\n");
-      return 0;
-   }
-
-   MUIMasterBase = OpenLibrary(MUIMASTER_NAME, MUIMASTER_VMIN);
-   if (!MUIMasterBase)
-   {
-      write_log ("Could not open muimaster.library\n");
-      return 0;
-   }
-
+   if (!(IntuitionBase = (void*) OpenLibrary ("intuition.library", 0L))) return 0;
+   if (!(IconBase = OpenLibrary ("icon.library", 37L))) return 0;
+   if (!(GfxBase = (void*) OpenLibrary ("graphics.library", 0L))) return 0;
+   if (!(LayersBase = OpenLibrary ("layers.library", 0L))) return 0;
+   if (!(MUIMasterBase = OpenLibrary(MUIMASTER_NAME, MUIMASTER_VMIN))) return 0;
+   if (!(CyberGfxBase = OpenLibrary ("cybergraphics.library", 40))) return 0;
+   if (!(UtilityBase = OpenLibrary ("utility.library", 39))) return 0;
    if (!(render_mcc = Init_Render())) return 0;
+   if (!(RawFilterBase = OpenLibrary("multimedia/rawvideo.filter", 51))) return 0;
+   if (!(MemoryStreamBase = OpenLibrary("multimedia/memory.stream", 51))) return 0;
+   if (!(FileOutputBase = OpenLibrary("multimedia/file.output", 51))) return 0;
 
    for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
    {
       if (!(LED_mcc[cntr] = Init_LED()))
          return 0;
    }
-
-   CyberGfxBase = OpenLibrary ("cybergraphics.library", 40);
-   if (!CyberGfxBase)
-      return 0;
-
-   UtilityBase = OpenLibrary ("utility.library", 39);
-   if (!UtilityBase)
-         return 0;
 
    morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
 
@@ -1982,64 +2020,23 @@ void graphics_leave (void)
 
    if (!uae_restarted)
    {
-      if (app)
-      {
-            MUI_DisposeObject(app);
-            app = NULL;
-      }
+      if (app) MUI_DisposeObject(app);
       if (render_mcc) Cleanup_Render(render_mcc);
 
       for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
             if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
 
-      if (UtilityBase)
-      {
-         CloseLibrary ((void*)UtilityBase);
-         UtilityBase = NULL;
-      }
-
-      if (AslBase)
-      {
-            CloseLibrary( (void*) AslBase);
-            AslBase = NULL;
-      }
-
-      if (GfxBase)
-      {
-            CloseLibrary ((void*)GfxBase);
-            GfxBase = NULL;
-      }
-
-      if (IconBase)
-      {
-            CloseLibrary ((void*)IconBase);
-            IconBase = NULL;
-      }
-
-      if (LayersBase)
-      {
-            CloseLibrary (LayersBase);
-            LayersBase = NULL;
-      }
-
-      if (IntuitionBase)
-      {
-            CloseLibrary ((void*)IntuitionBase);
-            IntuitionBase = NULL;
-      }
-
-      if (MUIMasterBase)
-      {
-            CloseLibrary(MUIMasterBase);
-            MUIMasterBase = NULL;
-      }
-
-      if (CyberGfxBase)
-      {
-            CloseLibrary((void*)CyberGfxBase);
-            CyberGfxBase = NULL;
-      }
-
+      if (FileOutputBase) CloseLibrary(FileOutputBase);
+      if (MemoryStreamBase) CloseLibrary(MemoryStreamBase);
+      if (RawFilterBase) CloseLibrary(RawFilterBase);
+      if (UtilityBase) CloseLibrary ((void*)UtilityBase);
+      if (AslBase) CloseLibrary( (void*) AslBase);
+      if (GfxBase) CloseLibrary ((void*)GfxBase);
+      if (IconBase) CloseLibrary ((void*)IconBase);
+      if (LayersBase) CloseLibrary (LayersBase);
+      if (IntuitionBase) CloseLibrary ((void*)IntuitionBase);
+      if (MUIMasterBase) CloseLibrary(MUIMasterBase);
+      if (CyberGfxBase) CloseLibrary((void*)CyberGfxBase);
    }
    else
    {
