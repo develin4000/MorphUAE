@@ -68,7 +68,6 @@
 #include <proto/multimedia.h>
 #include <classes/multimedia/video.h>
 #include <classes/multimedia/metadata.h>
-#include <proto/png.h>
 
 /****************************************************************************/
 
@@ -102,12 +101,11 @@
 #define DATE     __AMIGADATE__
 #define VSTRING  VERS" ("DATE") "
 
-#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n\n \33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n\ Bernd Schmidt, original UAE \n\ Toni Wilen, WinUAE"
+#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n\n \33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n\ Bernd Schmidt, original UAE \n\ Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui"
 
 /****************************************************************************/
 
 extern xcolnr xcolors[4096];
-//extern struct uae_prefs currprefs;
 /****************************************************************************/
 /*
  * prototypes & global vars
@@ -635,10 +633,10 @@ void insertimagefile(UBYTE unit)
 }
 /*=*/
 
-/*=----------------------------- savepng() -----------------------------------*
+/*=----------------------------- Save_Reggae() -------------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
-BOOL savepng(char *fname, UBYTE *imgdata, WORD width, WORD height, WORD depth)
+BOOL Save_Reggae(char *fname, UBYTE *imgdata, WORD width, WORD height, WORD depth)
 {
    Object *saver, *output, *memory_stream, *video_filter, *pngencoder;
    QUAD slen = width * height * depth;
@@ -1249,7 +1247,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             {
                lock = LockIBase(0);
                ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
-               savepng("RAM:MorphUAE-Screenshoot.png", tmpdata, _width(obj), _height(obj), 4);
+               Save_Reggae("RAM:MorphUAE-Screenshoot.png", tmpdata, _width(obj), _height(obj), 4);
                UnlockIBase (lock);
                FreeVec(tmpdata);
             }
@@ -1317,16 +1315,6 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
 
       switch(msg->imsg->Class)
       {
-//         case IDCMP_NEWSIZE:
-//            do_inhibit_frame ((_window(obj)->Flags & WFLG_ZOOMED) ? 1 : 0);
-//            break;
-
-//         case IDCMP_REFRESHWINDOW:
-//            BeginRefresh(_win(obj));      // Do we really need this one ?
-//            flush_block (0, currprefs.gfx_height_win - 1);
-//            EndRefresh (_win(obj), TRUE); // Do we really need this one ?
-//            break;
-
          case IDCMP_RAWKEY:
          {
             int keycode = code & 127;
@@ -1541,7 +1529,6 @@ static int mui_setup_window(void)
                               MUIA_Window_ID,             MAKE_ID('M','U','A','E'),
                               MUIA_Window_AppWindow,      TRUE,
                               MUIA_Window_DisableKeys,    MUIKEYF_WINDOW_CLOSE,
-                              //MUIA_Application_DiskObject,  dobj = GetDiskObject("uae"), 
 
                               WindowContents, VGroup,
 
@@ -1556,6 +1543,7 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "MorphUAE Settings",
                                        MUIA_Rawimage_Data, gfx_tools,
                                     End,
 
@@ -1564,6 +1552,7 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "Reset Emulation\nHotkey : \33bctrl+lalt+r",
                                        MUIA_Rawimage_Data, gfx_clockwise,
                                     End,
 
@@ -1572,6 +1561,7 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "Fullscreen Toggle\nHotkey : \33blalt+enter",
                                        MUIA_Rawimage_Data, gfx_fullscreen,
                                     End,
 
@@ -1580,6 +1570,7 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "Take Screenshot\nHotkey : \33bctrl+lalt+s",
                                        MUIA_Rawimage_Data, gfx_camera,
                                     End,
 
@@ -1588,6 +1579,7 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "Pause/Resume Emulation\nHotkey : \33bctrl+lalt+p",
                                        MUIA_Rawimage_Data, gfx_resume,
                                     End,
 
@@ -1597,12 +1589,13 @@ static int mui_setup_window(void)
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
                                        MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
                                        MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "Eject All Floppyimages\nHotkey : \33bctrl+lalt+e",
                                        MUIA_Rawimage_Data, gfx_eject,
                                     End,
-                                    Child, obj_LEDmcc[0] = NewObject(LED_mcc[0]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
-                                    Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
-                                    Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
-                                    Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, TAG_DONE),
+                                    Child, obj_LEDmcc[0] = NewObject(LED_mcc[0]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+1", TAG_DONE),
+                                    Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+2", TAG_DONE),
+                                    Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+3", TAG_DONE),
+                                    Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+4", TAG_DONE),
                                  End,
                               End,
                            End,
