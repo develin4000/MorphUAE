@@ -399,16 +399,16 @@ void reset_tab(unsigned int tab)
 
       case ID_BUT_OCS_RESET :
       {
-         set(ocs_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick1.rom");
-         set(ocs_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
+         set(ocs_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick1.rom");
+         set(ocs_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
          set(but_ocs_chipmem, MUIA_Cycle_Active, 0);   // 0,5Mb
          set(but_ocs_fastmem, MUIA_Cycle_Active, 0);   // 0 Mb
       }  break;
 
       case ID_BUT_ECS_RESET :
       {
-         set(ecs_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick2.rom");
-         set(ecs_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
+         set(ecs_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick2.rom");
+         set(ecs_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
          set(but_ecs_mode, MUIA_Cycle_Active, 0);      // ECS Agnus
          set(but_ecs_chipmem, MUIA_Cycle_Active, 1);   // 2 Mb
          set(but_ecs_fastmem, MUIA_Cycle_Active, 0);   // 0 Mb
@@ -416,15 +416,15 @@ void reset_tab(unsigned int tab)
 
       case ID_BUT_AGA_RESET :
       {
-         set(aga_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
-         set(aga_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
+         set(aga_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick3.rom");
+         set(aga_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
          set(but_aga_fastmem, MUIA_Cycle_Active, 4);   // 8 Mb
       }  break;
 
       case ID_BUT_CUS_RESET :
       {
-         set(cus_kickstart_str, MUIA_String_Contents, "Kickstarts/Kick3.rom");
-         set(cus_kickstartkey_str, MUIA_String_Contents, "Kickstarts/");
+         set(cus_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick3.rom");
+         set(cus_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
          set(but_cus_cpu, MUIA_Cycle_Active, 1);      // 68040
          set(but_cus_speed, MUIA_Cycle_Active, 1);    // Max
          set(but_cus_jit, MUIA_Cycle_Active, 0);      // Off
@@ -1664,13 +1664,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_ocs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART),
+                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_ocs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1692,13 +1692,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_ecs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART),
+                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_ecs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1722,13 +1722,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_aga_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART),
+                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_aga_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY),
+                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1750,13 +1750,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_cus_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART),
+                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_cus_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("Kickstarts/", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
