@@ -60,12 +60,22 @@ static char optionsfile[256];
 int cloanto_rom = 0;
 
 int rom_ok = 1;
+int cfgtype = UAE_CFGTYPE_DEFAULT;
 
 int log_scsi;
 
 struct gui_info gui_data;
 
 
+int uae_get_fgctype(void)
+{
+    return cfgtype;
+}
+
+void uae_set_cfgtype(int value)
+{
+    cfgtype = value;
+}
 
 int uae_get_kick_status(void)
 {
@@ -374,6 +384,14 @@ debug_print("%s (%d)\n", __func__, __LINE__);
 	    exit (0);
 	} else if (strcmp (argv[i], "-scsilog") == 0) {
 	    log_scsi = 1;
+   } else if (strcmp (argv[i], "-ocs") == 0) {
+       uae_set_cfgtype(UAE_CFGTYPE_OCS);
+   } else if (strcmp (argv[i], "-ecs") == 0) {
+        uae_set_cfgtype(UAE_CFGTYPE_ECS);
+   } else if (strcmp (argv[i], "-aga") == 0) {
+        uae_set_cfgtype(UAE_CFGTYPE_AGA);
+   } else if (strcmp (argv[i], "-custom") == 0) {
+        uae_set_cfgtype(UAE_CFGTYPE_CUS);
 	} else {
 	    if (argv[i][0] == '-' && argv[i][1] != '\0') {
 		const char *arg = argv[i] + 2;

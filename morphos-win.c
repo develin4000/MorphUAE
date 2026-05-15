@@ -451,7 +451,7 @@ void setup_specific(int conf)
    STRPTR ks, ksk;
    LONG val;
 
-   if (conf == 0) // OCS
+   if (conf == UAE_CFGTYPE_OCS) // OCS
    {
       GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, ocs_kickstartkey_str, (ULONG *)&ksk);
@@ -469,7 +469,7 @@ void setup_specific(int conf)
       changed_prefs.cpu_level = 0; // 68000
       changed_prefs.m68k_speed = 0; // Real
    }
-   else if (conf == 1) // ECS
+   else if (conf == UAE_CFGTYPE_ECS) // ECS
    {
       GetAttr(MUIA_String_Contents, ecs_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, ecs_kickstartkey_str, (ULONG *)&ksk);
@@ -488,7 +488,7 @@ void setup_specific(int conf)
       changed_prefs.cpu_level = 0; // 68000
       changed_prefs.m68k_speed = 0; // Real
    }
-   else if (conf == 2) // AGA
+   else if (conf == UAE_CFGTYPE_AGA) // AGA
    {
       GetAttr(MUIA_String_Contents, aga_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, aga_kickstartkey_str, (ULONG *)&ksk);
@@ -564,9 +564,15 @@ void setup_specific(int conf)
 void setup_generic(void)
 {
    LONG mpos, spos, jpos, val;
+   int clicfg = UAE_CFGTYPE_DEFAULT;
    get(but_gen_machine, MUIA_Cycle_Active, &mpos);
 
-   setup_specific(mpos);
+   clicfg = uae_get_fgctype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
+
+   if (clicfg == UAE_CFGTYPE_DEFAULT)
+      setup_specific(mpos);
+   else
+      setup_specific(clicfg);
 
    //Sound
    get(but_gen_sound, MUIA_Cycle_Active, &spos);
@@ -1592,10 +1598,10 @@ static int mui_setup_window(void)
                                        MUIA_ShortHelp, "Eject All Floppyimages\nHotkey : \33bctrl+lalt+e",
                                        MUIA_Rawimage_Data, gfx_eject,
                                     End,
-                                    Child, obj_LEDmcc[0] = NewObject(LED_mcc[0]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+1", TAG_DONE),
-                                    Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+2", TAG_DONE),
-                                    Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+3", TAG_DONE),
-                                    Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Attach A Diskimage on DF0\nHotkey : \33bctrl+lalt+4", TAG_DONE),
+                                    Child, obj_LEDmcc[0] = NewObject(LED_mcc[0]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF0\nHotkey : \33bctrl+lalt+1", TAG_DONE),
+                                    Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF1\nHotkey : \33bctrl+lalt+2", TAG_DONE),
+                                    Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF2\nHotkey : \33bctrl+lalt+3", TAG_DONE),
+                                    Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF3\nHotkey : \33bctrl+lalt+4", TAG_DONE),
                                  End,
                               End,
                            End,

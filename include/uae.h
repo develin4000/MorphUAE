@@ -24,6 +24,15 @@ extern void uae_save_config (void);
 
 extern int uae_get_kick_status(void);
 extern void uae_set_kick_status(int);
+extern void uae_set_cfgtype(int);
+extern int uae_get_cfgtype(void);
+
+#define UAE_CFGTYPE_OCS     0
+#define UAE_CFGTYPE_ECS     1
+#define UAE_CFGTYPE_AGA     2
+#define UAE_CFGTYPE_CUS     3
+#define UAE_CFGTYPE_DEFAULT 4
+
 
 extern void setup_brkhandler (void);
 
