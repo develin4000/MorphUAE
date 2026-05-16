@@ -27,6 +27,12 @@ extern void uae_set_kick_status(int);
 extern void uae_set_cfgtype(int);
 extern int uae_get_cfgtype(void);
 
+extern void uae_set_use_checksum(int);
+extern int uae_get_use_checksum(void);
+
+#define UAE_CHKSUM_ON       0
+#define UAE_CHKSUM_OFF      1
+
 #define UAE_CFGTYPE_OCS     0
 #define UAE_CFGTYPE_ECS     1
 #define UAE_CFGTYPE_AGA     2

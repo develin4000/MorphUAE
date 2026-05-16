@@ -971,65 +971,77 @@ static int decode_cloanto_rom (uae_u8 *mem, int size, int real_size)
 
 static int kickstart_checksum (uae_u8 *mem, int size)
 {
-    uae_u32 cksum = 0, prevck = 0;
-    int i;
-    for (i = 0; i < size; i+=4) {
-	uae_u32 data = mem[i]*65536*256 + mem[i+1]*65536 + mem[i+2]*256 + mem[i+3];
-	cksum += data;
-	if (cksum < prevck)
-	    cksum++;
-	prevck = cksum;
-    }
+   uae_u32 cksum = 0, prevck = 0;
+   int i;
+   for (i = 0; i < size; i+=4)
+   {
+	   uae_u32 data = mem[i]*65536*256 + mem[i+1]*65536 + mem[i+2]*256 + mem[i+3];
+	   cksum += data;
+	   if (cksum < prevck)
+         cksum++;
+	   prevck = cksum;
+   }
 #ifndef SINGLEFILE
-    if (cksum != 0xFFFFFFFFul) {
-	gui_message("Kickstart checksum incorrect. You probably have a corrupted ROM image.\n");
-	return 0;
-    }
+   if (cksum != 0xFFFFFFFFul)
+   {
+	   gui_message("Kickstart checksum incorrect. You probably have a corrupted ROM image.\n");
+	   return 0;
+   }
 #endif
-    return 1;
+   return 1;
 }
 
 static int read_kickstart (struct zfile *f, uae_u8 *mem, int size, int dochecksum, int *cloanto_rom)
 {
-    unsigned char buffer[20];
-    int i, cr = 0;
+   unsigned char buffer[20];
+   int i, cr = 0;
 
-    if (cloanto_rom)
-	*cloanto_rom = 0;
-    i = zfile_fread (buffer, 1, 11, f);
-    if (strncmp ((char *)buffer, "AMIROMTYPE1", 11) != 0) {
-	zfile_fseek (f, 0, SEEK_SET);
-    } else {
-	cr = 1;
-    }
+   if (cloanto_rom)
+	   *cloanto_rom = 0;
+   i = zfile_fread (buffer, 1, 11, f);
+   if (strncmp ((char *)buffer, "AMIROMTYPE1", 11) != 0)
+   {
+	   zfile_fseek (f, 0, SEEK_SET);
+   }
+   else
+   {
+	   cr = 1;
+   }
 
-    i = zfile_fread (mem, 1, size, f);
-    zfile_fclose (f);
-    if ((i != 8192 && i != 65536) && i != 131072 && i != 262144 && i != 524288) {
-	gui_message ("Error while reading Kickstart.\n");
-	return 0;
-    }
-    if (i == size / 2)
+   i = zfile_fread (mem, 1, size, f);
+   zfile_fclose (f);
+   if ((i != 8192 && i != 65536) && i != 131072 && i != 262144 && i != 524288)
+   {
+	   gui_message ("Error while reading Kickstart.\n");
+	   return 0;
+   }
+   if (i == size / 2)
 	memcpy (mem + size / 2, mem, size / 2);
 
-    if (cr) {
-	if (!decode_cloanto_rom (mem, size, i))
-	    return 0;
-    }
+   if (cr)
+   {
+	   if (!decode_cloanto_rom (mem, size, i))
+	      return 0;
+   }
 
-    if (i == 8192 || i == 65536) {
-	a1000_bootrom = malloc (65536);
-	memcpy (a1000_bootrom, kickmemory, 65536);
-	a1000_handle_kickstart (1);
-	i = 524288;
-	dochecksum = 0;
+   if (i == 8192 || i == 65536)
+   {
+	   a1000_bootrom = malloc (65536);
+ 	   memcpy (a1000_bootrom, kickmemory, 65536);
+	   a1000_handle_kickstart (1);
+	   i = 524288;
+	   dochecksum = 0;
     }
-    if (dochecksum && i >= 262144) {
-	if (!kickstart_checksum (mem, size))
-	    return 0;
+    if (dochecksum && i >= 262144)
+    {
+       if (uae_get_use_checksum() == UAE_CHKSUM_ON)
+       {
+          if (!kickstart_checksum (mem, size))
+	          return 0;
+       }
     }
     if (cloanto_rom)
-	*cloanto_rom = cr;
+	    *cloanto_rom = cr;
 
     return i;
 }
