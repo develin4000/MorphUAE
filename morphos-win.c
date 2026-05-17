@@ -178,6 +178,24 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
    #define MUIA_Window_Frontdrop 0x80426411
 #endif
 
+// Function borrowed from Ambient sources... and adjusted slightly
+APTR MUICreateCheckbox(ULONG defstate, ULONG id)
+{
+   APTR checkbox;
+
+   checkbox = MUI_NewObject(MUIC_Image, MUIA_Frame, MUIV_Frame_ImageButton,
+                            MUIA_Background , MUII_ButtonBack,
+                            MUIA_Image_FreeVert, TRUE,
+                            MUIA_InputMode, MUIV_InputMode_Toggle,
+                            MUIA_Image_Spec, MUII_CheckMark,
+                            MUIA_Selected, defstate,
+                            MUIA_ShowSelState, FALSE,
+                            MUIA_ObjectID, id,
+                            MUIA_UserData, id,
+                            TAG_DONE);
+   return(checkbox);
+}
+
 
 /* Compiler specific stuff */
 
@@ -425,6 +443,8 @@ void reset_tab(unsigned int tab)
       {
          set(cus_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick3.rom");
          set(cus_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
+         set(chk_harddisk, MUIA_Selected, FALSE);
+         set(cus_harddisk_str, MUIA_String_Contents, "PROGDIR:Harddisks/");
          set(but_cus_cpu, MUIA_Cycle_Active, 1);      // 68040
          set(but_cus_speed, MUIA_Cycle_Active, 1);    // Max
          set(but_cus_jit, MUIA_Cycle_Active, 0);      // Off
@@ -448,7 +468,8 @@ void reset_all(void)
 
 void setup_specific(int conf)
 {
-   STRPTR ks, ksk;
+   STRPTR ks, ksk, vhd;
+   char vhdstr[500];
    LONG val;
 
    if (conf == UAE_CFGTYPE_OCS) // OCS
@@ -509,6 +530,14 @@ void setup_specific(int conf)
    {
       GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&ksk);
+
+      get(chk_harddisk, MUIA_Selected, &val);
+      if (val)
+      {
+         GetAttr(MUIA_String_Contents, cus_harddisk_str, (ULONG *)&vhd);
+         add_filesys_unit(currprefs.mountinfo, "DH0", "System", vhd, 0, 0, 0, 0, 0, 0, 0, 0);
+      }
+
       get(but_cus_chipset, MUIA_Cycle_Active, &val);
       changed_prefs.chipset_mask = (val == 0 ? 0 : val == 1 ? 3 : 7);
 
@@ -1078,18 +1107,30 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   reset_all();
                else if (tag->ti_Data == MUIV_Settings_Use)
                {
+                  int numunits = 0;
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
                   setup_generic();
                   uae_restarted = TRUE;
+
+                  //numunits = nr_units (currprefs.mountinfo);
+                  //if (numunits > 0)
+                  //      kill_filesys_unit (currprefs.mountinfo, numunits);
+
                   set(win_settings, MUIA_Window_Open, FALSE);
                   uae_restart (-1, NULL);
                }
                else if (tag->ti_Data == MUIV_Settings_SaveUse)
                {
+                  int numunits = 0;
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENVARC);
                   setup_generic();
                   uae_restarted = TRUE;
+
+                  //numunits = nr_units (currprefs.mountinfo);
+                  //if (numunits > 0)
+                  //   kill_filesys_unit (currprefs.mountinfo, numunits);
+
                   set(win_settings, MUIA_Window_Open, FALSE);
                   uae_restart (-1, NULL);
                }
@@ -1334,16 +1375,25 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          case IDCMP_MOUSEMOVE:
             data->MouseX = msg->imsg->IDCMPWindow->MouseX; //msg->Window->IDCMPWindow->MouseX;
             data->MouseY = msg->imsg->IDCMPWindow->MouseY; //IntuiMessage
-         
+
             //debug_print("%s (%d) - NEW XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
             //debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
+
             if (_isinobject(data->MouseX, data->MouseY))
             {
+               //if (data->MouseX < 0) data->MouseX = 0;
+               //if (data->MouseY < 0) data->MouseY = 0;
+               //if (data->MouseX >= 640) data->MouseX = 639;
+               //if (data->MouseY >= 512) data->MouseY = 511;
+
                if(data->showpointer)
                {
                   set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
                   //data->MouseX = data->OldX;
                   //data->MouseY = data->OldY;
+                  //data->OldX = data->MouseX;
+                  //data->OldY = data->MouseY;
+
                   setmousestate (0, 0, data->MouseX, 1); //dmx
                   setmousestate (0, 1, data->MouseY, 1); //dmy
                }
@@ -1355,8 +1405,8 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                if(!data->showpointer)
                {
                   set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
-                  data->OldX = data->MouseX;
-                  data->OldY = data->MouseY;
+                  //data->OldX = data->MouseX;
+                  //data->OldY = data->MouseY;
                   setmousestate (0, 0, data->MouseX, 1);
                   setmousestate (0, 1, data->MouseY, 1);
                   //debug_print("%s (%d) -OLD -  XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
@@ -1760,11 +1810,21 @@ static int mui_setup_window(void)
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
-                                           Child, KeyLabel2("Kickstart Key File :",'f'),
+                                           Child, KeyLabel2("Kickstart Key File :",'k'),
                                            Child, cyc_cus_kickstartkey = PopaslObject,
                                               MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
+                                           End,
+                                           Child, KeyLabel2("Virtual Harddisk :",'v'),
+                                           Child, HGroup,
+                                              Child, chk_harddisk = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD), //CheckMark(TRUE),
+                                              Child, cyc_cus_harddisk = PopaslObject,
+                                                 MUIA_Popstring_String, cus_harddisk_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK),
+                                                 MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
+                                                 MUIA_Disabled, TRUE,
+                                                 ASLFR_TitleText, "Please select a folder for your virtual harddisk...",
+                                              End,
                                            End,
                                            Child, Label1("CPU Model :" ), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
                                            Child, Label1("CPU Speed :" ), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_cus_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
@@ -1875,7 +1935,9 @@ static int mui_setup_window(void)
    DoMethod(but_ecs_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_ECS);
    DoMethod(but_aga_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_AGA);
    DoMethod(but_cus_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_Custom);
-   
+   DoMethod(chk_harddisk,  MUIM_Notify, MUIA_Selected, TRUE, cyc_cus_harddisk, 3, MUIM_Set, MUIA_Disabled, FALSE);
+   DoMethod(chk_harddisk,  MUIM_Notify, MUIA_Selected, FALSE, cyc_cus_harddisk, 3, MUIM_Set, MUIA_Disabled, TRUE);
+
    DoMethod(but_use, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Use);
    DoMethod(but_saveuse, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_SaveUse);
    DoMethod(but_save, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Save);
@@ -2292,8 +2354,8 @@ struct inputdevice_functions inputdevicefunc_mouse = {
    close_mouse,
    acquire_mouse,
    unacquire_mouse,
-   read_mouse,
-   get_mouse_num,
+   //read_mouse,
+   //get_mouse_num,
    get_mouse_name,
    get_mouse_widget_num,
    get_mouse_widget_type,

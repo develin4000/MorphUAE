@@ -90,6 +90,8 @@ enum
    ID_PRFS_ECS_CHIPMEM,
    ID_PRFS_ECS_FASTMEM,
    ID_PRFS_AGA_FASTMEM,
+   ID_PRFS_CUS_USEVHD,
+   ID_PRFS_CUS_HARDDISK,
    ID_PRFS_CUS_CPU,
    ID_PRFS_CUS_SPEED,
    ID_PRFS_CUS_JIT,
@@ -132,9 +134,10 @@ static Object *aga_kickstartkey_str = NULL;  // (Path string)
 
 static char *cyc_aga_fastmem[]  = { "0 Mb", "1 Mb", "2 Mb", "4 Mb", "8 Mb", NULL };
 
-APTR cyc_cus_kickstart, cyc_cus_kickstartkey;
+APTR cyc_cus_kickstart, cyc_cus_kickstartkey, cyc_cus_harddisk, chk_harddisk;
 static Object *cus_kickstart_str = NULL;  // (Path string)
 static Object *cus_kickstartkey_str = NULL;  // (Path string)
+static Object *cus_harddisk_str = NULL;   // (Path string)
 
 static char *cyc_cus_cpu[]  = { "68020", "68040", "68060", NULL };
 static char *cyc_cus_speed[]  = { "Real", "Max", NULL };
