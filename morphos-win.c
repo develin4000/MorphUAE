@@ -480,6 +480,8 @@ void setup_specific(int conf)
    LONG val;
    int fscnt = 0;
 
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
    if (conf == UAE_CFGTYPE_OCS) // OCS
    {
       GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&ks);
@@ -542,20 +544,32 @@ void setup_specific(int conf)
       get(chk_harddisk1, MUIA_Selected, &val);
       if (val)
       {
+         debug_print("%s (%d) - CHK-Harddisk 1 - ACTIVE\n", __func__, __LINE__);
          GetAttr(MUIA_String_Contents, cus_harddisk1_str, (ULONG *)&vhd);
          GetAttr(MUIA_String_Contents, cus_devname1_str, (ULONG *)&devn);
          GetAttr(MUIA_String_Contents, cus_volname1_str, (ULONG *)&voln);
          add_filesys_unit(currprefs.mountinfo, devn, voln, vhd, 0, 0, 0, 0, 0, 0, 0, 0);
          fscnt++;
       }
+      else
+      {
+         debug_print("%s (%d) - CHK-Harddisk 1 - INACTIVE\n", __func__, __LINE__);
+         kill_filesys_unit(currprefs.mountinfo, 0);
+      }
 
       get(chk_harddisk2, MUIA_Selected, &val);
       if (val)
       {
+            debug_print("%s (%d) - CHK-Harddisk 2 - ACTIVE\n", __func__, __LINE__);
             GetAttr(MUIA_String_Contents, cus_harddisk2_str, (ULONG *)&vhd);
             GetAttr(MUIA_String_Contents, cus_devname2_str, (ULONG *)&devn);
             GetAttr(MUIA_String_Contents, cus_volname2_str, (ULONG *)&voln);
             add_filesys_unit(currprefs.mountinfo, devn, voln, vhd, 0, 0, 0, 0, 0, 0, 0, 0);
+      }
+      else
+      {
+            debug_print("%s (%d) - CHK-Harddisk 2 - INACTIVE\n", __func__, __LINE__);
+            kill_filesys_unit(currprefs.mountinfo, 1);
       }
 
       get(but_cus_chipset, MUIA_Cycle_Active, &val);
@@ -1849,9 +1863,9 @@ static int mui_setup_window(void)
                                            Child, KeyLabel2(" ",'q'), //HSpace(0),
                                            Child, grp_cus_harddisk1 = HGroup,
                                               Child, KeyLabel2("Device Name :",'d'),
-                                              Child, cus_devname1_str = MyKeyString("DH0", 32, NULL, ID_PRFS_CUS_DEVNAME1, 25),
-                                              Child, KeyLabel2("Volyme Name :",'v'),
-                                              Child, cus_volname1_str = MyKeyString("System", 32, NULL, ID_PRFS_CUS_VOLNAME1, 75),
+                                              Child, cus_devname1_str = MyKeyString("DH0", 32, NULL, ID_PRFS_CUS_DEVNAME1, 20),
+                                              Child, KeyLabel2("Volume Name :",'v'),
+                                              Child, cus_volname1_str = MyKeyString("System", 32, NULL, ID_PRFS_CUS_VOLNAME1, 80),
                                               MUIA_Disabled, TRUE,
                                            End,
                                            Child, KeyLabel2("Virtual Harddisk 2 :",'v'),
@@ -1867,9 +1881,9 @@ static int mui_setup_window(void)
                                            Child, KeyLabel2(" ",'q'), //HSpace(0),
                                            Child, grp_cus_harddisk2 = HGroup,
                                               Child, KeyLabel2("Device Name :",'d'),
-                                              Child, cus_devname2_str = MyKeyString("DH1", 32, NULL, ID_PRFS_CUS_DEVNAME2, 25),
-                                              Child, KeyLabel2("Volyme Name :",'v'),
-                                              Child, cus_volname2_str = MyKeyString("Work", 32, NULL, ID_PRFS_CUS_VOLNAME2, 75),
+                                              Child, cus_devname2_str = MyKeyString("DH1", 32, NULL, ID_PRFS_CUS_DEVNAME2, 20),
+                                              Child, KeyLabel2("Volume Name :",'v'),
+                                              Child, cus_volname2_str = MyKeyString("Work", 32, NULL, ID_PRFS_CUS_VOLNAME2, 80),
                                               MUIA_Disabled, TRUE,
                                            End,
                                            Child, Label1("CPU Model :" ), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
