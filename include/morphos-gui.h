@@ -90,8 +90,10 @@ enum
    ID_PRFS_ECS_CHIPMEM,
    ID_PRFS_ECS_FASTMEM,
    ID_PRFS_AGA_FASTMEM,
-   ID_PRFS_CUS_USEVHD,
-   ID_PRFS_CUS_HARDDISK,
+   ID_PRFS_CUS_USEVHD1,
+   ID_PRFS_CUS_HARDDISK1,
+   ID_PRFS_CUS_USEVHD2,
+   ID_PRFS_CUS_HARDDISK2,
    ID_PRFS_CUS_CPU,
    ID_PRFS_CUS_SPEED,
    ID_PRFS_CUS_JIT,
@@ -99,6 +101,10 @@ enum
    ID_PRFS_CUS_CHIPMEM,
    ID_PRFS_CUS_FASTMEM,
    ID_PRFS_CUS_ZORROMEM,
+   ID_PRFS_CUS_DEVNAME1,
+   ID_PRFS_CUS_VOLNAME1,
+   ID_PRFS_CUS_DEVNAME2,
+   ID_PRFS_CUS_VOLNAME2
 };
 
 
@@ -106,8 +112,8 @@ static char *cyc_gen_machine[]   = { "OCS", "ECS", "AGA", "Custom", NULL };
 static char *cyc_gen_sound[]   = { "None", "Interrupts", "Normal", "Exact", NULL };
 static char *cyc_gen_channels[]   = { "Mono", "Stereo", "Mixed", NULL };
 static char *cyc_gen_frequency[]   = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", NULL };
-static char *cyc_gen_joy0[]   = { "Mouse", "Joy0","Joy1", "Kbd1", "Kbd2", "Kbd3", NULL };
-static char *cyc_gen_joy1[]   = { "Mouse", "Joy0","Joy1", "Kbd1", "Kbd2", "Kbd3", NULL };
+static char *cyc_gen_joy0[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
+static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
 static char *cyc_gen_floppy[]  = { "Normal", "Fast", "Ludicrous", NULL };
 static char *cyc_gen_blitter[]  = { "Off", "On", NULL };
 static char *cyc_gen_sprite[]  = { "None", "Sprites", "Playfields", "Full",  NULL };
@@ -134,10 +140,16 @@ static Object *aga_kickstartkey_str = NULL;  // (Path string)
 
 static char *cyc_aga_fastmem[]  = { "0 Mb", "1 Mb", "2 Mb", "4 Mb", "8 Mb", NULL };
 
-APTR cyc_cus_kickstart, cyc_cus_kickstartkey, cyc_cus_harddisk, chk_harddisk;
+APTR cyc_cus_kickstart, cyc_cus_kickstartkey, cyc_cus_harddisk1, chk_harddisk1, cyc_cus_harddisk2, chk_harddisk2;
+APTR grp_cus_harddisk1, grp_cus_harddisk2;
 static Object *cus_kickstart_str = NULL;  // (Path string)
 static Object *cus_kickstartkey_str = NULL;  // (Path string)
-static Object *cus_harddisk_str = NULL;   // (Path string)
+static Object *cus_harddisk1_str = NULL;   // (Path string)
+static Object *cus_harddisk2_str = NULL;   // (Path string)
+static Object *cus_devname1_str = NULL;
+static Object *cus_volname1_str = NULL;
+static Object *cus_devname2_str = NULL;
+static Object *cus_volname2_str = NULL;
 
 static char *cyc_cus_cpu[]  = { "68020", "68040", "68060", NULL };
 static char *cyc_cus_speed[]  = { "Real", "Max", NULL };

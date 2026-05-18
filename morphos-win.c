@@ -146,12 +146,13 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
    #define debug_print(...)
 #endif
 
-#define MyKeyString(contents, maxlen, controlchar, id)\
+#define MyKeyString(contents, maxlen, controlchar, id, weight)\
    StringObject,\
       StringFrame,\
       MUIA_ControlChar    , controlchar,\
       MUIA_String_MaxLen  , maxlen,\
       MUIA_String_Contents, contents,\
+      MUIA_Weight, weight,\
       MUIA_ObjectID, id,\
       MUIA_UserData, id,\
       End
@@ -443,8 +444,14 @@ void reset_tab(unsigned int tab)
       {
          set(cus_kickstart_str, MUIA_String_Contents, "PROGDIR:Kickstarts/Kick3.rom");
          set(cus_kickstartkey_str, MUIA_String_Contents, "PROGDIR:Kickstarts/rom.key");
-         set(chk_harddisk, MUIA_Selected, FALSE);
-         set(cus_harddisk_str, MUIA_String_Contents, "PROGDIR:Harddisks/");
+         set(chk_harddisk1, MUIA_Selected, FALSE);
+         set(cus_harddisk1_str, MUIA_String_Contents, "PROGDIR:Harddisks/");
+         set(cus_devname1_str, MUIA_String_Contents, "DH0");
+         set(cus_volname1_str, MUIA_String_Contents, "System");
+         set(chk_harddisk2, MUIA_Selected, FALSE);
+         set(cus_harddisk2_str, MUIA_String_Contents, "PROGDIR:Harddisks/");
+         set(cus_devname2_str, MUIA_String_Contents, "DH1");
+         set(cus_volname2_str, MUIA_String_Contents, "Work");
          set(but_cus_cpu, MUIA_Cycle_Active, 1);      // 68040
          set(but_cus_speed, MUIA_Cycle_Active, 1);    // Max
          set(but_cus_jit, MUIA_Cycle_Active, 0);      // Off
@@ -468,9 +475,10 @@ void reset_all(void)
 
 void setup_specific(int conf)
 {
-   STRPTR ks, ksk, vhd;
-   char vhdstr[500];
+   STRPTR ks, ksk, vhd, devn, voln;
+   //char vhdstr[500];
    LONG val;
+   int fscnt = 0;
 
    if (conf == UAE_CFGTYPE_OCS) // OCS
    {
@@ -531,11 +539,23 @@ void setup_specific(int conf)
       GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&ks);
       GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&ksk);
 
-      get(chk_harddisk, MUIA_Selected, &val);
+      get(chk_harddisk1, MUIA_Selected, &val);
       if (val)
       {
-         GetAttr(MUIA_String_Contents, cus_harddisk_str, (ULONG *)&vhd);
-         add_filesys_unit(currprefs.mountinfo, "DH0", "System", vhd, 0, 0, 0, 0, 0, 0, 0, 0);
+         GetAttr(MUIA_String_Contents, cus_harddisk1_str, (ULONG *)&vhd);
+         GetAttr(MUIA_String_Contents, cus_devname1_str, (ULONG *)&devn);
+         GetAttr(MUIA_String_Contents, cus_volname1_str, (ULONG *)&voln);
+         add_filesys_unit(currprefs.mountinfo, devn, voln, vhd, 0, 0, 0, 0, 0, 0, 0, 0);
+         fscnt++;
+      }
+
+      get(chk_harddisk2, MUIA_Selected, &val);
+      if (val)
+      {
+            GetAttr(MUIA_String_Contents, cus_harddisk2_str, (ULONG *)&vhd);
+            GetAttr(MUIA_String_Contents, cus_devname2_str, (ULONG *)&devn);
+            GetAttr(MUIA_String_Contents, cus_volname2_str, (ULONG *)&voln);
+            add_filesys_unit(currprefs.mountinfo, devn, voln, vhd, 0, 0, 0, 0, 0, 0, 0, 0);
       }
 
       get(but_cus_chipset, MUIA_Cycle_Active, &val);
@@ -1405,8 +1425,8 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                if(!data->showpointer)
                {
                   set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
-                  //data->OldX = data->MouseX;
-                  //data->OldY = data->MouseY;
+                  data->OldX = data->MouseX;
+                  data->OldY = data->MouseY;
                   setmousestate (0, 0, data->MouseX, 1);
                   setmousestate (0, 1, data->MouseY, 1);
                   //debug_print("%s (%d) -OLD -  XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
@@ -1720,13 +1740,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_ocs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART),
+                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_ocs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1748,13 +1768,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_ecs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART),
+                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_ecs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1778,13 +1798,13 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_aga_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART),
+                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'f'),
                                            Child, cyc_aga_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY),
+                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
@@ -1806,25 +1826,51 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, KeyLabel2("Kickstart File :",'f'),
                                            Child, cyc_cus_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART),
+                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart file...",
                                            End,
                                            Child, KeyLabel2("Kickstart Key File :",'k'),
                                            Child, cyc_cus_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY),
+                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY, 100),
                                               MUIA_Popstring_Button, PopButton(MUII_PopFile),
                                               ASLFR_TitleText, "Please select a kickstart key file...",
                                            End,
-                                           Child, KeyLabel2("Virtual Harddisk :",'v'),
+                                           Child, KeyLabel2("Virtual Harddisk 1 :",'v'),
                                            Child, HGroup,
-                                              Child, chk_harddisk = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD), //CheckMark(TRUE),
-                                              Child, cyc_cus_harddisk = PopaslObject,
-                                                 MUIA_Popstring_String, cus_harddisk_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK),
+                                              Child, chk_harddisk1 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD1), //CheckMark(TRUE),
+                                              Child, cyc_cus_harddisk1 = PopaslObject,
+                                                 MUIA_Popstring_String, cus_harddisk1_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK1, 100),
                                                  MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
                                                  MUIA_Disabled, TRUE,
                                                  ASLFR_TitleText, "Please select a folder for your virtual harddisk...",
                                               End,
+                                           End,
+                                           Child, KeyLabel2(" ",'q'), //HSpace(0),
+                                           Child, grp_cus_harddisk1 = HGroup,
+                                              Child, KeyLabel2("Device Name :",'d'),
+                                              Child, cus_devname1_str = MyKeyString("DH0", 32, NULL, ID_PRFS_CUS_DEVNAME1, 25),
+                                              Child, KeyLabel2("Volyme Name :",'v'),
+                                              Child, cus_volname1_str = MyKeyString("System", 32, NULL, ID_PRFS_CUS_VOLNAME1, 75),
+                                              MUIA_Disabled, TRUE,
+                                           End,
+                                           Child, KeyLabel2("Virtual Harddisk 2 :",'v'),
+                                           Child, HGroup,
+                                              Child, chk_harddisk2 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD2), //CheckMark(TRUE),
+                                              Child, cyc_cus_harddisk2 = PopaslObject,
+                                                 MUIA_Popstring_String, cus_harddisk2_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK2, 100),
+                                                 MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
+                                                 MUIA_Disabled, TRUE,
+                                                 ASLFR_TitleText, "Please select a folder for your virtual harddisk...",
+                                              End,
+                                           End,
+                                           Child, KeyLabel2(" ",'q'), //HSpace(0),
+                                           Child, grp_cus_harddisk2 = HGroup,
+                                              Child, KeyLabel2("Device Name :",'d'),
+                                              Child, cus_devname2_str = MyKeyString("DH1", 32, NULL, ID_PRFS_CUS_DEVNAME2, 25),
+                                              Child, KeyLabel2("Volyme Name :",'v'),
+                                              Child, cus_volname2_str = MyKeyString("Work", 32, NULL, ID_PRFS_CUS_VOLNAME2, 75),
+                                              MUIA_Disabled, TRUE,
                                            End,
                                            Child, Label1("CPU Model :" ), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
                                            Child, Label1("CPU Speed :" ), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_cus_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
@@ -1935,8 +1981,16 @@ static int mui_setup_window(void)
    DoMethod(but_ecs_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_ECS);
    DoMethod(but_aga_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_AGA);
    DoMethod(but_cus_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_Custom);
-   DoMethod(chk_harddisk,  MUIM_Notify, MUIA_Selected, TRUE, cyc_cus_harddisk, 3, MUIM_Set, MUIA_Disabled, FALSE);
-   DoMethod(chk_harddisk,  MUIM_Notify, MUIA_Selected, FALSE, cyc_cus_harddisk, 3, MUIM_Set, MUIA_Disabled, TRUE);
+
+   DoMethod(chk_harddisk1, MUIM_Notify, MUIA_Selected, TRUE, cyc_cus_harddisk1, 3, MUIM_Set, MUIA_Disabled, FALSE);
+   DoMethod(chk_harddisk1, MUIM_Notify, MUIA_Selected, TRUE, grp_cus_harddisk1, 3, MUIM_Set, MUIA_Disabled, FALSE);
+   DoMethod(chk_harddisk1, MUIM_Notify, MUIA_Selected, FALSE, cyc_cus_harddisk1, 3, MUIM_Set, MUIA_Disabled, TRUE);
+   DoMethod(chk_harddisk1, MUIM_Notify, MUIA_Selected, FALSE, grp_cus_harddisk1, 3, MUIM_Set, MUIA_Disabled, TRUE);
+
+   DoMethod(chk_harddisk2, MUIM_Notify, MUIA_Selected, TRUE, cyc_cus_harddisk2, 3, MUIM_Set, MUIA_Disabled, FALSE);
+   DoMethod(chk_harddisk2, MUIM_Notify, MUIA_Selected, TRUE, grp_cus_harddisk2, 3, MUIM_Set, MUIA_Disabled, FALSE);
+   DoMethod(chk_harddisk2, MUIM_Notify, MUIA_Selected, FALSE, cyc_cus_harddisk2, 3, MUIM_Set, MUIA_Disabled, TRUE);
+   DoMethod(chk_harddisk2, MUIM_Notify, MUIA_Selected, FALSE, grp_cus_harddisk2, 3, MUIM_Set, MUIA_Disabled, TRUE);
 
    DoMethod(but_use, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Use);
    DoMethod(but_saveuse, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_SaveUse);
