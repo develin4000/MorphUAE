@@ -32,6 +32,7 @@ static Object *but_gen_joy1 = NULL;
 static Object *but_gen_floppy = NULL;
 static Object *but_gen_blitter = NULL;
 static Object *but_gen_sprite = NULL;
+static Object *but_gen_framerate = NULL;
 static Object *but_gen_resetmode = NULL;
 
 static Object *but_ocs_chipmem = NULL;
@@ -104,7 +105,8 @@ enum
    ID_PRFS_CUS_DEVNAME1,
    ID_PRFS_CUS_VOLNAME1,
    ID_PRFS_CUS_DEVNAME2,
-   ID_PRFS_CUS_VOLNAME2
+   ID_PRFS_CUS_VOLNAME2,
+   ID_PRFS_GEN_FRAMERATE
 };
 
 
@@ -117,6 +119,7 @@ static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 
 static char *cyc_gen_floppy[]  = { "Normal", "Fast", "Ludicrous", NULL };
 static char *cyc_gen_blitter[]  = { "Off", "On", NULL };
 static char *cyc_gen_sprite[]  = { "None", "Sprites", "Playfields", "Full",  NULL };
+static char *cyc_gen_framerate[] = { "Every one", "Every second one", "Every third one", NULL };
 static char *cyc_gen_resetmode[]  = { "Soft", "Hard", NULL };
 
 APTR cyc_ocs_kickstart, cyc_ocs_kickstartkey;

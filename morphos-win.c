@@ -413,6 +413,7 @@ void reset_tab(unsigned int tab)
          set(but_gen_floppy, MUIA_Cycle_Active, 0);    // Normal
          set(but_gen_blitter, MUIA_Cycle_Active, 0);   // Off - Check this!
          set(but_gen_sprite, MUIA_Cycle_Active, 3);    // Full - Check this!
+         set(but_gen_framerate, MUIA_Cycle_Active, 0); // Every one
          set(but_gen_resetmode, MUIA_Cycle_Active, 0); // Soft!
       }  break;
 
@@ -658,6 +659,8 @@ void setup_generic(void)
    changed_prefs.immediate_blits = val;
    get(but_gen_sprite, MUIA_Cycle_Active, &val);
    changed_prefs.collision_level = val;
+   get(but_gen_framerate, MUIA_Cycle_Active, &val);
+   changed_prefs.gfx_framerate = val+1;
 }
 
 
@@ -1230,8 +1233,7 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
 
    data->eh.ehn_Object = obj;
    data->eh.ehn_Class  = cl;
-   //data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW|IDCMP_MOUSEMOVE|IDCMP_DELTAMOVE|IDCMP_CLOSEWINDOW|IDCMP_REFRESHWINDOW|IDCMP_NEWSIZE;//|IDCMP_INTUITICKS;
-   data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW|IDCMP_MOUSEMOVE|IDCMP_CLOSEWINDOW|IDCMP_REFRESHWINDOW;//|IDCMP_INTUITICKS;
+   data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_MOUSEMOVE;
    data->eh.ehn_Flags  = MUI_EHF_GUIMODE; // Check this... React if the object is active or not...
 
    DoMethod(_win(obj), MUIM_Window_AddEventHandler, &data->eh);
@@ -1410,8 +1412,45 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
             data->MouseX = msg->imsg->IDCMPWindow->MouseX; //msg->Window->IDCMPWindow->MouseX;
             data->MouseY = msg->imsg->IDCMPWindow->MouseY; //IntuiMessage
 
-            //debug_print("%s (%d) - NEW XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
-            //debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
+            //#define DEFAULT_GFX_WIDTH 640
+            //#define DEFAULT_GFX_HEIGHT 512
+
+            //data->MouseX = msg->imsg->MouseX;  // Test
+            //data->MouseY = msg->imsg->MouseY;  // Test
+/*
+            // Begin Test
+
+            //setmousestate (0, 0, data->MouseX, 1); // Test
+            //setmousestate (0, 1, data->MouseY, 1); // Test
+
+            if (_isinobject(dmx, dmy))
+            {
+                  setmousestate (0, 0, msg->imsg->MouseX, 1); //dmx
+                  setmousestate (0, 1, msg->imsg->MouseY, 1); //dmy
+            }
+            else
+            {
+               if (msg->imsg->MouseX < 0)
+                  setmousestate(0, 0, 0, 1);
+               if (msg->imsg->MouseX > 639)
+                  setmousestate(0, 0, 639, 1);
+
+               if (msg->imsg->MouseY < _mtop(obj))
+                  setmousestate(0, 1, _mtop(obj), 1);
+               if (msg->imsg->MouseY > _mtop(obj)+511)
+                  setmousestate(0, 1, _mtop(obj)+511, 1);
+
+               //dmx = (dmx < 0 ? 1 : dmx > 639 ? 639 : dmx);
+               //dmy = (dmy < 0 ? 1 : dmy > 511+_mtop(obj) ? 511+_mtop(obj) : dmy);
+               //setmousestate (0, 0, dmx, 1); //dmx
+               //setmousestate (0, 1, dmy, 1); //dmy
+            }
+            debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->MouseX, msg->imsg->MouseY);
+
+            // End Test
+*/
+            //debug_print("%s (%d) - NEW XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->IDCMPWindow->MouseX, msg->imsg->IDCMPWindow->MouseY);
+            //debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->MouseX, msg->imsg->MouseY);
 
             if (_isinobject(data->MouseX, data->MouseY))
             {
@@ -1419,6 +1458,8 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                //if (data->MouseY < 0) data->MouseY = 0;
                //if (data->MouseX >= 640) data->MouseX = 639;
                //if (data->MouseY >= 512) data->MouseY = 511;
+
+               debug_print("%s (%d) - INSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
 
                if(data->showpointer)
                {
@@ -1436,11 +1477,17 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
             }
             else
             {
+                  //setmousestate (0, 0, data->OldX, 1);
+                  //setmousestate (0, 1, data->OldY, 1);
+
+               debug_print("%s (%d) - OUTSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+
                if(!data->showpointer)
                {
                   set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
                   data->OldX = data->MouseX;
                   data->OldY = data->MouseY;
+
                   setmousestate (0, 0, data->MouseX, 1);
                   setmousestate (0, 1, data->MouseY, 1);
                   //debug_print("%s (%d) -OLD -  XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
@@ -1618,6 +1665,7 @@ static int mui_setup_window(void)
                               MUIA_Window_Title,          "MorphUAE",
                               MUIA_Window_ID,             MAKE_ID('M','U','A','E'),
                               MUIA_Window_AppWindow,      TRUE,
+                              //MUIA_Window_NeedsMouseObject, TRUE,
                               MUIA_Window_DisableKeys,    MUIKEYF_WINDOW_CLOSE,
 
                               WindowContents, VGroup,
@@ -1732,9 +1780,10 @@ static int mui_setup_window(void)
                                            Child, Label1("Joystick Port 1 :"), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                            Child, Label1("Floppy Speed :"), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_gen_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Chipset", MUIA_FixHeight, 8, End,
+                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Graphics", MUIA_FixHeight, 8, End,
                                            Child, Label1("Immediate Blits :"), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_gen_blitter, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
                                            Child, Label1("Sprite Collisions :"), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_gen_sprite, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
+                                           Child, Label1("Framerate :"), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_gen_framerate, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Misc", MUIA_FixHeight, 8, End,
                                            Child, Label1("Reset Type :"), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_gen_resetmode, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
@@ -2016,6 +2065,7 @@ static int mui_setup_window(void)
    setup_generic();
    uae_restarted = TRUE;
    uae_restart (-1, NULL);
+
    set(win_main, MUIA_Window_Open, TRUE);
 
    //valid_kick = uae_get_kick_status();
