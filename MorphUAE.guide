@@ -1,0 +1,515 @@
+@DATABASE "MorphUAE.guide"
+@(c) "2025-2026 Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.0 (15-05-26) by Stefan Blixth, OnyxSoft"
+@INDEX "Index"
+@NODE "Main" "MorphUAE - Documentation"
+@NEXT "intro"
+
+ @{b}MorphUAE 1.0@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
+
+ - User Documentation -
+
+ @{" Introduction " LINK "intro"   } - What is MorphUAE ?
+ @{" Requirements " LINK "req"     } - What does it need to run ?
+ @{" Installation " LINK "install" } - How to install it.
+ 
+ @{" Usage        " LINK "usage"   } - How to use MorphUAE.
+       |
+       +-------- - @{" Main Window  " LINK "usage-main"     }
+       +-------- - @{" Settings     " LINK "usage-settings" }
+       +-------- - @{" CLI / Shell  " LINK "usage-shell"    }
+       +-------- - @{" Ambient      " LINK "usage-ambient"  }
+       +-------- - @{" Hotkeys      " LINK "usage-hotkeys"  }
+       +-------- - @{" ARexx        " LINK "usage-arexx"    }
+
+ @{" FAQ          " LINK "faq"     } - Frequently Asked Questions.
+
+ @{" What's new ? " LINK "news"    } - What is new in this version?
+ @{" History      " LINK "history" } - The history of this program.
+ @{" Future       " LINK "future"  } - What can we see in the crystal-ball?
+ @{" Copyrights   " LINK "copy"    } - Legal mumbo-jumbo..
+
+ @{" Author       " LINK "author"  } - Person behind this program.
+ @{" Thanks to..  " LINK "thanks"  } - My best regards to..
+
+ @{" Donations    " LINK "donate"  } - Show your support for OnyxSoft
+
+@ENDNODE
+
+@NODE "intro" "MorphUAE - Introduction"
+@PREV "main"
+@NEXT "req"
+
+ @{b}@{u}Introduction@{uu}@{ub}
+ 
+ MorphUAE is an enhanced variant of the emulator E-UAE specially made for MorphOS.
+
+ You might think to yourself, isn't there allready a port of E-UAE for MorphOS ?
+ And the answer to that is ofcourse yes, however the version ported done by Fabien Coeurjoly was last updated
+ more than 10 years ago.
+
+ E-UAE is very Un*x-like in it's configuration handling which only consist of textfiles.
+ It also lack MUI-support so it's purely a Intuition window.
+
+ And that was the key idea of the birth of MorphUAE. Add a better and easier user experince with some new features.
+
+@ENDNODE
+
+@NODE "req" "MorphUAE - Requirements"
+@PREV "intro"
+@NEXT "install"
+
+ @{b}@{u}Requirements@{uu}@{ub}
+
+ This program needs some of the following systems to run :
+
+ · MorphOS 2.x or higher
+ · Amiga Kickstart ROMs
+
+@ENDNODE
+
+@NODE "install" "MorphUAE - Installation"
+@PREV "req"
+@NEXT "usage"
+
+ @{b}@{u}Installation@{uu}@{ub}
+
+ This program doesn't need any installation and because of that doesn't come with
+ any form of installer script. Just place it where you want and run it from there! =)
+
+ Place your Amiga Kickstart files in the folder named @{b}Kickstarts@{ub}
+ The default name which the emulator uses for the name here is
+
+ @{b}Kick1.rom@{ub} : OCS based hardware
+ @{b}Kick2.rom@{ub} : ECS based hardware
+ @{b}Kick3.rom@{ub} : AGA based hardware
+ @{b}rom.key@{ub}   : Your AmigaForever/Cloanto keyfile (if you have encrypted ROM files that is)
+
+ However the name can be anything and can be adjusted in the settings window on each machine type.
+ Naming the files as in the list above should get you a running emulator directly withouth any changes.
+
+@ENDNODE
+
+@NODE "usage" "MorphUAE - Usage"
+@PREV "install"
+@NEXT "faq"
+
+ @{b}@{u}Usage@{uu}@{ub}
+
+ This program's user interface consists of a couple of fields/elements,
+ which are briefly explained below...
+
+  @{" Main Window  " LINK "usage-main"     }
+  @{" Settings     " LINK "usage-settings" }
+  @{" CLI / Shell  " LINK "usage-shell"    }
+  @{" Ambient      " LINK "usage-ambient"  }
+  @{" Hotkeys      " LINK "usage-hotkeys"  }
+  @{" ARexx        " LINK "usage-arexx"    }
+
+@ENDNODE
+
+@NODE "usage-main" "MorphUAE - Main Window"
+@PREV "usage"
+@NEXT "usage-settings"
+
+ @{b}· Main window :@{ub}
+
+   The first thing you see when you start the emulator is the main window.
+   This window consist mostly of a render area for the emulated graphics and below that you have a toolbar.
+
+
+ @{b}· Toolbar :@{ub}
+   
+   From this toolbar you can adjust the emulator settings and control the behaviour of it.
+   The toolbar consist of number of clickable symbols which are described below.
+
+
+    @{b}· Settings :@{ub}
+
+      This button will open the settings window where you can adjust the different setups on
+
+
+    @{b}· Reset :@{ub}
+
+      This button will reset the emulator in either an Soft or Hard reset (depending on what you have selected
+      in the settings window on the General tab).
+
+
+    @{b}· Fullscreen :@{ub}
+
+      By pressing this button the emulator opens up a fullscreen window and scale the graphics to fit the full screen.
+      It will remove the toolbar and only show the render data on the window. If you want to revert back to window mode
+      please use the hotkey combination
+
+
+    @{b}· Screenshot :@{ub}
+
+      By pressing this button you will get a screenshot of what is currently rendered in the main window.
+      The saved image will be stored in @{b}RAM:@{ub} named @{b}MorphUAE-Screenshoot.png@{ub}
+
+
+    @{b}· Pause/Resume :@{ub}
+
+      This button will Pause or Resume emulation depending on what current state is.
+      An paused emulation is identified by that the window title is change to @{b}MorphUAE - Paused@{ub}
+
+
+    @{b}· About :@{ub}
+
+      This button will open the About window...
+
+
+    @{b}· Eject Disk Images :@{ub}
+
+      Pressing this will eject all previously added/mounted disk images in DF0-DF3
+
+
+    @{b}· Disk Images / LED indicators :@{ub}
+    
+      Theese buttons represents the disk images and will indicate read/write operations when it's active.
+      They are enumerated from left to right : DF0, DF1, DF2, DF3.
+      Pressing them will open up an ASL-requester where you can select the .ADF-file you want to mount/use on the emulator.
+
+      If you drag'n'drop an ADF-file to the main window, DF0 will add and mount that file to it's container.
+      This can be done if you quickly want to swap disks.
+
+@ENDNODE
+
+@NODE "usage-settings" "MorphUAE - Settings"
+@PREV "usage-main"
+@NEXT "usage-shell"
+
+ @{b}Settings :@{ub}
+
+   This window consist of a number of tabs which you can configure General settings for the emulator or specific ones
+   related to the machine type.
+   
+   All of the configurable tabs have a "Reset to Default" button if you want to get back to originat state of the settings.
+
+    @{b}· General tab :@{ub}
+
+      The @{b}Machine Type@{ub} button let you select which of the tabs that shall be the default emulated machine when it start up.
+      Each of the selected tabs have options to select Kickstart ROM and other machine specific parameters.
+      This selection can be overrided by using CLI/Shell flags if needed.
+
+     @{b} Sound section@{ub} will let you configure the output quality of the emulated sound or even disable it completely.
+
+     @{b} I/O Devices@{ub} Lets you select which type of emulated device that shall be connected to the Mouse/Joystick port
+      Here you can also set the emulated floppy drive speed. Some games/demos might have issues with faster
+      speed higher than normal hence this might be a good thing to try if issues would occure.
+
+     @{b} Graphics section@{ub} Here you can alter how precise the emulated graphics shall be presented.
+      If your machine struggles with graphics intensive parts that result in choppy sound or general slugginess, this might
+      be a good "playground" to change it for a better result.
+
+
+
+    @{b}· OCS tab :@{ub}
+     This machine type is intended to emulate the first generations of Amiga with OCS chipset, lower memory fotprint and Kickstart 1.x ROM.
+     Typical machine here is A500/A1000/A2000 (MC68000)
+
+
+    @{b}· ECS tab :@{ub}
+     This machine type is very similar to the OCS settings but configuration is using the ECS chipset (which where you can select
+     if you want ECS Agnus, Denise or both emulated. Kickstart 2.x ROM, typical machine A500+/A600 (MC68000).
+
+
+    @{b}· AGA tab :@{ub}
+    This is the last generation of Amigas using AGA chipset and default 2Mb CHIP RAM with optional 1-8 Mb FAST RAM. Kickstart 3.x ROM
+    Typical machine A1200. (MC68020)
+
+
+    @{b}· Custom tab :@{ub}
+
+    In this machine type you can pretty much customize your emulated machine to be what ever you like.
+    You can add up to 2 virtual harddisks (a path to your host OS where files can be easily copied from and to).
+    Device and Volume name will be used in the emulated environment.
+    You can select which emulated CPU is going to be used (68020, 68040 or 68060).
+    There is also an option to turn of PPC JIT Compiler with different amount of caches, this option can cause issues during emulation but also
+    boost emulation speeds a huge bit, This is very much depended of what type of binaries/software that is used during the emulation.
+    
+
+   @{b}· About tab :@{ub}
+
+   Here you can see the software version/revision and credits.
+
+
+   @{b}·Use, Save or Cancel buttons :@{ub}
+
+     @{b}Use@{ub} button will store all settings in ENV: and restart the emulator with the new settings...
+
+     @{b}Save & Use@{ub} button stores all settings in both ENV and ENVARC and restart the emulator with the new settings.
+
+     @{b}Save@{ub} button stores the settings to ENVARC: and uses it next reboot of the system
+
+     @{b}Cancel@{ub} button just closes the settings window
+
+
+@ENDNODE
+
+@NODE "usage-shell" "MorphUAE - CLI / Shell"
+@PREV "usage-settings"
+@NEXT "usage-ambient"
+
+ @{b}CLI/Shell :@{ub}
+
+    @{b}-ocs@{ub} : Will override the default settings and use what is setup under the @{b}OCS tab@{ub} in the settings window.
+    @{b}-ecs@{ub} : Will override the default settings and use what is setup under the @{b}ECS tab@{ub} in the settings window.
+    @{b}-aga@{ub} : Will override the default settings and use what is setup under the @{b}AGA tab@{ub} in the settings window.
+    @{b}-custom@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
+    @{b}-nochecksum@{ub} : This will ignore the checksum control of the Kickstart/ROM file, some homebrew ROM's doesn't work otherwise like diagnostic ROMs.
+
+    @{b}-0 <ADF file>@{ub} : Insert an ADF disk image on DF0: at startup.
+    @{b}-1 <ADF file>@{ub} : Insert an ADF disk image on DF1: at startup.
+
+@ENDNODE
+
+@NODE "usage-ambient" "MorphUAE - Ambient"
+@PREV "usage-shell"
+@NEXT "usage-hotkeys"
+
+ @{b}Ambient :@{ub}
+
+   If you want to automatically start and load an ADF disk image in Ambient on MorphOS you can go to the Settings menu in Ambient.
+
+   Settings
+      |
+      +- Ambient...
+
+   In the settings, locate the "Mime" option in the left panel.
+   Search for 'adf' when you see the x-adf type double click on this.
+
+   · Add a new event type, name it something suitable.
+   · Change the type to @{b}AmigaDOS@{ub}
+   · Set the event type to : DoubleClick
+   · Check the option "Change working directory to destination"
+   
+   · Add following string to the field : @{b}run >NIL: Work:Emulators/MorphUAE/MorphUAE -0 %sp@{ub}
+     The above string you will have to change to the location where you have MorphUAE located, this is just an example.
+
+@ENDNODE
+
+@NODE "usage-hotkeys" "MorphUAE - Hotkeys"
+@PREV "usage-ambient"
+@NEXT "usage-arexx"
+
+ There are hotkeys associated to the toolbar in the main window and 
+
+ @{b}· Toolbar hotkeys :@{ub}
+
+    · Reset : @{b}ctrl+lalt+r@{ub}
+    · Fullscreen/Window toggle : @{b}lalt+enter@{ub}
+    · Screenshoot : @{b}ctrl+lalt+s@{ub}
+    · Pause/Resume : @{b}ctrl+lalt+p@{ub}
+    · Eject Disk Images : @{b}ctrl+lalt+e@{ub}
+    · Insert DF0 Image : @{b}ctrl+lalt+1@{ub}
+    · Insert DF1 Image : @{b}ctrl+lalt+2@{ub}
+    · Insert DF2 Image : @{b}ctrl+lalt+3@{ub}
+    · Insert DF3 Image : @{b}ctrl+lalt+4@{ub}
+
+ @{b}· Other hotkeys :@{ub}
+
+    · Toggle the toolbar on / off : @{b}ctrl+lalt+t@{ub}
+    · Quit the emulator : @{b}ctrl+lalt+q@{ub}
+
+@ENDNODE
+
+@NODE "usage-arexx" "MorphUAE - ARexx"
+@PREV "usage-hotkeys"
+@NEXT "faq"
+
+ @{b}ARexx :@{ub}
+
+   · Not yet implemented...
+
+@ENDNODE
+
+
+@NODE "faq" "MorphUAE - FAQ"
+@PREV "usageprefs"
+@NEXT "news"
+
+@{b}@{u}FAQ - Frequently Asked Questions@{uu}@{ub}
+
+* @{b}Q = Question@{ub}
+* @{b}A = Answer@{ub}
+
+-------------------------------------------------------------------------------------
+Q - Where can I find Amiga ROM files ?
+
+A - Easiest way is to buy a licence from www.amigaforever.com
+    The cheapest way is to obtain them for Android (via Google Play) :
+    https://play.google.com/store/apps/details?id=com.cloanto.amigaforever.essentials
+
+    If you allready have a real Amiga you can dump the content of the kickstart
+    directly from that and use it in the emulator. There are several tools on
+    Aminet for this purpose.
+--------------------------------------------------------------------------------------
+
+
+@ENDNODE
+
+@NODE "news" "MorphUAE - What's new?"
+@PREV "usage"
+@NEXT "history"
+
+ @{b}@{u}What's new@{uu}@{ub}
+
+ · First public release of MorphUAE (1.0)
+
+
+@ENDNODE
+
+@NODE "history" "MorphUAE - History"
+@PREV "news"
+@NEXT "future"
+
+ @{b}@{u}History@{uu}@{ub}
+
+ · 01-Jul-2026
+
+   * First public release of MorphUAE (1.0)
+
+
+@ENDNODE
+
+@NODE "future" "MorphUAE - Future"
+@PREV "history"
+@NEXT "copy"
+
+ @{b}@{u}Future@{uu}@{ub}
+
+ · ARexx support
+ · TinyGL support
+ · Integrate newer emulation core from WinUAE and or Amiberry
+
+ · ... Suggestions are welcome =)
+
+@ENDNODE
+
+@NODE "copy" "MorphUAE - Copyright & Disclaimer"
+@PREV "future"
+@NEXT "author"
+
+ @{b}@{u}Copyright and Disclaimer@{uu}@{ub}
+
+ MorphUAE is totally free (FreeWare) but @{"donations" LINK "donate"} are always welcome.
+ If you like the program the @{"author" LINK "author"} would be very glad if
+ you would send him an e-mail or a postcard to tell him so... ;-)
+
+ Permission is granted to make and distribute verbatim copies of this 
+ program provided the copyright notice and this permission notice are 
+ preserved on all copies.
+
+ No guarantee of any kind is given that the programs described in this 
+ document are 100% reliable. You are using this material at your own risk. 
+ The author cannot be held responsible for any damage that is caused by 
+ using this program.
+
+ This package is freely distributable, but the copyrights still apply. 
+ This means that you can copy it freely as long as you don't ask for more 
+ than a nominal copying fee.
+
+ Permission is granted to include this package in Public-Domain collections,
+ Aminet (CD's) etc. etc. The package may be uploaded to Bulletin-
+ Board-Systems or FTP servers.
+ 
+@ENDNODE
+
+@NODE "author" "MorphUAE - About the author"
+@PREV "copy"
+@NEXT "thanks"
+
+ @{b}@{u}About the author@{uu}@{ub}
+
+ My name is Stefan Blixth, and I'm a programmer/electrical engineer from Karlstad, Sweden.
+
+ If you would like to contact me about this program (or any other program I've done),
+ the best way is to do so by e-mail.
+ So if you have any comments, found any bugs or have a complaint, don't hesitate to
+ use one of the following addresses :
+
+ Personal e-mail : @{b}stefan@onyxsoft.se@{ub}
+
+ If you would like to send me a postcard, my address is :
+
+ @{b}Stefan Blixth
+ Spånga 433
+ 655 94 Karlstad
+ Sweden@{ub}
+
+ If you are interested in more programs by me and/or the rest of the team.
+ You can find the complete OnyxSoft software library at the following URL :
+
+ @{b}www.onyxsoft.se@{ub}
+
+
+@ENDNODE
+
+@NODE "thanks" "MorphUAE - Thanks to.."
+@PREV "author"
+@NEXT "donate"
+
+ @{b}@{u}Thanks to@{uu}@{ub}
+
+ I'd like to thank the following people/groups for making it possible for me to create this program.
+
+ MorphOS Team......................... For creating the best system there is, I love it!
+
+ Fram 'cyfm' Mariak................... For helping me out with CyberGraphix issues for the fullscreen mode and much more!
+
+ Dave 'skateman' Koelman.............. For letting me be part of the "Mirari family" which sparked my coding passion again =)
+
+ Grzegorz Kraszewski.................. For the Reggae framework which is used for saving the screenshoot graphics.
+
+ Stefan Stuntz........................ For the superb Magic User Interface (MUI).
+
+@ENDNODE
+
+@NODE "donate" "MorphUAE - Donations"
+@PREV "thanks"
+
+ @{b}@{u}Donations are welcome@{uu}@{ub}
+
+ We at OnyxSoft have been releasing freeware applications since 1995 and are still going strong
+ with the greatest enthusiasm, and ambitions for the future of the Amiga-like platform(s).
+
+ This is of course something we would like to continue to do in the future.
+ All our titles are totally free of charge without any crippled functions, etc.
+
+ We have now established a PayPal account, as many users asked us how they could donate
+ money to us (to motivate us even more, and keep the software releases "flowing").
+
+ To send us donations, please use the following e-mail : @{b}donate@onyxsoft.se@{ub}
+
+
+ Thank you for your support!
+
+
+@ENDNODE
+
+@NODE "Index" "Index of this documentation"
+
+ @{b}@{u}Index (A-Z)@{uu}@{ub}
+
+ @{" Author               " LINK "author"         }
+ @{" Copyright            " LINK "copy"           }
+ @{" Donations            " LINK "donate"         }
+ @{" FAQ                  " LINK "faq"            }
+ @{" Features             " LINK "intro"          }
+ @{" Future               " LINK "future"         }
+ @{" History              " LINK "history"        }
+ @{" Installation         " LINK "install"        }
+ @{" Introduction         " LINK "intro"          }
+ @{" Main-page            " LINK "main"           }
+ @{" Requirements         " LINK "req"            }
+ @{" Thanks to..          " LINK "thanks"         }
+ @{" Usage                " LINK "usage"          }
+ @{" Usage - Main Window  " LINK "usage-main"     }
+ @{" Usage - Settings     " LINK "usage-settings" } 
+ @{" Usage - CLI / Shell  " LINK "usage-shell"    }
+ @{" Usage - Ambient      " LINK "usage-ambient"  }
+ @{" Usage - Hotkeys      " LINK "usage-hotkeys"  }
+ @{" Usage - ARexx        " LINK "usage-arexx"    }
+ @{" What's new ?         " LINK "news"           }
+@ENDNODE

@@ -52,7 +52,7 @@ static Object *but_cus_chipmem = NULL;
 static Object *but_cus_fastmem = NULL;
 static Object *but_cus_zorromem = NULL;
 
-static const char *Pages[]   = { "General", "OCS", "ECS", "AGA", "Custom", "About", NULL };
+static const char *Pages[]   = { "General", "OCS", "ECS", "AGA", "Custom", NULL };
 
 // Enumerated Objects...
 enum

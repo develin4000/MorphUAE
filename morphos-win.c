@@ -28,6 +28,11 @@
   * Resume SVG Vector
   * (c) radix-ui
   * https://www.svgrepo.com/svg/361583/resume
+  *
+  * About SVG Vector
+  * (c) Siemens
+  * https://www.svgrepo.com/svg/486929/about
+  *
   */
 
 #include "sysconfig.h"
@@ -101,7 +106,7 @@
 #define DATE     __AMIGADATE__
 #define VSTRING  VERS" ("DATE") "
 
-#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n\n \33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n\ Bernd Schmidt, original UAE \n\ Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui"
+#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n\n \33nThe Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n\ Bernd Schmidt, original UAE \n\ Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens"
 
 /****************************************************************************/
 
@@ -221,6 +226,7 @@ static ULONG Name##_Dispatcher(void) { struct IClass *cl=(struct IClass*)REG_A0;
 static Object *app             = NULL;  // MUI-Application object
 static Object *win_main        = NULL;  // MUI-Window object
 static Object *win_settings    = NULL;  // Window object
+static Object *win_about       = NULL;  // Window object
 static Object *obj_rendermcc   = NULL;  // Render object
 struct Object *btn_settings    = NULL;
 struct Object *btn_camera      = NULL;
@@ -228,6 +234,7 @@ struct Object *btn_reset       = NULL;
 struct Object *btn_eject       = NULL;
 struct Object *btn_fullscreen  = NULL;
 struct Object *btn_pauseresume = NULL;
+struct Object *btn_about       = NULL;
 struct Object *grp_toolbar     = NULL;
 struct Object *ctm_reset       = NULL;
 struct Object *ctm_eject       = NULL;
@@ -1318,7 +1325,9 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
 
                //ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 1, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff); //RECTFMT_ARGB); //0xFFFFFFFF);
             else
+            {
                ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 0, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff);//RECTFMT_ARGB); //0xFFFFFFFF);
+            }
          }
          else if (data->render_state == MUIV_ScreenShoot)
          {
@@ -1459,7 +1468,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                //if (data->MouseX >= 640) data->MouseX = 639;
                //if (data->MouseY >= 512) data->MouseY = 511;
 
-               debug_print("%s (%d) - INSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+               //debug_print("%s (%d) - INSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
 
                if(data->showpointer)
                {
@@ -1480,7 +1489,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                   //setmousestate (0, 0, data->OldX, 1);
                   //setmousestate (0, 1, data->OldY, 1);
 
-               debug_print("%s (%d) - OUTSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+               //debug_print("%s (%d) - OUTSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
 
                if(!data->showpointer)
                {
@@ -1721,6 +1730,15 @@ static int mui_setup_window(void)
                                        MUIA_Rawimage_Data, gfx_resume,
                                     End,
 
+                                    Child, btn_about = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_None, //MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, "About MorphUAE",
+                                       MUIA_Rawimage_Data, gfx_about,
+                                    End,
+
                                     Child, HVSpace,
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
@@ -1734,6 +1752,38 @@ static int mui_setup_window(void)
                                     Child, obj_LEDmcc[1] = NewObject(LED_mcc[1]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF1\nHotkey : \33bctrl+lalt+2", TAG_DONE),
                                     Child, obj_LEDmcc[2] = NewObject(LED_mcc[2]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF2\nHotkey : \33bctrl+lalt+3", TAG_DONE),
                                     Child, obj_LEDmcc[3] = NewObject(LED_mcc[3]->mcc_Class, NULL, NoFrame, MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0, MUIA_ShortHelp, "Insert Diskimage on DF3\nHotkey : \33bctrl+lalt+4", TAG_DONE),
+                                 End,
+                              End,
+                           End,
+
+                           SubWindow, win_about = WindowObject,
+                              MUIA_Frame,                 MUIV_Frame_Window,
+                              MUIA_Window_Borderless,     FALSE,
+                              MUIA_Window_CloseGadget,    TRUE,
+                              MUIA_Window_DepthGadget,    TRUE,
+                              MUIA_Window_SizeGadget,     TRUE,
+                              MUIA_Window_DragBar,        TRUE,
+                              MUIA_Window_Title,          "About MorphUAE",
+                              MUIA_Window_ID,             MAKE_ID('A','U','A','E'),
+                              MUIA_Window_AppWindow,      FALSE,
+
+                              WindowContents, VGroup,
+                                 Child, RawimageObject,
+                                    MUIA_DoubleBuffer, 0,
+                                    MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                    MUIA_Frame, MUIV_Frame_None,
+                                    MUIA_Rawimage_Data, small_logo,
+                                 End,
+                                 Child, TextObject, NoFrame,
+                                    MUIA_Weight, 0,
+                                    MUIA_Text_PreParse, "\33c",
+                                    MUIA_Text_Contents, ABOUTSTR, //about_text,
+                                 End,
+                                 Child, VSpace(0),
+                                 Child, TextObject, NoFrame,
+                                    MUIA_Weight, 0,
+                                    MUIA_Text_PreParse, "\33c",
+                                    MUIA_Text_Contents, "Amiga are trademark of Amiga Corporation",
                                  End,
                               End,
                            End,
@@ -1945,25 +1995,6 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
-                                     Child, VGroup,  // About Tab
-                                        Child, RawimageObject,
-                                           MUIA_DoubleBuffer, 0,
-                                           MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
-                                           MUIA_Frame, MUIV_Frame_None,
-                                           MUIA_Rawimage_Data, small_logo,
-                                        End,
-                                        Child, TextObject, NoFrame,
-                                           MUIA_Weight, 0,
-                                           MUIA_Text_PreParse, "\33c",
-                                           MUIA_Text_Contents, ABOUTSTR, //about_text,
-                                        End,
-                                        Child, VSpace(0),
-                                        Child, TextObject, NoFrame,
-                                           MUIA_Weight, 0,
-                                           MUIA_Text_PreParse, "\33c",
-                                           MUIA_Text_Contents, "Amiga are trademark of Amiga Corporation",
-                                        End,
-                                     End,
                                   End,
                                   Child, HGroup,
                                      Child, but_use = TextObject, ButtonFrame,
@@ -2036,6 +2067,10 @@ static int mui_setup_window(void)
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt p", obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt s", obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
+
+
+   DoMethod(btn_about, MUIM_Notify, MUIA_Pressed, FALSE, win_about, 3, MUIM_Set, MUIA_Window_Open, TRUE);
+   DoMethod(win_about, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_about, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
    DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, win_settings, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_settings, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_settings, 3, MUIM_Set, MUIA_Window_Open, FALSE);
