@@ -1662,6 +1662,7 @@ static int mui_setup_window(void)
                            MUIA_Application_Description    , "MorphUAE",
                            MUIA_Application_Base           , "MorphUAE",
                            MUIA_Application_DiskObject     , morphuae_icon,
+                           MUIA_Application_HelpFile       , "PROGDIR:MorphUAE.guide",
                            MUIA_Application_UseCommodities , FALSE,
 
                            SubWindow, win_main = WindowObject,
