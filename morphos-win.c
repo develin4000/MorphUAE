@@ -252,6 +252,7 @@ struct RenderData
    BOOL showpointer;
    BOOL FullScreen;
    BOOL ToolBar;
+   BOOL Iconified;
    struct Window *window;
    struct Screen *screen, *ogscreen;
    ULONG modeid;
@@ -287,19 +288,20 @@ struct RenderData
 #define MUIA_Render_State       (TAGBASE_DEVELIN | 0x0007)
 
 // Initial setup...
-#define MUIV_TestTrigger        (TAGBASE_DEVELIN | 0x0008)
-#define MUIV_InitGraphics       (TAGBASE_DEVELIN | 0x0009)
-#define MUIV_InitColours        (TAGBASE_DEVELIN | 0x000a)
-#define MUIV_CleanupGraphics    (TAGBASE_DEVELIN | 0x000b)
+#define MUIV_Iconified          (TAGBASE_DEVELIN | 0x0008)
+#define MUIV_UnIconified        (TAGBASE_DEVELIN | 0x0009)
+#define MUIV_InitGraphics       (TAGBASE_DEVELIN | 0x000a)
+#define MUIV_InitColours        (TAGBASE_DEVELIN | 0x000b)
+#define MUIV_CleanupGraphics    (TAGBASE_DEVELIN | 0x000c)
 
 // Mouse pointers...
-#define MUIV_ShowPointer        (TAGBASE_DEVELIN | 0x000c)
-#define MUIV_HidePointer        (TAGBASE_DEVELIN | 0x000d)
+#define MUIV_ShowPointer        (TAGBASE_DEVELIN | 0x000d)
+#define MUIV_HidePointer        (TAGBASE_DEVELIN | 0x000e)
 
 // Render flushes...
-#define MUIV_FlushLineCGX       (TAGBASE_DEVELIN | 0x000e)
-#define MUIV_FlushBlockCGX      (TAGBASE_DEVELIN | 0x000f)
-#define MUIV_ScreenShoot        (TAGBASE_DEVELIN | 0x0010)
+#define MUIV_FlushLineCGX       (TAGBASE_DEVELIN | 0x000f)
+#define MUIV_FlushBlockCGX      (TAGBASE_DEVELIN | 0x0010)
+#define MUIV_ScreenShoot        (TAGBASE_DEVELIN | 0x0011)
 //#define MUIV_FlushBlockOverlay  (TAGBASE_DEVELIN | 0x0011)
 #define MUIV_FlushClearScreen   (TAGBASE_DEVELIN | 0x0012)
 
@@ -342,6 +344,7 @@ struct RenderData
 #define MUIV_Settings_SaveUse  7
 #define MUIV_Settings_Save     8
 #define MUIV_Settings_Cancel   9
+
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
@@ -787,6 +790,7 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->showpointer = TRUE;
    data->FullScreen = FALSE;
    data->ToolBar = TRUE;
+   data->Iconified = FALSE;
 
    data->BitMap = NULL;
    data->Buffer = NULL;
@@ -1135,7 +1139,27 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                if (tag->ti_Data == MUIV_CleanupGraphics)
                {
                   closepseudodevices ();
-               }  break;
+               }
+               else if (tag->ti_Data == MUIV_Iconified)
+               {
+                  debug_print("%s (%d) - Application Iconified!\n", __func__, __LINE__);
+                  data->Iconified = TRUE;
+               }
+               else if (tag->ti_Data == MUIV_UnIconified)
+               {
+                 if (uae_get_state() == UAE_STATE_PAUSED)
+                 {
+                    //reset_drawing ();
+                    uae_resume();
+                    //reset_drawing ();
+                    //redraw_frame(); //reset_drawing ();
+                    //reset_drawing ();
+                    uae_pause();
+                    // Force redraw to get some graphics visible...
+                 }
+                 debug_print("%s (%d) - Application UnIconified!\n", __func__, __LINE__);
+                 data->Iconified = FALSE;
+               } break;
             case MUIA_Settings_Adjust :
                if (tag->ti_Data == MUIV_Reset_General)
                   reset_tab(ID_BUT_GEN_RESET);
@@ -2034,6 +2058,9 @@ static int mui_setup_window(void)
       return 0;
    }
 
+   DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, TRUE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_Iconified);
+   DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_UnIconified);
+
    DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
    DoMethod(win_main, MUIM_Notify, MUIA_AppMessage, MUIV_EveryTime, win_main, 3, MUIM_CallHook, &AppMsg_hook, MUIV_TriggerValue);
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl lalt r", obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Soft);
@@ -2068,7 +2095,6 @@ static int mui_setup_window(void)
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt p", obj_rendermcc, 3, MUIM_Set, MUIA_Control_UAE, MUIV_Control_UAE_Toggle);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_InputEvent, "ctrl alt s", obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
-
 
    DoMethod(btn_about, MUIM_Notify, MUIA_Pressed, FALSE, win_about, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_about, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_about, 3, MUIM_Set, MUIA_Window_Open, FALSE);
