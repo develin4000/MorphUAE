@@ -36,6 +36,9 @@ static Object *but_gen_sprite = NULL;
 static Object *but_gen_framerate = NULL;
 static Object *but_gen_resetmode = NULL;
 
+static Object *but_tmp_joy0 = NULL;
+static Object *but_tmp_joy1 = NULL;
+
 static Object *but_ocs_chipmem = NULL;
 static Object *but_ocs_fastmem = NULL;
 
@@ -116,8 +119,10 @@ static char *cyc_gen_machine[]   = { "OCS", "ECS", "AGA", "Custom", NULL };
 static char *cyc_gen_sound[]   = { "None", "Interrupts", "Normal", "Exact", NULL };
 static char *cyc_gen_channels[]   = { "Mono", "Stereo", "Mixed", NULL };
 static char *cyc_gen_frequency[]   = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", NULL };
-static char *cyc_gen_joy0[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
-static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
+static char *cyc_gen_joy0[]   = { "Mouse", "Joystick 0", "Joystick 1", NULL };
+static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0", "Joystick 1", NULL };
+//static char *cyc_gen_joy0[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keyboard 3", NULL };
+//static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keyboard 3", NULL };
 static char *cyc_gen_floppy[]  = { "Normal", "Fast", "Ludicrous", NULL };
 static char *cyc_gen_language[] = { "US / UK (Default)", "DK - Danish", "DE - German", "SE - Swedish", "FR - French", "IT - Italian", "ES - Spanish", NULL };
 static char *cyc_gen_blitter[]  = { "Off", "On", NULL };

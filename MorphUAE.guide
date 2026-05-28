@@ -159,6 +159,12 @@
       This button will open the About window...
 
 
+    @{b}· Joystick port 0 & 1 Selector:@{ub}
+
+      Here you can change the emulated joystick port during the runtime of the emulation.
+      See it like you virtually swapping out the mouse with a joystick or vice versa.
+
+
     @{b}· Eject Disk Images :@{ub}
 
       Pressing this will eject all previously added/mounted disk images in DF0-DF3

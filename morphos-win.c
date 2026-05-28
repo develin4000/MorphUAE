@@ -346,6 +346,9 @@ struct RenderData
 #define MUIV_Settings_Save      8
 #define MUIV_Settings_Cancel    9
 
+#define MUIA_Runtime_Port0     (TAGBASE_DEVELIN | 0x0040)
+#define MUIA_Runtime_Port1     (TAGBASE_DEVELIN | 0x0041)
+
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
@@ -659,8 +662,10 @@ void setup_generic(void)
 
    // IO Devices...
    get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
+   set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
    changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : jpos == 2 ? 101 : jpos == 3 ? 0 : jpos == 4 ? 1 : 2);
    get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
+   set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
    changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : jpos == 2 ? 101 : jpos == 3 ? 0 : jpos == 4 ? 1 : 2);
    get(but_gen_floppy, MUIA_Cycle_Active, &jpos);
    changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
@@ -1194,6 +1199,20 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else // MUIV_Settings_Cancel
                   set(win_settings, MUIA_Window_Open, FALSE);
                break;
+
+            case MUIA_Runtime_Port0 :
+            {
+               LONG tmpp = tag->ti_Data;
+               changed_prefs.jport0 = (tmpp == 0 ? 200 : tmpp == 1 ? 100 : tmpp == 2 ? 101 : tmpp == 3 ? 0 : tmpp == 4 ? 1 : 2);
+               inputdevice_updateconfig (&changed_prefs);
+            } break;
+
+            case MUIA_Runtime_Port1 :
+            {
+               LONG tmpp = tag->ti_Data;
+               changed_prefs.jport1 = (tmpp == 0 ? 200 : tmpp == 1 ? 100 : tmpp == 2 ? 101 : tmpp == 3 ? 0 : tmpp == 4 ? 1 : 2);
+               inputdevice_updateconfig (&changed_prefs);
+            } break;
 
             case MUIA_Control_UAE :
                if (tag->ti_Data == MUIV_Control_UAE_Toggle)
@@ -1764,6 +1783,9 @@ static int mui_setup_window(void)
                                     End,
 
                                     Child, HVSpace,
+                                    Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                    Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                    Child, HVSpace,
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
@@ -2058,6 +2080,9 @@ static int mui_setup_window(void)
 
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, TRUE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_Iconified);
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_UnIconified);
+
+   DoMethod(but_tmp_joy0, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port0, MUIV_TriggerValue);
+   DoMethod(but_tmp_joy1, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port1, MUIV_TriggerValue);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
    DoMethod(win_main, MUIM_Notify, MUIA_AppMessage, MUIV_EveryTime, win_main, 3, MUIM_CallHook, &AppMsg_hook, MUIV_TriggerValue);
