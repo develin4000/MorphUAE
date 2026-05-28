@@ -30,6 +30,7 @@ static Object *but_gen_frequency = NULL;
 static Object *but_gen_joy0 = NULL;
 static Object *but_gen_joy1 = NULL;
 static Object *but_gen_floppy = NULL;
+static Object *but_gen_language = NULL;
 static Object *but_gen_blitter = NULL;
 static Object *but_gen_sprite = NULL;
 static Object *but_gen_framerate = NULL;
@@ -106,7 +107,8 @@ enum
    ID_PRFS_CUS_VOLNAME1,
    ID_PRFS_CUS_DEVNAME2,
    ID_PRFS_CUS_VOLNAME2,
-   ID_PRFS_GEN_FRAMERATE
+   ID_PRFS_GEN_FRAMERATE,
+   ID_PRFS_GEN_LANGUAGE
 };
 
 
@@ -117,6 +119,7 @@ static char *cyc_gen_frequency[]   = { "11025 Hz", "22050 Hz", "44100 Hz", "4800
 static char *cyc_gen_joy0[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
 static char *cyc_gen_joy1[]   = { "Mouse", "Joystick 0","Joystick 1", "Keyboard 1", "Keyboard 2", "Keayboard 3", NULL };
 static char *cyc_gen_floppy[]  = { "Normal", "Fast", "Ludicrous", NULL };
+static char *cyc_gen_language[] = { "US / UK (Default)", "DK - Danish", "DE - German", "SE - Swedish", "FR - French", "IT - Italian", "ES - Spanish", NULL };
 static char *cyc_gen_blitter[]  = { "Off", "On", NULL };
 static char *cyc_gen_sprite[]  = { "None", "Sprites", "Playfields", "Full",  NULL };
 static char *cyc_gen_framerate[] = { "Every one", "Every second one", "Every third one", NULL };

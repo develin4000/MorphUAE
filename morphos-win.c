@@ -422,6 +422,7 @@ void reset_tab(unsigned int tab)
          set(but_gen_joy0, MUIA_Cycle_Active, 0);      // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);      // Joy1
          set(but_gen_floppy, MUIA_Cycle_Active, 0);    // Normal
+         set(but_gen_language, MUIA_Cycle_Active, 0);  // US / UK (Default)
          set(but_gen_blitter, MUIA_Cycle_Active, 0);   // Off - Check this!
          set(but_gen_sprite, MUIA_Cycle_Active, 3);    // Full - Check this!
          set(but_gen_framerate, MUIA_Cycle_Active, 0); // Every one
@@ -663,6 +664,8 @@ void setup_generic(void)
    changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : jpos == 2 ? 101 : jpos == 3 ? 0 : jpos == 4 ? 1 : 2);
    get(but_gen_floppy, MUIA_Cycle_Active, &jpos);
    changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
+   get(but_gen_language, MUIA_Cycle_Active, &jpos);
+   changed_prefs.keyboard_lang = jpos;
 
    // Chipset...
    get(but_gen_blitter, MUIA_Cycle_Active, &val);
@@ -1848,6 +1851,7 @@ static int mui_setup_window(void)
                                            Child, Label1("Joystick Port 0 :"), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
                                            Child, Label1("Joystick Port 1 :"), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                            Child, Label1("Floppy Speed :"), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_gen_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
+                                           Child, Label1("Keyboard Layout :"), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_gen_language, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, "Graphics", MUIA_FixHeight, 8, End,
                                            Child, Label1("Immediate Blits :"), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_gen_blitter, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,

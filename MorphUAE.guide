@@ -344,6 +344,15 @@ A - Easiest way is to buy a licence from www.amigaforever.com
     If you allready have a real Amiga you can dump the content of the kickstart
     directly from that and use it in the emulator. There are several tools on
     Aminet for this purpose.
+
+
+Q - Can I use P96 driver for RTG software with MorphUAE ?
+
+A - No, not at this point.
+    The main idea behind this emulator is to have compability with games & demos
+    back from the Amiga days. Apart from that, system friendly RTG programs runs
+    straight into MorphOS directly so there is nothing really to gain with adding
+    this into the emulator. Maybe one day but it's not at all on the prio list.
 --------------------------------------------------------------------------------------
 
 
@@ -442,7 +451,8 @@ A - Easiest way is to buy a licence from www.amigaforever.com
  You can find the complete OnyxSoft software library at the following URL :
 
  @{b}www.onyxsoft.se@{ub}
-
+ 
+ ...And my open source projects on following page : @{b}github.com/develin4000@{ub}
 
 @ENDNODE
 
@@ -456,7 +466,7 @@ A - Easiest way is to buy a licence from www.amigaforever.com
 
  MorphOS Team......................... For creating the best system there is, I love it!
 
- Fram 'cyfm' Mariak................... For helping me out with CyberGraphix issues for the fullscreen mode and much more!
+ Fram 'cyfm' Mariak................... For helping me out with CyberGraphX issues for the fullscreen mode and much more!
 
  Dave 'skateman' Koelman.............. For letting me be part of the "Mirari family" which sparked my coding passion again =)
 
