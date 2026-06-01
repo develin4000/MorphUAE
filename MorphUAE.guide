@@ -63,7 +63,8 @@
 
  This program needs following to run :
 
- · MorphOS 2.x or higher
+ · MorphOS 3.x or higher
+ · TrueColour / 24Bit graphics
  · Amiga Kickstart ROMs
 
 @ENDNODE
@@ -350,6 +351,11 @@ A - Easiest way is to buy a licence from www.amigaforever.com
     If you allready have a real Amiga you can dump the content of the kickstart
     directly from that and use it in the emulator. There are several tools on
     Aminet for this purpose.
+
+
+Q - The render window does not have the correct colours and the graphics looks strange ?
+
+A - This emulator NEEDS 24bit resolution to be able to work as intended.
 
 
 Q - Can I use P96 driver for RTG software with MorphUAE ?
