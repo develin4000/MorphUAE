@@ -224,12 +224,12 @@ Chipminne :
 ;
 MSG_SETTINGS_FASTMEM (43//)
 Fast Memory :
-Snabbt minne :
+Fast-minne :
 
 ;
 MSG_SETTINGS_ZORROMEM (44//)
 Zorro3 Memory :
-Zorro3 minne :
+Zorro3-minne :
 
 ;
 MSG_SETTINGS_VHD1 (45//)
@@ -300,5 +300,190 @@ Misc
 MSG_SETTINGS_VHDPATH (58//)
 Please select a folder for your virtual harddisk...
 Välj en mapp för din virtuella hårddisk...
+
+;
+MSG_CYC_JPORT_0 (59//)
+Mouse
+Mus
+
+;
+MSG_CYC_JPORT_1 (60//)
+Joystick 0
+Joystick 0
+
+;
+MSG_CYC_JPORT_2 (61//)
+Joystick 1
+Joystick 1
+
+;
+MSG_CYC_SOUNDOUT_0 (62//)
+None
+Ingen
+
+;
+MSG_CYC_SOUNDOUT_1 (63//)
+Interrupts
+Interrupt
+
+;
+MSG_CYC_SOUNDOUT_2 (64//)
+Normal
+Normal
+
+;
+MSG_CYC_SOUNDOUT_3 (65//)
+Exact
+Exakt
+
+;
+MSG_CYC_SOUNDCHAN_0 (66//)
+Mono
+Mono
+
+;
+MSG_CYC_SOUNDCHAN_1 (67//)
+Stereo
+Stereo
+
+;
+MSG_CYC_SOUNDCHAN_2 (68//)
+Mixed
+Mixade
+
+;
+MSG_CYC_FLOPPY_0 (69//)
+Normal
+Normal
+
+;
+MSG_CYC_FLOPPY_1 (70//)
+Fast
+Snabb
+
+;
+MSG_CYC_FLOPPY_2 (71//)
+Ludicrous
+Löjligt snabbt
+
+;
+MSG_CYC_BLITS_0 (72//)
+Off
+Av
+
+;
+MSG_CYC_BLITS_1 (73//)
+On
+På
+
+;
+MSG_CYC_SPRITES_0 (74//)
+None
+Inga
+
+;
+MSG_CYC_SPRITES_1 (75//)
+Sprites
+Sprites
+
+;
+MSG_CYC_SPRITES_2 (76//)
+Playfields
+Playfields
+
+;
+MSG_CYC_SPRITES_3 (77//)
+Full
+Komplett
+
+;
+MSG_CYC_FRAMER_0 (78//)
+Every one
+Varenda en
+
+;
+MSG_CYC_FRAMER_1 (79//)
+Every second one
+Varannan
+
+;
+MSG_CYC_FRAMER_2 (80//)
+Every third one
+Var tredje
+
+;
+MSG_CYC_RESET_0 (81//)
+Soft
+Mjuk
+
+;
+MSG_CYC_RESET_1 (82//)
+Hard
+Hård
+
+;
+MSG_CYC_SPEED_0 (83//)
+Real
+Riktig
+
+;
+MSG_CYC_SPEED_1 (84//)
+Max
+Maximal
+
+;
+MSG_CYC_JIT_0 (85//)
+Off
+Av
+
+;
+MSG_CYC_JIT_1 (86//)
+On - 4 Mb
+På - 4 Mb
+
+;
+MSG_CYC_JIT_2 (87//)
+On - 8 Mb
+På - 8 Mb
+
+;
+MSG_CYC_JIT_3 (88//)
+On - 16 Mb
+På - 16 Mb
+
+;
+MSG_CYC_KEYS_0 (89//)
+US / UK (Default)
+US / UK (Standard)
+
+;
+MSG_CYC_KEYS_1 (90//)
+DK - Danish
+DK - Dansk
+
+;
+MSG_CYC_KEYS_2 (91//)
+DE - German
+DE - Tysk
+
+;
+MSG_CYC_KEYS_3 (92//)
+SE - Swedish
+SE - Svensk
+
+;
+MSG_CYC_KEYS_4 (93//)
+FR - French
+FR - Fransk
+
+;
+MSG_CYC_KEYS_5 (94//)
+IT - Italian
+IT - Italiensk
+
+;
+MSG_CYC_KEYS_6 (95//)
+ES - Spanish
+ES - Spansk
 
 ;

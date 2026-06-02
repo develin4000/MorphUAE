@@ -254,6 +254,20 @@ struct DiskObject *morphuae_icon = NULL;
 struct Locale *MorphUAE_Locale;
 static struct Catalog *MorphUAE_Catalog;
 
+
+static STRPTR cyc_list_jport[4];
+static STRPTR cyc_list_sndout[5];
+static STRPTR cyc_list_sndchan[4];
+static STRPTR cyc_list_floppy[4];
+static STRPTR cyc_list_blits[3];
+static STRPTR cyc_list_sprites[5];
+static STRPTR cyc_list_frames[4];
+static STRPTR cyc_list_reset[3];
+static STRPTR cyc_list_speed[3];
+static STRPTR cyc_list_jit[5];
+static STRPTR cyc_list_keys[8];
+
+
 #define DEFAULT_GFX_WIDTH 640
 #define DEFAULT_GFX_HEIGHT 512
 
@@ -495,6 +509,62 @@ STRPTR Locale_GetString( long id )
       return GetCatalogStr(MorphUAE_Catalog, strnum, defstr);
    else
       return defstr;
+}
+/*=*/
+
+
+/*=----------------------------- Populate_CycleStrings()----------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+void Populate_CycleStrings(void)
+{
+      cyc_list_jport[0] = Locale_GetString(MSG_CYC_JPORT_0);
+      cyc_list_jport[1] = Locale_GetString(MSG_CYC_JPORT_1);
+      cyc_list_jport[2] = Locale_GetString(MSG_CYC_JPORT_2);
+
+      cyc_list_sndout[0] = Locale_GetString(MSG_CYC_SOUNDOUT_0);
+      cyc_list_sndout[1] = Locale_GetString(MSG_CYC_SOUNDOUT_1);
+      cyc_list_sndout[2] = Locale_GetString(MSG_CYC_SOUNDOUT_2);
+      cyc_list_sndout[3] = Locale_GetString(MSG_CYC_SOUNDOUT_3);
+
+      cyc_list_sndchan[0] = Locale_GetString(MSG_CYC_SOUNDCHAN_0);
+      cyc_list_sndchan[1] = Locale_GetString(MSG_CYC_SOUNDCHAN_1);
+      cyc_list_sndchan[2] = Locale_GetString(MSG_CYC_SOUNDCHAN_2);
+
+      cyc_list_floppy[0] = Locale_GetString(MSG_CYC_FLOPPY_0);
+      cyc_list_floppy[1] = Locale_GetString(MSG_CYC_FLOPPY_1);
+      cyc_list_floppy[2] = Locale_GetString(MSG_CYC_FLOPPY_2);
+
+      cyc_list_blits[0] = Locale_GetString(MSG_CYC_BLITS_0);
+      cyc_list_blits[1] = Locale_GetString(MSG_CYC_BLITS_1);
+
+      cyc_list_sprites[0] = Locale_GetString(MSG_CYC_SPRITES_0);
+      cyc_list_sprites[1] = Locale_GetString(MSG_CYC_SPRITES_1);
+      cyc_list_sprites[2] = Locale_GetString(MSG_CYC_SPRITES_2);
+      cyc_list_sprites[3] = Locale_GetString(MSG_CYC_SPRITES_3);
+
+      cyc_list_frames[0] = Locale_GetString(MSG_CYC_FRAMER_0);
+      cyc_list_frames[1] = Locale_GetString(MSG_CYC_FRAMER_1);
+      cyc_list_frames[2] = Locale_GetString(MSG_CYC_FRAMER_2);
+
+      cyc_list_reset[0] = Locale_GetString(MSG_CYC_RESET_0);
+      cyc_list_reset[1] = Locale_GetString(MSG_CYC_RESET_1);
+
+      cyc_list_speed[0] = Locale_GetString(MSG_CYC_SPEED_0);
+      cyc_list_speed[1] = Locale_GetString(MSG_CYC_SPEED_1);
+
+      cyc_list_jit[0] = Locale_GetString(MSG_CYC_JIT_0);
+      cyc_list_jit[1] = Locale_GetString(MSG_CYC_JIT_1);
+      cyc_list_jit[2] = Locale_GetString(MSG_CYC_JIT_2);
+      cyc_list_jit[3] = Locale_GetString(MSG_CYC_JIT_3);
+
+      cyc_list_keys[0] = Locale_GetString(MSG_CYC_KEYS_0);
+      cyc_list_keys[1] = Locale_GetString(MSG_CYC_KEYS_1);
+      cyc_list_keys[2] = Locale_GetString(MSG_CYC_KEYS_2);
+      cyc_list_keys[3] = Locale_GetString(MSG_CYC_KEYS_3);
+      cyc_list_keys[4] = Locale_GetString(MSG_CYC_KEYS_4);
+      cyc_list_keys[5] = Locale_GetString(MSG_CYC_KEYS_5);
+      cyc_list_keys[6] = Locale_GetString(MSG_CYC_KEYS_6);
 }
 /*=*/
 
@@ -1894,8 +1964,8 @@ static int mui_setup_window(void)
                                     End,
 
                                     Child, HVSpace,
-                                    Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                    Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                    Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                    Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                     Child, HVSpace,
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
@@ -1980,23 +2050,23 @@ static int mui_setup_window(void)
                                            Child, VSpace(0), Child, VSpace(0),
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_SOUNDTITLE), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDOUTPUT)), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_gen_sound, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDCHANNELS)), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_gen_channels, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDOUTPUT)), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_list_sndout, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDCHANNELS)), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_list_sndchan, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDFREQ)), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_IOTITLE), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy0, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY1)), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_gen_joy1, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_gen_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_gen_language, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY1)), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_list_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_list_keys, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_GFXTITLE), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_gen_blitter, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_gen_sprite, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_gen_framerate, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_list_blits, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_list_sprites, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_list_frames, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_MISC), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_RESETTYPE)), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_gen_resetmode, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_RESETTYPE)), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_list_reset, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
                                            Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
@@ -2144,8 +2214,8 @@ static int mui_setup_window(void)
                                               MUIA_Disabled, TRUE,
                                            End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_CPU)), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CPUSPEED)), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_cus_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_JIT)), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_cus_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CPUSPEED)), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_list_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_JIT)), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_list_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPSET)), Child, but_cus_chipset = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipset, MUIA_ObjectID, ID_PRFS_CUS_CHIPSET, MUIA_UserData, ID_PRFS_CUS_CHIPSET, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_cus_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipmem, MUIA_ObjectID, ID_PRFS_CUS_CHIPMEM, MUIA_UserData, ID_PRFS_CUS_CHIPMEM, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_cus_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_fastmem, MUIA_ObjectID, ID_PRFS_CUS_FASTMEM, MUIA_UserData, ID_PRFS_CUS_FASTMEM, End,
@@ -2298,6 +2368,7 @@ int graphics_setup (void)
    }
 
    Locale_Open("MorphUAE.catalog", 1, 0);
+   Populate_CycleStrings();
    morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
 
    initpseudodevices ();
