@@ -108,11 +108,14 @@
 #include <mui/Rawimage_mcc.h>
 #include <LEDmcc.h>
 
-#define VERS     "1.0"
-#define DATE     __AMIGADATE__
-#define VSTRING  VERS" ("DATE") "
+#define STRNAME     "MorphUAE"
+#define STRVERSION  "1"
+#define STRREVISION "0"
 
-#define ABOUTSTR "\33c \n \33bMorphUAE " VSTRING " \n"
+#define DATE        __AMIGADATE__
+#define VSTRING     STRVERSION"."STRREVISION " ("DATE") "
+#define MVERSTAG    "$VER: " STRNAME " " VSTRING
+#define ABOUTSTR    "\33c \n \33b"STRNAME " "  VSTRING " \n"
 
 
 /****************************************************************************/
@@ -1880,14 +1883,15 @@ static int mui_setup_window(void)
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    app = ApplicationObject,MUIA_Application_Title          , "MorphUAE",
-                           MUIA_Application_Version        , VERS,
+                           MUIA_Application_Version        , MVERSTAG, //VERS,
                            MUIA_Application_Copyright      , "OnyxSoft",
                            MUIA_Application_Author         , "Stefan Blixth",
                            MUIA_Application_Description    , Locale_GetString(MSG_APPLICATION_DESCRIPTION),
                            MUIA_Application_Base           , "MorphUAE",
                            MUIA_Application_DiskObject     , morphuae_icon,
                            MUIA_Application_HelpFile       , "PROGDIR:MorphUAE.guide",
-                           MUIA_Application_UseCommodities , FALSE,
+                           MUIA_Application_SingleTask     , TRUE,
+                           MUIA_Application_UseCommodities , TRUE,
 
                            SubWindow, win_main = WindowObject,
                               MUIA_Frame,                 MUIV_Frame_None,
@@ -2263,6 +2267,7 @@ static int mui_setup_window(void)
 
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, TRUE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_Iconified);
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_UnIconified);
+   DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, TRUE, app, 3, MUIM_Set, MUIA_Application_Iconified, FALSE);
 
    DoMethod(but_tmp_joy0, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port0, MUIV_TriggerValue);
    DoMethod(but_tmp_joy1, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port1, MUIV_TriggerValue);
