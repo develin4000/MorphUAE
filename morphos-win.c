@@ -115,8 +115,7 @@
 #define DATE        __AMIGADATE__
 #define VSTRING     STRVERSION"."STRREVISION " ("DATE") "
 #define MVERSTAG    "$VER: " STRNAME " " VSTRING
-#define ABOUTSTR    "\33c \n \33b"STRNAME " "  VSTRING " \n"
-
+#define ABOUTSTR    "\n" STRNAME " " VSTRING "\n"
 
 /****************************************************************************/
 
@@ -345,7 +344,7 @@ struct RenderData
 #define MUIA_Reset_Type         (TAGBASE_DEVELIN | 0x0019)
 #define MUIV_Reset_Soft         0
 #define MUIV_Reset_Hard         1
-#define MUIV_Reset_Custom       2
+#define MUIV_Reset_UserSelect   2
 
 #define MUIA_Display_Type       (TAGBASE_DEVELIN | 0x001c)
 #define MUIV_Display_Window     0
@@ -380,8 +379,6 @@ struct RenderData
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
-
-//#define swapw(x) ( (((x)&0x00FF)<<8)+(((x)&0xFF00)>>8) )
 
 MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
 {
@@ -685,8 +682,8 @@ void setup_specific(int conf)
                                     val == 2 ? 0x200000 :
                                     val == 3 ? 0x400000 : 0x800000);
 
-      changed_prefs.cpu_level = 0; // 68000
-      changed_prefs.m68k_speed = 0; // Real
+      changed_prefs.cpu_level = 0;   // 68000
+      changed_prefs.m68k_speed = 0;  // Real
    }
    else if (conf == UAE_CFGTYPE_ECS) // ECS
    {
@@ -704,8 +701,8 @@ void setup_specific(int conf)
                                     val == 2 ? 0x200000 :
                                     val == 3 ? 0x400000 : 0x800000);
 
-      changed_prefs.cpu_level = 0; // 68000
-      changed_prefs.m68k_speed = 0; // Real
+      changed_prefs.cpu_level = 0;   // 68000
+      changed_prefs.m68k_speed = 0;  // Real
    }
    else if (conf == UAE_CFGTYPE_AGA) // AGA
    {
@@ -721,7 +718,7 @@ void setup_specific(int conf)
                                     val == 2 ? 0x200000 :
                                     val == 3 ? 0x400000 : 0x800000);
 
-      changed_prefs.cpu_level = 2; // 68020
+      changed_prefs.cpu_level = 2;  // 68020
       changed_prefs.m68k_speed = 0; // Real
    }
    else // Custom
@@ -832,7 +829,7 @@ void setup_generic(void)
    else
       setup_specific(clicfg);
 
-   //Sound
+   // Sound
    get(but_gen_sound, MUIA_Cycle_Active, &spos);
    changed_prefs.produce_sound = spos;
    get(but_gen_channels, MUIA_Cycle_Active, &spos);
@@ -1087,7 +1084,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                break;
 
             case MUIA_Reset_Type :
-               if (tag->ti_Data == MUIV_Reset_Custom)
+               if (tag->ti_Data == MUIV_Reset_UserSelect)
                {
                   get(but_gen_sprite, MUIA_Cycle_Active, &val);
                   uae_reset(val);
@@ -1132,15 +1129,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      data->ogscreen = data->screen; // Store the orginal ID
 
                      tmpscreen = OpenScreenTags(NULL,
-                                                SA_Title,     "MorphUAE Screen",
-                     //                           SA_ShowTitle, FALSE,
-                     //                           SA_Type,      CUSTOMSCREEN,
+                                                SA_Title,         "MorphUAE Screen",
                                                 SA_LikeWorkbench, TRUE,
-                     //                           SA_DisplayID, data->modeid,
-                     //                           SA_Width,     data->WinWidth,
-                     //                           SA_Height,    data->WinHeight,
-                     //                           SA_Depth,     data->Depth,
-                                                SA_Quiet,     TRUE,
+                                                SA_Quiet,         TRUE,
                                                 TAG_DONE);
                      if (tmpscreen)
                      {
@@ -1156,6 +1147,8 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                                  MUIA_Window_SizeGadget,  FALSE,
                                  MUIA_Window_Frontdrop,   TRUE,
                                  MUIA_Window_Title,       NULL,
+                                 //MUIA_Window_Width,      MUIV_Window_Width_Screen(100),   // Test
+                                 //MUIA_Window_Height,     MUIV_Window_Height_Screen(100),  // Test
                                  TAG_DONE);
                      }
                   }
@@ -1269,42 +1262,36 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   pixfmt = GetCyberMapAttr (_rp(obj)->BitMap, (LONG)CYBRMATTR_PIXFMT);
                   data->Depth = GetCyberMapAttr (_rp(obj)->BitMap, (LONG)CYBRMATTR_DEPTH);
 
+                  debug_print("%s (%d) - PixFMT = %d, DEPTH = %d\n", __func__, __LINE__, pixfmt, data->Depth);
+
                   switch (pixfmt)
                   {
                      case PIXFMT_RGB15PC:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         byte_swap = TRUE;
                      case PIXFMT_RGB15:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 5;  greenbits  = 5; bluebits  = 5;
                         redshift = 10; greenshift = 5; blueshift = 0;
                         break;
                      case PIXFMT_RGB16PC:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         byte_swap = TRUE;
                      case PIXFMT_RGB16:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 5;  greenbits  = 6;  bluebits  = 5;
                         redshift = 11; greenshift = 5;  blueshift = 0;
                         break;
                      case PIXFMT_RGBA32:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         redshift = 24; greenshift = 16; blueshift = 8;
                         break;
                      case PIXFMT_BGRA32: // //RGBA
-                        //debug_print("%s (%d) - %d bpp\n", __func__, __LINE__, data->Depth);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         //redshift = 8;  greenshift = 16; blueshift = 24;
                         redshift = 16;  greenshift = 8; blueshift = 0;
                         break;
                      case PIXFMT_ARGB32:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 8;  greenbits  = 8;  bluebits  = 8;
                         redshift = 16; greenshift = 8;  blueshift = 0;
                         break;
                      default:
-                        //debug_print("%s (%d)\n", __func__, __LINE__);
                         redbits  = 0;  greenbits  = 0;  bluebits  = 0;
                         redshift = 0;  greenshift = 0;  blueshift = 0;
                         found = FALSE;
@@ -1461,6 +1448,9 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
    data->screen = _screen(obj);
    data->window = _window(obj);
 
+   data->ScrWidth  = data->screen->Width;
+   data->ScrHeight = data->screen->Height;
+
    // IDCMP_DELTAMOVE
 
    data->eh.ehn_Object = obj;
@@ -1490,19 +1480,31 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
 
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) FS = %d\n", __func__, __LINE__, data->FullScreen);
 
    DoSuperMethodA(cl, obj, (Msg)msg);
 
    if ((data->screen = _screen(obj)) != NULL)
    {
+      if (data->FullScreen)
+      {
+         msg->MinMaxInfo->MinWidth  += data->ScrWidth;
+         msg->MinMaxInfo->DefWidth  += data->ScrWidth;
+         msg->MinMaxInfo->MinHeight += data->ScrHeight;
+         msg->MinMaxInfo->DefHeight += data->ScrHeight;
+         msg->MinMaxInfo->MaxWidth  += data->ScrWidth;
+         msg->MinMaxInfo->MaxHeight += data->ScrHeight;
+      }
+      else
+      {
       //debug_print("%s (%d) : FS = %d - %d x %d : %d x %d\n", __func__, __LINE__, data->FullScreen, data->ScrWidth, data->ScrHeight, currprefs.gfx_width_win, currprefs.gfx_height_win);
-      msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH;
-      msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH;
-      msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT;
-      msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT;
-      msg->MinMaxInfo->MaxWidth  += (data->FullScreen) ? data->ScrWidth : DEFAULT_GFX_WIDTH;
-      msg->MinMaxInfo->MaxHeight += (data->FullScreen) ? data->ScrHeight : DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->MaxWidth  += DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->MaxHeight += DEFAULT_GFX_HEIGHT;
+      }
    }
 
    debug_print("%s (%d) : %d x %d\n", __func__, __LINE__, currprefs.gfx_width_win, currprefs.gfx_height_win);
@@ -1883,7 +1885,7 @@ static int mui_setup_window(void)
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    app = ApplicationObject,MUIA_Application_Title          , "MorphUAE",
-                           MUIA_Application_Version        , MVERSTAG, //VERS,
+                           MUIA_Application_Version        , MVERSTAG,
                            MUIA_Application_Copyright      , "OnyxSoft",
                            MUIA_Application_Author         , "Stefan Blixth",
                            MUIA_Application_Description    , Locale_GetString(MSG_APPLICATION_DESCRIPTION),
@@ -2006,7 +2008,7 @@ static int mui_setup_window(void)
                                     MUIA_Rawimage_Data, small_logo,
                                  End,
                                  Child, TextObject, NoFrame,
-                                    MUIA_Text_PreParse, "\33c",
+                                    MUIA_Text_PreParse, "\33c \33b",
                                     MUIA_Text_Contents, ABOUTSTR,
                                  End,
                                  Child, TextObject, NoFrame,
@@ -2292,7 +2294,7 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[2], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
-   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Custom);
+   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_UserSelect);
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
    DoMethod(btn_camera, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
 
@@ -2633,7 +2635,6 @@ void toggle_fullscreen (void)
 void screenshot (int type)
 {
    //debug_print("%s (%d)\n", __func__, __LINE__);
-   write_log ("Screenshot not implemented yet\n");
 }
 
 /****************************************************************************
