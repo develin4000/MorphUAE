@@ -93,6 +93,30 @@ STATIC_INLINE fpp_rounding_mode get_rounding_mode (const struct regstruct *regs)
     return (regs->fpsr >> 4) & 3;
 }
 
+// FPU rounding fix by FlynnTheAvatar
+STATIC_INLINE tointtype toint (fpp_rounding_mode mode, fptype src)
+{
+   switch (mode)
+   {
+      case FPP_ROUND_TO_NEAREST:
+#if USE_X86_FPUCW
+         return (tointtype) (src);
+#else
+         if (src >= 0.0)
+            return (tointtype) (src + 0.5);
+         else
+            return (tointtype) (src - 0.5);
+#endif
+      case FPP_ROUND_TO_ZERO:
+         return (tointtype) src;
+      case FPP_ROUND_DOWN:
+         return (tointtype) floor (src);
+      case FPP_ROUND_UP:
+         return (tointtype) ceil (src);
+   }
+}
+
+/*
 STATIC_INLINE tointtype toint (fpp_rounding_mode mode, fptype src)
 {
     switch (mode) {
@@ -110,6 +134,7 @@ STATIC_INLINE tointtype toint (fpp_rounding_mode mode, fptype src)
 	    return (tointtype) ceil (src);
     }
 }
+*/
 
 STATIC_INLINE uae_u32 get_fpsr (const struct regstruct *regs)
 {

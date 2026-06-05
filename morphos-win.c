@@ -1101,8 +1101,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   data->screen = data->ogscreen;
 
                   data->FullScreen = FALSE;
-                  //set(obj_rendermcc, MUIA_Width, data->WinWidth);
-                  //set(obj_rendermcc, MUIA_Height, data-> WinHeight);
 
                   set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
                   SetAttrs(win_main,
@@ -1114,8 +1112,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                            MUIA_Window_SizeGadget,  FALSE,
                            MUIA_Window_Frontdrop,   FALSE,
                            MUIA_Window_Title,       "MorphUAE",
-                           //MUIA_Window_Width,       data->WinWidth,
-                           //MUIA_Window_Height,      data-> WinHeight,
                            TAG_DONE);
                }
                else
@@ -1147,8 +1143,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                                  MUIA_Window_SizeGadget,  FALSE,
                                  MUIA_Window_Frontdrop,   TRUE,
                                  MUIA_Window_Title,       NULL,
-                                 //MUIA_Window_Width,      MUIV_Window_Width_Screen(100),   // Test
-                                 //MUIA_Window_Height,     MUIV_Window_Height_Screen(100),  // Test
                                  TAG_DONE);
                      }
                   }
