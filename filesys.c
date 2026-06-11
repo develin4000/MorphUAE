@@ -3092,7 +3092,8 @@ action_set_date (Unit *unit, dpacket packet)
 
     a = find_aino (unit, lock, bstr (unit, name), &err);
 #if defined TARGET_AMIGAOS && defined WORDS_BIGENDIAN
-    if (err == 0 && SetFileDate (a->nname, (struct DateStamp *) date) == DOSFALSE)
+    //if (err == 0 && SetFileDate (a->nname, (struct DateStamp *) date) == DOSFALSE)
+    if (err == 0 && SetFileDate (a->nname, (struct DateStamp *) get_real_address(date)) == DOSFALSE)
 	err = IoErr ();
 #else
     ut.actime = ut.modtime = put_time(get_long (date), get_long (date + 4),
