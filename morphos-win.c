@@ -148,6 +148,13 @@ int valid_kick = 0;
 ULONG lock;
 UBYTE *tmpdata = NULL;
 
+
+// BEGIN - Test
+float imgdim, objdim, dimdiff, flwidth, flheight, fltop, flleft;
+float xdiff, ydiff, xdim, ydim, xstart, ystart;
+BOOL fscheck = FALSE;
+// END - Test
+
 static int init_colors(void);
 static int dummy_lock (struct vidbuf_description *gfxinfo);
 static void dummy_unlock (struct vidbuf_description *gfxinfo);
@@ -302,6 +309,14 @@ struct RenderData
    WORD   MouseY;
    WORD   OldX;
    WORD   OldY;
+// BEGIN - Test for bitmap scaling...
+   //struct RastPort *fs_rp;
+   //struct Layer_Info *fs_layerinfo;
+   //struct Layer *fs_layer;
+   //struct BitMap *fs_sbm;
+   //struct BitMap *fs_dbm;
+   //struct BitScaleArgs fs_bsa;
+// END - Test for bitmap scaling...
 };
 
 
@@ -1102,6 +1117,16 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                   data->FullScreen = FALSE;
 
+                  // BEGIN - BitsMap scale test
+                  // Allocate rastport, layerinfo and layer stuff here ?
+
+                  //if (data->fs_sbm) FreeBitMap(data->fs_sbm);
+                  //if (data->fs_dbm) FreeBitMap(data->fs_dbm);
+                  //DeleteLayer(0, data->fs_layer);
+                  //DisposeLayerInfo(data->fs_layerinfo);
+                  //FreeVec(data->fs_rp);
+                  // END - BitMap scale test
+
                   set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
                   SetAttrs(win_main,
                            MUIA_Window_Screen,      data->ogscreen,
@@ -1129,6 +1154,26 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                                                 SA_LikeWorkbench, TRUE,
                                                 SA_Quiet,         TRUE,
                                                 TAG_DONE);
+                     // BEGIN - BitsMap scale test
+                     //data->Depth = GetCyberMapAttr (_rp(obj)->BitMap, (LONG)CYBRMATTR_DEPTH);
+                     //data->fs_rp = AllocVec(sizeof(struct RastPort), MEMF_ANY);
+                     //data->fs_sbm = AllocBitMap(data->WinWidth, data->WinHeight, data->Depth, BMF_MINPLANES | BMF_DISPLAYABLE, NULL);
+                     //data->fs_dbm = AllocBitMap(tmpscreen->Width, tmpscreen->Height, data->Depth, BMF_MINPLANES | BMF_DISPLAYABLE, NULL);
+
+                     //if (data->fs_sbm)
+                     //{
+                     //   data->fs_layerinfo = NewLayerInfo();
+                     //   if (data->fs_layerinfo)
+                     //   {
+                     //      data->fs_layer = CreateUpfrontLayer(data->fs_layerinfo, data->fs_sbm, 0, 0, data->WinWidth-1, data-//>WinHeight-1, 0, NULL);
+                     //      if (data->fs_layer)
+                     //      {
+                     //         data->fs_rp = data->fs_layer->rp;
+                     //      }
+                     //   }
+                     //}
+                     // END - BitsMap scale test
+
                      if (tmpscreen)
                      {
                         data->screen = tmpscreen;
@@ -1147,6 +1192,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      }
                   }
                   //set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);
+                  fscheck = TRUE;
                }
                set(win_main, MUIA_Window_Open, TRUE);
                break;
@@ -1515,6 +1561,8 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
    struct RastPort *rp = _rp(obj);
+   //float imgdim, objdim, dimdiff, flwidth, flheight, fltop, flleft;
+   //float xdiff, ydiff, xstart;
    //debug_print("%s (%d)\n", __func__, __LINE__);
 
    DoSuperMethodA(cl, obj, (Msg)msg);
@@ -1541,11 +1589,42 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             //debug_print("%s (%d) - BLOCK - FL = %d ; RB = %d\n", __func__, __LINE__, tmp_first_line, tmp_gfxinfo->rowbytes);
             if (!data->FullScreen)
                WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB); //RECTFMT_RAW);
-
-               //ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 1, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff); //RECTFMT_ARGB); //0xFFFFFFFF);
             else
             {
-               ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), 0, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, 0xffffffff);//RECTFMT_ARGB); //0xFFFFFFFF);
+
+                // BEGIN - BitsMap scale test
+/*
+                imgdim   = (float)data->WinWidth / (float)data->WinHeight;
+                dimdiff  = (float)data->WinHeight/ (float)data->WinWidth;
+                objdim   = (float)data->ScrWidth / (float)data->ScrHeight;
+
+*/
+
+               if (fscheck) // Do this just once on first toggle between window and fullscreen mode...
+               {
+                  xdim = 1500; //(float)(data->WinWidth / data->WinHeight) * data->ScrHeight; // 1500
+                  ydim = 1536; //(float)(data->WinHeight / data->WinWidth) * data->ScrWidth;
+
+                  //debug_print("%s (%d) - XDim = %.3f (WW = %d); YDim = %.3f (WH = %d)\n", __func__, __LINE__, xdim, data->WinWidth, ydim, data->WinHeight);
+
+                  xdiff = (float)data->ScrWidth / (float)data->WinWidth;
+                  ydiff = (float)data->ScrHeight / (float)data->WinHeight; // 2.34
+                  xstart = (int)(data->ScrWidth-xdim) / 2;
+                  ystart = (int)(data->ScrWidth-ydim) / 2;
+                  fscheck = FALSE;
+                  FillPixelArray (_rp(obj), 0, 0, data->ScrWidth, data->ScrHeight, 0x00000000);
+                  ScalePixelArrayAlpha(data->Buffer, tmp_gfxinfo->width, tmp_gfxinfo->height, tmp_gfxinfo->rowbytes, _rp(obj), (int)xstart, 0, xdim, data->WinHeight*(int)ydiff, 0xffffffff);
+
+
+                  debug_print("%s (%d) TESTING - WW = %d; WH = %d; SW = %d; SH = %d; XD = %.3f; YD = %.3f - XDIFF=%.3f; YDIFF=%.3f\n", __func__, __LINE__, data->WinWidth, data->WinHeight, data->ScrWidth, data->ScrHeight, xdim, ydim, xdiff, ydiff);
+                  //reset_drawing();
+               }
+
+
+               ScalePixelArrayAlpha(data->Buffer, tmp_gfxinfo->width/*data->WinWidth*/, tmp_last_line - tmp_first_line + 1/*data->WinHeight*/, tmp_gfxinfo->rowbytes, _rp(obj), (int)xstart, (int)(tmp_first_line*2.34), xdim, (int)((tmp_last_line - tmp_first_line)*2.34), 0xffffffff);
+               // END - BitsMap scale test n
+
+               //ScalePixelArrayAlpha(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), xstart, 0, (data->WinWidth-150)*xdiff, data->WinHeight*ydiff, 0xffffffff);
             }
          }
          else if (data->render_state == MUIV_ScreenShoot)
