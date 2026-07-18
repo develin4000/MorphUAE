@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.0 (15-05-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.0 (18-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -265,6 +265,7 @@
     @{b}-aga@{ub} : Will override the default settings and use what is setup under the @{b}AGA tab@{ub} in the settings window.
     @{b}-custom@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
     @{b}-nochecksum@{ub} : This will ignore the checksum control of the Kickstart/ROM file, some homebrew ROM's doesn't work otherwise like diagnostic ROMs.
+    @{b}-fullscreen@{ub} : This will start the emulator in fullscreen mode.
 
     @{b}-0 <ADF file>@{ub} : Insert an ADF disk image on DF0: at startup.
     @{b}-1 <ADF file>@{ub} : Insert an ADF disk image on DF1: at startup.
@@ -358,6 +359,12 @@ Q - The render window does not have the correct colours and the graphics looks s
 A - This emulator NEEDS 24bit resolution to be able to work as intended.
 
 
+Q - When using the fullscreen mode the graphics is not as "big" as expected, how come ?
+
+A - Add a 24/32 bit screenmode with the resolution 640 x 512 pixels in the monitor
+    preferences and the screen should fill it up better.
+
+
 Q - Can I use P96 driver for RTG software with MorphUAE ?
 
 A - No, not at this point.
@@ -387,7 +394,7 @@ A - No, not at this point.
 
  @{b}@{u}History@{uu}@{ub}
 
- · 01-Jul-2026
+ · 18-Jul-2026
 
    * First public release of MorphUAE (1.0)
 

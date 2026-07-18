@@ -62,6 +62,7 @@ int cloanto_rom = 0;
 int rom_ok = 1;
 int cfgtype = UAE_CFGTYPE_DEFAULT;
 int usechksum = UAE_CHKSUM_ON;
+int usefullscreen = UAE_FULLSCREEN_OFF;
 
 int log_scsi;
 
@@ -86,6 +87,16 @@ void uae_set_use_checksum(int value)
 int uae_get_use_checksum(void)
 {
     return usechksum;
+}
+
+void uae_set_use_fullscreen(int value)
+{
+    usefullscreen = value;
+}
+
+int uae_get_use_fullscreen(void)
+{
+    return usefullscreen;
 }
 
 int uae_get_kick_status(void)
@@ -405,6 +416,8 @@ debug_print("%s (%d)\n", __func__, __LINE__);
         uae_set_cfgtype(UAE_CFGTYPE_CUS);
    } else if (strcmp (argv[i], "-nochecksum") == 0) {
        uae_set_use_checksum(UAE_CHKSUM_OFF);
+   } else if (strcmp (argv[i], "-fullscreen") == 0) {
+       uae_set_use_fullscreen(UAE_FULLSCREEN_ON);
 	} else {
 	    if (argv[i][0] == '-' && argv[i][1] != '\0') {
 		const char *arg = argv[i] + 2;
