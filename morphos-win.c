@@ -1027,6 +1027,12 @@ static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
       data->BitMap = NULL;
    }
 
+   if (data->FullScreen)
+   {
+      CloseScreen(data->screen);
+      data->FullScreen = FALSE;
+   }
+
    return(DoSuperMethodA(cl, obj, msg));
 }
 /*=*/
