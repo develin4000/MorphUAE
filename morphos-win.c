@@ -259,7 +259,7 @@ struct Object *ctm_eject       = NULL;
 struct DiskObject *morphuae_icon = NULL;
 struct Locale *MorphUAE_Locale;
 static struct Catalog *MorphUAE_Catalog;
-
+struct Window *twnd = NULL;
 
 static STRPTR cyc_list_jport[4];
 static STRPTR cyc_list_sndout[5];
@@ -302,6 +302,8 @@ struct RenderData
    WORD   ScrWidth;
    WORD   ScrHeight;
    int    Depth;
+   WORD   LeftEdge;
+   WORD   TopEdge;
    WORD   MouseX;
    WORD   MouseY;
    WORD   OldX;
@@ -879,7 +881,7 @@ void insertimagefile(UBYTE unit)
    if ((AslBase = OpenLibrary("asl.library", 37L)))
    {
          sprintf(tmpstr, Locale_GetString(MSG_INSERT_IMAGE), unit);
-         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)",/* ASLFR_InitialDrawer, get_last_floppy_dir(),*/ TAG_DONE}; // "Insert image on DFx"
+         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, /* ASLFR_InitialDrawer, get_last_floppy_dir(),*/ TAG_DONE}; // "Insert image on DFx"
 
          if ((freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags)))
          {
@@ -998,6 +1000,8 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->MouseY = 0;
    data->OldX = 0;
    data->OldY = 0;
+   data->LeftEdge = 0;
+   data->TopEdge = 0;
    
    return((ULONG)obj);
 }
@@ -1090,8 +1094,10 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                if (tag->ti_Data == MUIV_HKTriggerEjectAll)
                   for (dcnt=0; dcnt < MUIV_HKTriggerEjectAll; dcnt++)
                      strcpy(changed_prefs.df[dcnt], "");
-               else 
-                  insertimagefile(tag->ti_Data); 
+               else
+               {
+                  insertimagefile(tag->ti_Data);
+               }
                break;
 
             case MUIA_Reset_Type :
@@ -1127,8 +1133,11 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                }
                else
                {
+                  data->LeftEdge = twnd->LeftEdge;
+                  data->TopEdge = twnd->TopEdge;
+
                   data->modeid = BestCModeIDTags(CYBRBIDTG_NominalWidth,  data->WinWidth, CYBRBIDTG_NominalHeight, data->WinHeight, CYBRBIDTG_Depth, data->Depth, TAG_DONE);
-                  debug_print("%s (%d) - ModeID : %d\n", __func__, __LINE__, data->modeid);
+
                   if (data->modeid != INVALID_ID)
                   {
                      struct Screen *tmpscreen;
@@ -1162,10 +1171,14 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      else
                         debug_print("%s (%d) - ErrorCode : %lu\n", __func__, __LINE__, serror);
                   }
-                  //set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);
+
                   fscheck = TRUE;
                }
                set(win_main, MUIA_Window_Open, TRUE);
+
+               if (!data->FullScreen)
+                  SetAttrs(win_main, MUIA_Window_LeftEdge, data->LeftEdge, MUIA_Window_TopEdge, data->TopEdge, TAG_DONE);
+
                break;
 
             case MUIA_Toolbar_Active :
@@ -1459,6 +1472,8 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
    data->screen = _screen(obj);
    data->window = _window(obj);
 
+   //twnd = _win(obj);
+
    data->ScrWidth  = data->screen->Width;
    data->ScrHeight = data->screen->Height;
 
@@ -1508,7 +1523,6 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
       }
       else
       {
-      //debug_print("%s (%d) : FS = %d - %d x %d : %d x %d\n", __func__, __LINE__, data->FullScreen, data->ScrWidth, data->ScrHeight, currprefs.gfx_width_win, currprefs.gfx_height_win);
          msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH;
          msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH;
          msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT;
@@ -1523,8 +1537,6 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
    
    return(0);
 }
-
-#include "sleep.h"
 
 /*=----------------------------- Render_Draw() -------------------------------*
  *                                                                            *
@@ -1548,15 +1560,12 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          }
          else if (data->render_state == MUIV_FlushLineCGX)
          {
-            //if (!data->FullScreen)
-               WritePixelArray(data->Buffer, 0, tmp_line_no, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, tmp_gfxinfo->width, 1, RECTFMT_RAW);
-//            else
-//               ScalePixelArray(data->Buffer, data->WinWidth, data->WinHeight, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, data->WinWidth, data->WinHeight, RECTFMT_RGBA);
+            WritePixelArray(data->Buffer, 0, tmp_line_no, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_line_no, tmp_gfxinfo->width, 1, RECTFMT_RAW);
          }
          else if (data->render_state == MUIV_FlushBlockCGX)
          {
             if (!data->FullScreen)
-               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB); //RECTFMT_RAW);
+               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB);
             else
             {
                if (fscheck) // Do this just once on first toggle between window and fullscreen mode...
@@ -1570,7 +1579,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
                   FillPixelArray (_rp(obj), 0, 0, data->ScrWidth, data->ScrHeight, 0x00000000);
                }
 
-               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), xstart+data->XOffset, ystart+data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB); //RECTFMT_RAW);
+               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), xstart+data->XOffset, ystart+data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB);
             }
          }
          else if (data->render_state == MUIV_ScreenShoot)
@@ -1592,7 +1601,6 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             data->render_state = 0;
          }
          else
-            //FillPixelArray(rp, render_left, render_top, render_right, render_bottom-render_top, 0x00000000);
             return(0);
       }
       else if ((msg->flags & MADF_DRAWUPDATE))
@@ -1627,7 +1635,7 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    data->screen = _screen(obj);
-   data->window = (struct Window *)_window(obj);
+   twnd = data->window = (struct Window *)_window(obj);
    data->Active = TRUE;
    data->XOffset = _mleft(obj);
    data->YOffset = _mtop(obj);
