@@ -304,8 +304,8 @@ struct RenderData
    int    Depth;
    WORD   LeftEdge;
    WORD   TopEdge;
-   WORD   MouseX;
-   WORD   MouseY;
+   //WORD   MouseX;
+   //WORD   MouseY;
    WORD   OldX;
    WORD   OldY;
 };
@@ -669,6 +669,7 @@ void setup_specific(int conf)
 {
    STRPTR ks, ksk, vhd, devn, voln;
    LONG val;
+   BPTR fh = 0;
    int fscnt = 0;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
@@ -811,8 +812,20 @@ void setup_specific(int conf)
                                    val == 7 ? 0x4000000 :
                                    val == 8 ? 0x8000000 : 0x10000000);
 
-   strcpy(changed_prefs.romfile, ks);
-   strcpy(changed_prefs.keyfile, ksk);
+   // Check if the selected Kickstart is really present, otherwise use AROS ROM replacement...
+   if( fh = Open(ks, MODE_OLDFILE) )
+   {
+      strcpy(changed_prefs.romfile, ks);
+      strcpy(changed_prefs.keyfile, ksk);
+      uae_set_usearosrom(UAE_AROSROM_NO);
+      Close(fh);
+   }
+   else
+   {
+      uae_set_usearosrom(UAE_AROSROM_YES);
+      strcpy(changed_prefs.romfile,"PROGDIR:Kickstarts/aros/aros-amiga-m68k-rom.bin");
+      strcpy(changed_prefs.romextfile,"PROGDIR:Kickstarts/aros/aros-amiga-m68k-ext.bin");
+   }
 }
 /*=*/
 
@@ -996,8 +1009,8 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->ScrWidth = DEFAULT_GFX_WIDTH;
    data->ScrHeight = DEFAULT_GFX_HEIGHT;
    data->Depth = 24;
-   data->MouseX = 0;
-   data->MouseY = 0;
+   //data->MouseX = 0;
+   //data->MouseY = 0;
    data->OldX = 0;
    data->OldY = 0;
    data->LeftEdge = 0;
@@ -1085,7 +1098,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                {
                   if (data->showpointer)
                   {
-                     SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_DOT, WM_ObtainEvents, TRUE, TAG_DONE);
+                     SetWindowPointer(data->window, WA_PointerType, POINTERTYPE_INVISIBLE, WM_ObtainEvents, TRUE, TAG_DONE);
                      data->showpointer = FALSE;
                   }
                }  break;
@@ -1175,6 +1188,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   fscheck = TRUE;
                }
                set(win_main, MUIA_Window_Open, TRUE);
+               SetWindowPointer(data->window, WA_PointerType, (data->FullScreen) ? POINTERTYPE_INVISIBLE : POINTERTYPE_NORMAL, WM_ObtainEvents, TRUE, TAG_DONE);
 
                if (!data->FullScreen)
                   SetAttrs(win_main, MUIA_Window_LeftEdge, data->LeftEdge, MUIA_Window_TopEdge, data->TopEdge, TAG_DONE);
@@ -1651,7 +1665,7 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
  *----------------------------------------------------------------------------*/
 static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_HandleEvent *msg)
 {
-   int dmx, dmy, mx, my, classi, code, qualifier;
+   int code, qualifier;
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
    #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
    #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
@@ -1662,8 +1676,6 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
    {
       code = msg->imsg->Code;
       qualifier = msg->imsg->Qualifier;
-      dmx       = msg->imsg->MouseX;
-      dmy       = msg->imsg->MouseY;
 
       switch(msg->imsg->Class)
       {
@@ -1678,100 +1690,22 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          }  break;
 
          case IDCMP_MOUSEMOVE:
-            data->MouseX = msg->imsg->IDCMPWindow->MouseX; //msg->Window->IDCMPWindow->MouseX;
-            data->MouseY = msg->imsg->IDCMPWindow->MouseY; //IntuiMessage
-
-            //#define DEFAULT_GFX_WIDTH 640
-            //#define DEFAULT_GFX_HEIGHT 512
-
-            //data->MouseX = msg->imsg->MouseX;  // Test
-            //data->MouseY = msg->imsg->MouseY;  // Test
-/*
-            // Begin Test
-
-            //setmousestate (0, 0, data->MouseX, 1); // Test
-            //setmousestate (0, 1, data->MouseY, 1); // Test
-
-            if (_isinobject(dmx, dmy))
+            if (_isinobject(msg->imsg->MouseX, msg->imsg->MouseY))
             {
-                  setmousestate (0, 0, msg->imsg->MouseX, 1); //dmx
-                  setmousestate (0, 1, msg->imsg->MouseY, 1); //dmy
+               setmousestate (0, 0, msg->imsg->MouseX, 1);
+               setmousestate (0, 1, msg->imsg->MouseY, 1);
+               set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
             }
             else
-            {
-               if (msg->imsg->MouseX < 0)
-                  setmousestate(0, 0, 0, 1);
-               if (msg->imsg->MouseX > 639)
-                  setmousestate(0, 0, 639, 1);
+               set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
 
-               if (msg->imsg->MouseY < _mtop(obj))
-                  setmousestate(0, 1, _mtop(obj), 1);
-               if (msg->imsg->MouseY > _mtop(obj)+511)
-                  setmousestate(0, 1, _mtop(obj)+511, 1);
-
-               //dmx = (dmx < 0 ? 1 : dmx > 639 ? 639 : dmx);
-               //dmy = (dmy < 0 ? 1 : dmy > 511+_mtop(obj) ? 511+_mtop(obj) : dmy);
-               //setmousestate (0, 0, dmx, 1); //dmx
-               //setmousestate (0, 1, dmy, 1); //dmy
-            }
-            debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->MouseX, msg->imsg->MouseY);
-
-            // End Test
-*/
-            //debug_print("%s (%d) - NEW XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->IDCMPWindow->MouseX, msg->imsg->IDCMPWindow->MouseY);
-            //debug_print("%s (%d) - OLD XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, msg->imsg->MouseX, msg->imsg->MouseY);
-
-            if (_isinobject(data->MouseX, data->MouseY))
-            {
-               //if (data->MouseX < 0) data->MouseX = 0;
-               //if (data->MouseY < 0) data->MouseY = 0;
-               //if (data->MouseX >= 640) data->MouseX = 639;
-               //if (data->MouseY >= 512) data->MouseY = 511;
-
-               //debug_print("%s (%d) - INSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
-
-               if(data->showpointer)
-               {
-                  set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
-                  //data->MouseX = data->OldX;
-                  //data->MouseY = data->OldY;
-                  //data->OldX = data->MouseX;
-                  //data->OldY = data->MouseY;
-
-                  setmousestate (0, 0, data->MouseX, 1); //dmx
-                  setmousestate (0, 1, data->MouseY, 1); //dmy
-               }
-               setmousestate (0, 0, data->MouseX, 1);
-               setmousestate (0, 1, data->MouseY, 1);
-            }
-            else
-            {
-                  //setmousestate (0, 0, data->OldX, 1);
-                  //setmousestate (0, 1, data->OldY, 1);
-
-               //debug_print("%s (%d) - OUTSIDE XPOS : %d  YPOS : %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
-
-               if(!data->showpointer)
-               {
-                  set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
-                  data->OldX = data->MouseX;
-                  data->OldY = data->MouseY;
-
-                  setmousestate (0, 0, data->MouseX, 1);
-                  setmousestate (0, 1, data->MouseY, 1);
-                  //debug_print("%s (%d) -OLD -  XPOS : %d  YPOS : YPOS : %d\n", __func__, __LINE__, data->OldX, data->OldY);
-               }
-            }
             break;
 
          case IDCMP_MOUSEBUTTONS:
          {
-            data->MouseX = msg->imsg->IDCMPWindow->MouseX;
-            data->MouseY = msg->imsg->IDCMPWindow->MouseY;
-
-            if (_isinobject(data->MouseX, data->MouseY))
+            if (_isinobject(msg->imsg->MouseX, msg->imsg->MouseY))
             {
-               switch (code) //(msg->imsg->Code)
+               switch (code)
                {
                   case SELECTDOWN :
                      setmousebuttonstate (0, 0, 1); break;

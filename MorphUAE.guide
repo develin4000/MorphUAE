@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.0 (18-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.0 (22-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -65,7 +65,7 @@
 
  · MorphOS 3.x or higher
  · TrueColour / 24Bit graphics
- · Amiga Kickstart ROMs
+ · Amiga Kickstart ROMs (for best compability)
 
 @ENDNODE
 
@@ -88,6 +88,10 @@
 
  However the name can be anything and can be adjusted in the settings window on each machine type.
  Naming the files as in the list above should get you a running emulator directly withouth any changes.
+
+ MorphUAE comes bundled with AROS m68k ROM images which is used incase there is no real Amiga Kickstarts found.
+ This is a re-implementaion of the official Kickstart for m68k Amigas. It's not perfect but should work "good enough" in most cases.
+ For best compability it's always best to try to use a real Amiga Kickstart ROM.
 
 @ENDNODE
 
@@ -359,6 +363,13 @@ Q - The render window does not have the correct colours and the graphics looks s
 A - This emulator NEEDS 24bit resolution to be able to work as intended.
 
 
+Q - The mouse position on the Amiga (emulation) side is not fully in sync with the
+    host mouse coordinations ?
+
+A - This issue needs to be adressed in future versions of MorphUAE and it's a
+    well known issue.
+
+
 Q - When using the fullscreen mode the graphics is not as "big" as expected, how come ?
 
 A - Add a 24/32 bit screenmode with the resolution 640 x 512 pixels in the monitor
@@ -394,7 +405,7 @@ A - No, not at this point.
 
  @{b}@{u}History@{uu}@{ub}
 
- · 18-Jul-2026
+ · 22-Jul-2026
 
    * First public release of MorphUAE (1.0)
 
@@ -487,6 +498,8 @@ A - No, not at this point.
  I'd like to thank the following people/groups for making it possible for me to create this program.
 
  MorphOS Team......................... For creating the best system there is, I love it!
+
+ AROS Development Team................ For making a cool OS and an free redistributed Kickstart replacement!
 
  Fram 'cyfm' Mariak................... For helping me out with CyberGraphX issues for the fullscreen mode and much more!
 

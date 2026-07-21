@@ -63,6 +63,7 @@ int rom_ok = 1;
 int cfgtype = UAE_CFGTYPE_DEFAULT;
 int usechksum = UAE_CHKSUM_ON;
 int usefullscreen = UAE_FULLSCREEN_OFF;
+int usearosrom = UAE_AROSROM_NO;
 
 int log_scsi;
 
@@ -77,6 +78,16 @@ int uae_get_fgctype(void)
 void uae_set_cfgtype(int value)
 {
     cfgtype = value;
+}
+
+void uae_set_usearosrom(int value)
+{
+   usearosrom = value;
+}
+
+int uae_get_usearosrom(void)
+{
+   return usearosrom;
 }
 
 void uae_set_use_checksum(int value)

@@ -730,24 +730,22 @@ uae_u8 REGPARAM2 *kickmem_xlate (uaecptr addr)
     return kickmemory + addr;
 }
 
-/* CD32/CDTV extended kick memory */
+/* Extended kick memory */
 
 uae_u8 *extendedkickmemory;
 static unsigned int extendedkickmem_size;
 static uae_u32 extendedkickmem_start;
 
-#define EXTENDED_ROM_CD32 1
-#define EXTENDED_ROM_CDTV 2
-
-#if defined CDTV || defined CD32
+#define EXTENDED_ROM_512K 1
+#define EXTENDED_ROM_256K 2
 
 static int extromtype (void)
 {
     switch (extendedkickmem_size) {
     case 524288:
-	return EXTENDED_ROM_CD32;
+	return EXTENDED_ROM_512K;
     case 262144:
-	return EXTENDED_ROM_CDTV;
+	return EXTENDED_ROM_256K;
     }
     return 0;
 }
@@ -824,7 +822,6 @@ uae_u8 REGPARAM2 *extendedkickmem_xlate (uaecptr addr)
     return extendedkickmemory + addr;
 }
 
-#endif
 
 /* Default memory access functions */
 
@@ -922,13 +919,11 @@ addrbank kickram_bank = {
     kickmem_xlate, kickmem_check, NULL
 };
 
-#if defined CDTV || defined CD32
 addrbank extendedkickmem_bank = {
     extendedkickmem_lget, extendedkickmem_wget, extendedkickmem_bget,
     extendedkickmem_lput, extendedkickmem_wput, extendedkickmem_bput,
     extendedkickmem_xlate, extendedkickmem_check, NULL
 };
-#endif
 
 static int decode_cloanto_rom (uae_u8 *mem, int size, int real_size)
 {
@@ -1047,7 +1042,6 @@ static int read_kickstart (struct zfile *f, uae_u8 *mem, int size, int dochecksu
 }
 
 
-#if defined CDTV || defined CD32
 static int load_extendedkickstart (void)
 {
     struct zfile *f;
@@ -1069,11 +1063,11 @@ static int load_extendedkickstart (void)
     zfile_fseek (f, 0, SEEK_SET);
     switch (extromtype ()) {
 
-    case EXTENDED_ROM_CDTV:
+    case EXTENDED_ROM_256K:
 	extendedkickmemory = (uae_u8 *) mapped_malloc (extendedkickmem_size, "rom_f0");
 	extendedkickmem_bank.baseaddr = (uae_u8 *) extendedkickmemory;
 	break;
-    case EXTENDED_ROM_CD32:
+    case EXTENDED_ROM_512K:
 	extendedkickmemory = (uae_u8 *) mapped_malloc (extendedkickmem_size, "rom_e0");
 	extendedkickmem_bank.baseaddr = (uae_u8 *) extendedkickmemory;
 	break;
@@ -1082,7 +1076,6 @@ static int load_extendedkickstart (void)
     extendedkickmem_mask = extendedkickmem_size - 1;
     return 1;
 }
-#endif
 
 static void kickstart_fix_checksum (uae_u8 *mem, int size)
 {
@@ -1297,13 +1290,12 @@ void memory_reset (void)
          memcpy (currprefs.keyfile, changed_prefs.keyfile, sizeof currprefs.keyfile);
          if (savestate_state != STATE_RESTORE)
             clearexec ();
-#if defined CDTV || defined CD32
+
          load_extendedkickstart ();
-#endif
+
          if (!load_kickstart ())
          {
             //gui_message ("Failed to load Kickstart image '%s'\n", currprefs.romfile);
-            //uae_pause();
             uae_set_kick_status(0);
             return;
          }
@@ -1375,26 +1367,18 @@ void memory_reset (void)
    cd32_enabled = 0;
 #endif
 
-#if defined CDTV || CD32
    switch (extromtype ())
    {
 
-#ifdef CDTV
-   case EXTENDED_ROM_CDTV:
+   case EXTENDED_ROM_256K:
       map_banks (&extendedkickmem_bank, 0xF0, 4, 0);
-      cdtv_enabled = 1;
       break;
-#endif
-#ifdef CD32
-   case EXTENDED_ROM_CD32:
+
+   case EXTENDED_ROM_512K:
       map_banks (&extendedkickmem_bank, 0xE0, 8, 0);
-      cd32_enabled = 1;
       break;
-#endif
+
    default:
-#else
-   {
-#endif
       if (cloanto_rom && !currprefs.maprom)
          map_banks (&kickmem_bank, 0xE0, 8, 0);
    }

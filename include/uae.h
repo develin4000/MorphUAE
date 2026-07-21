@@ -33,6 +33,9 @@ extern int uae_get_use_checksum(void);
 extern void uae_set_use_fullscreen(int);
 extern int uae_get_use_fullscreen(void);
 
+extern void uae_set_usearosrom(int);
+extern int uae_get_usearosrom(void);
+
 #define UAE_CHKSUM_ON       0
 #define UAE_CHKSUM_OFF      1
 
@@ -44,6 +47,9 @@ extern int uae_get_use_fullscreen(void);
 #define UAE_CFGTYPE_AGA     2
 #define UAE_CFGTYPE_CUS     3
 #define UAE_CFGTYPE_DEFAULT 4
+
+#define UAE_AROSROM_NO      0
+#define UAE_AROSROM_YES     1
 
 
 extern void setup_brkhandler (void);
