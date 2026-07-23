@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.0 (22-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.0 (23-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -405,7 +405,7 @@ A - No, not at this point.
 
  @{b}@{u}History@{uu}@{ub}
 
- · 22-Jul-2026
+ · 23-Jul-2026
 
    * First public release of MorphUAE (1.0)
 
