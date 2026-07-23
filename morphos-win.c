@@ -148,6 +148,8 @@ int valid_kick = 0;
 ULONG lock;
 UBYTE *tmpdata = NULL;
 
+static char *floppy_dir;
+static char *last_adf;
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -398,7 +400,13 @@ MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
    {
       NameFromLock(ap->wa_Lock,buf,sizeof(buf));
       AddPart(buf,ap->wa_Name,sizeof(buf));
-      strcpy (changed_prefs.df[0], b); // Attach image to DF0: as default...
+      debug_print("%s (%d) - Attched file %s to DF%d\n", __func__, __LINE__, b, i);
+      if (i < 4)
+      {
+         strcpy (changed_prefs.df[i], b); // Attach image to DFx: as default...
+      }
+      else
+         strcpy (changed_prefs.df[0], b); // Attach image to DF0: as default...
    }
 
    return(0);
@@ -441,6 +449,102 @@ MUI_HOOK(WindowFunc, Object *pop, Object *win)
    set(win,MUIA_Window_DefaultObject,pop);
    set(win,MUIA_Window_ID,27);
    return 0;
+}
+
+
+// Stores and recalls last used file path and ADF files used in the ASL requesters...
+void free_floppy_dir(void)
+{
+   if (floppy_dir)
+   {
+      free(floppy_dir);
+      floppy_dir = 0;
+   }
+}
+
+char *get_floppy_dir(void)
+{
+   if (!floppy_dir)
+   {
+      static int done = 0;
+      unsigned int len;
+
+      if (!done)
+      {
+         done = 1;
+         atexit(free_floppy_dir);
+      }
+
+      floppy_dir = my_strdup ("PROGDIR:Floppies");
+   }
+   return floppy_dir;
+}
+
+void set_floppy_dir(const char *path)
+{
+   if (floppy_dir)
+   {
+      free(floppy_dir);
+      floppy_dir = 0;
+   }
+
+   if (path)
+   {
+      unsigned int len = strlen (path);
+      if (len)
+      {
+         floppy_dir = malloc (len + 1);
+         if (floppy_dir)
+            strcpy (floppy_dir, path);
+      }
+   }
+}
+
+void free_last_adf(void)
+{
+   if (last_adf)
+   {
+      free(last_adf);
+      last_adf = 0;
+   }
+}
+
+char *get_last_adf(void)
+{
+   if (!last_adf)
+   {
+      static int done = 0;
+      unsigned int len;
+
+      if (!done)
+      {
+         done = 1;
+         atexit(free_last_adf);
+      }
+
+      last_adf = my_strdup ("");
+   }
+   return last_adf;
+}
+
+void set_last_adf(const char *adf)
+{
+   if (last_adf)
+   {
+      free(last_adf);
+      last_adf = 0;
+   }
+
+   if (adf)
+   {
+      unsigned int len = strlen (adf);
+      if (len)
+      {
+         last_adf = malloc (len + 1);
+         if (last_adf)
+            strcpy (last_adf, adf);
+      }
+   }
 }
 
 
@@ -591,7 +695,8 @@ void reset_tab(unsigned int tab)
          set(but_gen_frequency, MUIA_Cycle_Active, 2); // 44100Hz
          set(but_gen_joy0, MUIA_Cycle_Active, 0);      // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);      // Joy1
-         set(but_gen_floppy, MUIA_Cycle_Active, 0);    // Normal
+         set(but_gen_floppynum, MUIA_Cycle_Active, 1); // 2 Floppys
+         set(but_gen_floppyspd, MUIA_Cycle_Active, 0); // Normal
          set(but_gen_language, MUIA_Cycle_Active, 0);  // US / UK (Default)
          set(but_gen_blitter, MUIA_Cycle_Active, 0);   // Off - Check this!
          set(but_gen_sprite, MUIA_Cycle_Active, 3);    // Full - Check this!
@@ -835,6 +940,7 @@ void setup_specific(int conf)
 void setup_generic(void)
 {
    LONG mpos, spos, jpos, val;
+   int fcnt;
    int clicfg = UAE_CFGTYPE_DEFAULT;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
@@ -863,7 +969,13 @@ void setup_generic(void)
    get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
    set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
    changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
-   get(but_gen_floppy, MUIA_Cycle_Active, &jpos);
+   get(but_gen_floppynum, MUIA_Cycle_Active, &jpos);
+   changed_prefs.nr_floppies = jpos+1;
+
+   for (fcnt = 0; fcnt < 4; fcnt++)
+      changed_prefs.dfxtype[fcnt] = (fcnt <= jpos) ? 0 : -1;
+
+   get(but_gen_floppyspd, MUIA_Cycle_Active, &jpos);
    changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
    get(but_gen_language, MUIA_Cycle_Active, &jpos);
    changed_prefs.keyboard_lang = jpos;
@@ -894,7 +1006,7 @@ void insertimagefile(UBYTE unit)
    if ((AslBase = OpenLibrary("asl.library", 37L)))
    {
          sprintf(tmpstr, Locale_GetString(MSG_INSERT_IMAGE), unit);
-         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, /* ASLFR_InitialDrawer, get_last_floppy_dir(),*/ TAG_DONE}; // "Insert image on DFx"
+         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, get_floppy_dir(), ASLFR_InitialFile, get_last_adf(), TAG_DONE}; // "Insert image on DFx"
 
          if ((freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags)))
          {
@@ -903,6 +1015,8 @@ void insertimagefile(UBYTE unit)
                if (strcmp(freq->fr_File, "") != 0)
                {
                   strcpy(buf, freq->fr_Drawer);
+                  set_floppy_dir(freq->fr_Drawer);
+                  set_last_adf(freq->fr_File);
                   AddPart(buf, freq->fr_File, sizeof(buf));
                   strcpy (changed_prefs.df[unit], b); 
                }
@@ -1290,7 +1404,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   if (data->InitOK)
                   {
                      reset_drawing ();
-                     //set_default_hotkeys (ami_hotkeys);
                   }
 
                }
@@ -2024,7 +2137,9 @@ static int mui_setup_window(void)
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_IOTITLE), MUIA_FixHeight, 8, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY1)), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppy = CycleObject, MUIA_Cycle_Entries, cyc_list_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPYNUM)), Child, but_gen_floppynum = CycleObject, MUIA_Cycle_Entries, cyc_list_floppynum, MUIA_ObjectID, ID_PRFS_GEN_FLOPPYNUM, MUIA_UserData, ID_PRFS_GEN_FLOPPYNUM, End,
+
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppyspd = CycleObject, MUIA_Cycle_Entries, cyc_list_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_list_keys, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_GFXTITLE), MUIA_FixHeight, 8, End,

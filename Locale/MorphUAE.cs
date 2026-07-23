@@ -162,327 +162,332 @@ Floppy Speed :
 Disketthastighet :
 
 ;
-MSG_SETTINGS_IOKEYBOARD (31//)
+MSG_SETTINGS_IOFLOPPYNUM (31//)
+Floppy Drives :
+Diskettenheter :
+
+;
+MSG_SETTINGS_IOKEYBOARD (32//)
 Keyboard Layout :
 Tangentbordslayout :
 
 ;
-MSG_SETTINGS_GFXTITLE (32//)
+MSG_SETTINGS_GFXTITLE (33//)
 Graphics
 Grafik
 
 ;
-MSG_SETTINGS_GFXBLITS (33//)
+MSG_SETTINGS_GFXBLITS (34//)
 Immediate Blits :
 Omedelbar blits :
 
 ;
-MSG_SETTINGS_GFXSPRITE (34//)
+MSG_SETTINGS_GFXSPRITE (35//)
 Sprite Collisions :
 Sprite-kollisioner :
 
 ;
-MSG_SETTINGS_GFXFRAMES (35//)
+MSG_SETTINGS_GFXFRAMES (36//)
 Frame Rate :
 Bildfrekvens :
 
 ;
-MSG_SETTINGS_RESETTYPE (36//)
+MSG_SETTINGS_RESETTYPE (37//)
 Reset Type :
 Återställningstyp :
 
 ;
-MSG_SETTINGS_KICKFILE (37//)
+MSG_SETTINGS_KICKFILE (38//)
 Kickstart File :
 Kickstartfil :
 
 ;
-MSG_SETTINGS_KICKKEYFILE (38//)
+MSG_SETTINGS_KICKKEYFILE (39//)
 Kickstart Key File :
 Kickstart nyckelfil :
 
 ;
-MSG_SETTINGS_KICKFILEASL (39//)
+MSG_SETTINGS_KICKFILEASL (40//)
 Please select a kickstart file...
 Välj en kickstart-fil...
 
 ;
-MSG_SETTINGS_KICKKEYFILEASL (40//)
+MSG_SETTINGS_KICKKEYFILEASL (41//)
 Please select a kickstart key file...
 Välj en kickstart-nyckelfil...
 
 ;
-MSG_SETTINGS_ECSMODE (41//)
+MSG_SETTINGS_ECSMODE (42//)
 ECS Mode :
 ECS-läge :
 
 ;
-MSG_SETTINGS_CHIPMEM (42//)
+MSG_SETTINGS_CHIPMEM (43//)
 Chip Memory :
 Chipminne :
 
 ;
-MSG_SETTINGS_FASTMEM (43//)
+MSG_SETTINGS_FASTMEM (44//)
 Fast Memory :
 Fast-minne :
 
 ;
-MSG_SETTINGS_ZORROMEM (44//)
+MSG_SETTINGS_ZORROMEM (45//)
 Zorro3 Memory :
 Zorro3-minne :
 
 ;
-MSG_SETTINGS_VHD1 (45//)
+MSG_SETTINGS_VHD1 (46//)
 Virtual Harddisk 1 :
 Virtuell hårddisk 1 :
 
 ;
-MSG_SETTINGS_VHD2 (46//)
+MSG_SETTINGS_VHD2 (47//)
 Virtual Harddisk 2 :
 Virtuell hårddisk 2 :
 
 ;
-MSG_SETTINGS_DEVICENAME (47//)
+MSG_SETTINGS_DEVICENAME (48//)
 Device Name :
 Enhetsnamn :
 
 ;
-MSG_SETTINGS_VOLUMENAME (48//)
+MSG_SETTINGS_VOLUMENAME (49//)
 Volume Name :
 Volymnamn :
 
 ;
-MSG_SETTINGS_CPU (49//)
+MSG_SETTINGS_CPU (50//)
 CPU Model :
 CPU modell :
 
 ;
-MSG_SETTINGS_CPUSPEED (50//)
+MSG_SETTINGS_CPUSPEED (51//)
 CPU Speed :
 CPU-hastighet :
 
 ;
-MSG_SETTINGS_JIT (51//)
+MSG_SETTINGS_JIT (52//)
 JIT Compiler :
 JIT-kompilator :
 
 ;
-MSG_SETTINGS_CHIPSET (52//)
+MSG_SETTINGS_CHIPSET (53//)
 Chipset :
 Chipset :
 
 ;
-MSG_SETTINGS_USE (53//)
+MSG_SETTINGS_USE (54//)
 Use
 Använd
 
 ;
-MSG_SETTINGS_SAVEANDUSE (54//)
+MSG_SETTINGS_SAVEANDUSE (55//)
 Save & Use
 Spara & Använd
 
 ;
-MSG_SETTINGS_SAVE (55//)
+MSG_SETTINGS_SAVE (56//)
 Save
 Spara
 
 ;
-MSG_SETTINGS_CANCEL (56//)
+MSG_SETTINGS_CANCEL (57//)
 Cancel
 Avbryt
 
 ;
-MSG_SETTINGS_MISC (57//)
+MSG_SETTINGS_MISC (58//)
 Misc
 Övrigt
 
 ;
-MSG_SETTINGS_VHDPATH (58//)
+MSG_SETTINGS_VHDPATH (59//)
 Please select a folder for your virtual harddisk...
 Välj en mapp för din virtuella hårddisk...
 
 ;
-MSG_CYC_JPORT_0 (59//)
+MSG_CYC_JPORT_0 (60//)
 Mouse
 Mus
 
 ;
-MSG_CYC_JPORT_1 (60//)
+MSG_CYC_JPORT_1 (61//)
 Joystick 0
 Joystick 0
 
 ;
-MSG_CYC_JPORT_2 (61//)
+MSG_CYC_JPORT_2 (62//)
 Joystick 1
 Joystick 1
 
 ;
-MSG_CYC_SOUNDOUT_0 (62//)
+MSG_CYC_SOUNDOUT_0 (63//)
 None
 Ingen
 
 ;
-MSG_CYC_SOUNDOUT_1 (63//)
+MSG_CYC_SOUNDOUT_1 (64//)
 Interrupts
 Interrupt
 
 ;
-MSG_CYC_SOUNDOUT_2 (64//)
+MSG_CYC_SOUNDOUT_2 (65//)
 Normal
 Normal
 
 ;
-MSG_CYC_SOUNDOUT_3 (65//)
+MSG_CYC_SOUNDOUT_3 (66//)
 Exact
 Exakt
 
 ;
-MSG_CYC_SOUNDCHAN_0 (66//)
+MSG_CYC_SOUNDCHAN_0 (67//)
 Mono
 Mono
 
 ;
-MSG_CYC_SOUNDCHAN_1 (67//)
+MSG_CYC_SOUNDCHAN_1 (68//)
 Stereo
 Stereo
 
 ;
-MSG_CYC_SOUNDCHAN_2 (68//)
+MSG_CYC_SOUNDCHAN_2 (69//)
 Mixed
 Mixade
 
 ;
-MSG_CYC_FLOPPY_0 (69//)
+MSG_CYC_FLOPPY_0 (70//)
 Normal
 Normal
 
 ;
-MSG_CYC_FLOPPY_1 (70//)
+MSG_CYC_FLOPPY_1 (71//)
 Fast
 Snabb
 
 ;
-MSG_CYC_FLOPPY_2 (71//)
+MSG_CYC_FLOPPY_2 (72//)
 Ludicrous
 Löjligt snabbt
 
 ;
-MSG_CYC_BLITS_0 (72//)
+MSG_CYC_BLITS_0 (73//)
 Off
 Av
 
 ;
-MSG_CYC_BLITS_1 (73//)
+MSG_CYC_BLITS_1 (74//)
 On
 På
 
 ;
-MSG_CYC_SPRITES_0 (74//)
+MSG_CYC_SPRITES_0 (75//)
 None
 Inga
 
 ;
-MSG_CYC_SPRITES_1 (75//)
+MSG_CYC_SPRITES_1 (76//)
 Sprites
 Sprites
 
 ;
-MSG_CYC_SPRITES_2 (76//)
+MSG_CYC_SPRITES_2 (77//)
 Playfields
 Playfields
 
 ;
-MSG_CYC_SPRITES_3 (77//)
+MSG_CYC_SPRITES_3 (78//)
 Full
 Komplett
 
 ;
-MSG_CYC_FRAMER_0 (78//)
+MSG_CYC_FRAMER_0 (79//)
 Every one
 Varenda en
 
 ;
-MSG_CYC_FRAMER_1 (79//)
+MSG_CYC_FRAMER_1 (80//)
 Every second one
 Varannan
 
 ;
-MSG_CYC_FRAMER_2 (80//)
+MSG_CYC_FRAMER_2 (81//)
 Every third one
 Var tredje
 
 ;
-MSG_CYC_RESET_0 (81//)
+MSG_CYC_RESET_0 (82//)
 Soft
 Mjuk
 
 ;
-MSG_CYC_RESET_1 (82//)
+MSG_CYC_RESET_1 (83//)
 Hard
 Hård
 
 ;
-MSG_CYC_SPEED_0 (83//)
+MSG_CYC_SPEED_0 (84//)
 Real
 Riktig
 
 ;
-MSG_CYC_SPEED_1 (84//)
+MSG_CYC_SPEED_1 (85//)
 Max
 Maximal
 
 ;
-MSG_CYC_JIT_0 (85//)
+MSG_CYC_JIT_0 (86//)
 Off
 Av
 
 ;
-MSG_CYC_JIT_1 (86//)
+MSG_CYC_JIT_1 (87//)
 On - 4 Mb
 På - 4 Mb
 
 ;
-MSG_CYC_JIT_2 (87//)
+MSG_CYC_JIT_2 (88//)
 On - 8 Mb
 På - 8 Mb
 
 ;
-MSG_CYC_JIT_3 (88//)
+MSG_CYC_JIT_3 (89//)
 On - 16 Mb
 På - 16 Mb
 
 ;
-MSG_CYC_KEYS_0 (89//)
+MSG_CYC_KEYS_0 (90//)
 US / UK (Default)
 US / UK (Standard)
 
 ;
-MSG_CYC_KEYS_1 (90//)
+MSG_CYC_KEYS_1 (91//)
 DK - Danish
 DK - Dansk
 
 ;
-MSG_CYC_KEYS_2 (91//)
+MSG_CYC_KEYS_2 (92//)
 DE - German
 DE - Tysk
 
 ;
-MSG_CYC_KEYS_3 (92//)
+MSG_CYC_KEYS_3 (93//)
 SE - Swedish
 SE - Svensk
 
 ;
-MSG_CYC_KEYS_4 (93//)
+MSG_CYC_KEYS_4 (94//)
 FR - French
 FR - Fransk
 
 ;
-MSG_CYC_KEYS_5 (94//)
+MSG_CYC_KEYS_5 (95//)
 IT - Italian
 IT - Italiensk
 
 ;
-MSG_CYC_KEYS_6 (95//)
+MSG_CYC_KEYS_6 (96//)
 ES - Spanish
 ES - Spansk
 
