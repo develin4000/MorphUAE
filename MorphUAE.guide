@@ -1,11 +1,11 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.0 (23-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (24-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
 
- @{b}MorphUAE 1.0@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
+ @{b}MorphUAE 1.1@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
 
  - User Documentation -
 
@@ -394,8 +394,8 @@ A - No, not at this point.
 
  @{b}@{u}What's new@{uu}@{ub}
 
- · First public release of MorphUAE (1.0)
-
+ · Now the requesters keeps track of which ADF file and path is selected on each image device. (Suggested by jPV)
+ · Drag and drop multiple ADF images distribute them over several devices. (Suggested by jPV)
 
 @ENDNODE
 

@@ -110,7 +110,7 @@
 
 #define STRNAME     "MorphUAE"
 #define STRVERSION  "1"
-#define STRREVISION "0"
+#define STRREVISION "1"
 
 #define DATE        __AMIGADATE__
 #define VSTRING     STRVERSION"."STRREVISION " ("DATE") "
@@ -148,8 +148,9 @@ int valid_kick = 0;
 ULONG lock;
 UBYTE *tmpdata = NULL;
 
-static char *floppy_dir;
-static char *last_adf;
+static char *floppy_dir[4];
+static char *last_adf[4];
+char adfbuf[128];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -162,6 +163,8 @@ static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_li
 
 static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no);
 static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line);
+
+char *get_last_adf(int devnum);
 
 #ifdef USEDEBUG
    #include <clib/debug_protos.h>
@@ -399,14 +402,13 @@ MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
    for (ap=amsg->am_ArgList,i=0;i<amsg->am_NumArgs;i++,ap++)
    {
       NameFromLock(ap->wa_Lock,buf,sizeof(buf));
+      set_floppy_dir((i < 4) ? i : 0, buf);
       AddPart(buf,ap->wa_Name,sizeof(buf));
+      set_last_adf((i < 4) ? i : 0, ap->wa_Name, TRUE);
+
       debug_print("%s (%d) - Attched file %s to DF%d\n", __func__, __LINE__, b, i);
-      if (i < 4)
-      {
-         strcpy (changed_prefs.df[i], b); // Attach image to DFx: as default...
-      }
-      else
-         strcpy (changed_prefs.df[0], b); // Attach image to DF0: as default...
+
+      strcpy (changed_prefs.df[(i < 4) ? i : 0], b); // Attach image to DFx: as default...
    }
 
    return(0);
@@ -455,16 +457,24 @@ MUI_HOOK(WindowFunc, Object *pop, Object *win)
 // Stores and recalls last used file path and ADF files used in the ASL requesters...
 void free_floppy_dir(void)
 {
-   if (floppy_dir)
+   int dcntr;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   for(dcntr = 0; dcntr < 4; dcntr++)
    {
-      free(floppy_dir);
-      floppy_dir = 0;
+      if (floppy_dir[dcntr])
+      {
+         free(floppy_dir[dcntr]);
+         floppy_dir[dcntr] = 0;
+      }
    }
 }
 
-char *get_floppy_dir(void)
+char *get_floppy_dir(int devnum)
 {
-   if (!floppy_dir)
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if (!floppy_dir[devnum])
    {
       static int done = 0;
       unsigned int len;
@@ -475,17 +485,19 @@ char *get_floppy_dir(void)
          atexit(free_floppy_dir);
       }
 
-      floppy_dir = my_strdup ("PROGDIR:Floppies");
+      floppy_dir[devnum] = my_strdup ("PROGDIR:Floppies");
    }
-   return floppy_dir;
+   return floppy_dir[devnum];
 }
 
-void set_floppy_dir(const char *path)
+void set_floppy_dir(int devnum, char *path)
 {
-   if (floppy_dir)
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if (floppy_dir[devnum])
    {
-      free(floppy_dir);
-      floppy_dir = 0;
+      free(floppy_dir[devnum]);
+      floppy_dir[devnum] = 0;
    }
 
    if (path)
@@ -493,25 +505,33 @@ void set_floppy_dir(const char *path)
       unsigned int len = strlen (path);
       if (len)
       {
-         floppy_dir = malloc (len + 1);
-         if (floppy_dir)
-            strcpy (floppy_dir, path);
+         floppy_dir[devnum] = malloc (len + 1);
+         if (floppy_dir[devnum])
+            strcpy (floppy_dir[devnum], path);
       }
    }
 }
 
 void free_last_adf(void)
 {
-   if (last_adf)
+   int dcntr;
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   for(dcntr = 0; dcntr < 4; dcntr++)
    {
-      free(last_adf);
-      last_adf = 0;
+      if (last_adf[dcntr])
+      {
+         free(last_adf[dcntr]);
+         last_adf[dcntr] = 0;
+      }
    }
 }
 
-char *get_last_adf(void)
+char *get_last_adf(int devnum)
 {
-   if (!last_adf)
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if (!last_adf[devnum])
    {
       static int done = 0;
       unsigned int len;
@@ -522,17 +542,19 @@ char *get_last_adf(void)
          atexit(free_last_adf);
       }
 
-      last_adf = my_strdup ("");
+      last_adf[devnum] = my_strdup ("");
    }
-   return last_adf;
+   return last_adf[devnum];
 }
 
-void set_last_adf(const char *adf)
+void set_last_adf(int devnum, char *adf, BOOL sethelp)
 {
-   if (last_adf)
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if (last_adf[devnum])
    {
-      free(last_adf);
-      last_adf = 0;
+      free(last_adf[devnum]);
+      last_adf[devnum] = 0;
    }
 
    if (adf)
@@ -540,9 +562,13 @@ void set_last_adf(const char *adf)
       unsigned int len = strlen (adf);
       if (len)
       {
-         last_adf = malloc (len + 1);
-         if (last_adf)
-            strcpy (last_adf, adf);
+         last_adf[devnum] = malloc (len + 1);
+         if (last_adf[devnum])
+         {
+            strcpy (last_adf[devnum], adf);
+            if (sethelp)
+               SetAttrs(obj_LEDmcc[devnum], MUIA_ShortHelp, last_adf[devnum], TAG_DONE);
+         }
       }
    }
 }
@@ -995,7 +1021,7 @@ void setup_generic(void)
  *----------------------------------------------------------------------------*/
 void insertimagefile(UBYTE unit)
 {
-   struct Library *AslBase = NULL;
+   //struct Library *AslBase = NULL;
    struct FileRequester *freq;
    char tmpstr[100];
    static char buf[256];
@@ -1006,7 +1032,8 @@ void insertimagefile(UBYTE unit)
    if ((AslBase = OpenLibrary("asl.library", 37L)))
    {
          sprintf(tmpstr, Locale_GetString(MSG_INSERT_IMAGE), unit);
-         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, get_floppy_dir(), ASLFR_InitialFile, get_last_adf(), TAG_DONE}; // "Insert image on DFx"
+
+         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, get_floppy_dir(unit), ASLFR_InitialFile, get_last_adf(unit), TAG_DONE}; // "Insert image on DFx"
 
          if ((freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags)))
          {
@@ -1015,10 +1042,11 @@ void insertimagefile(UBYTE unit)
                if (strcmp(freq->fr_File, "") != 0)
                {
                   strcpy(buf, freq->fr_Drawer);
-                  set_floppy_dir(freq->fr_Drawer);
-                  set_last_adf(freq->fr_File);
+                  set_floppy_dir(unit, buf);
+                  strcpy(adfbuf, freq->fr_File);
+                  set_last_adf(unit, freq->fr_File, TRUE);
                   AddPart(buf, freq->fr_File, sizeof(buf));
-                  strcpy (changed_prefs.df[unit], b); 
+                  strcpy (changed_prefs.df[unit], b);
                }
             }
             
@@ -1219,8 +1247,15 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
             case MUIA_Floppy_Hotkey :
                if (tag->ti_Data == MUIV_HKTriggerEjectAll)
+               {
                   for (dcnt=0; dcnt < MUIV_HKTriggerEjectAll; dcnt++)
                      strcpy(changed_prefs.df[dcnt], "");
+
+                  SetAttrs(obj_LEDmcc[0], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF0), TAG_DONE);
+                  SetAttrs(obj_LEDmcc[1], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF1), TAG_DONE);
+                  SetAttrs(obj_LEDmcc[2], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF2), TAG_DONE);
+                  SetAttrs(obj_LEDmcc[3], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF3), TAG_DONE);
+               }
                else
                {
                   insertimagefile(tag->ti_Data);
@@ -2421,6 +2456,9 @@ static int mui_setup_window(void)
 
    gfxvidinfo.width  = currprefs.gfx_width_win;
    gfxvidinfo.height = currprefs.gfx_height_win;
+
+   for (int tc = 0; tc < 4; tc++)
+      set_last_adf(tc, " ", FALSE);
 
    if (uae_get_use_fullscreen())
       set(obj_rendermcc, MUIA_Display_Type, MUIV_Display_Toggle);
