@@ -150,7 +150,8 @@ UBYTE *tmpdata = NULL;
 
 static char *floppy_dir[4];
 static char *last_adf[4];
-char adfbuf[128];
+BOOL adfstate[4];
+//char adfbuf[128];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -409,6 +410,7 @@ MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
       debug_print("%s (%d) - Attched file %s to DF%d\n", __func__, __LINE__, b, i);
 
       strcpy (changed_prefs.df[(i < 4) ? i : 0], b); // Attach image to DFx: as default...
+      set_disk_state((i < 4) ? i : 0, TRUE);
    }
 
    return(0);
@@ -571,6 +573,34 @@ void set_last_adf(int devnum, char *adf, BOOL sethelp)
          }
       }
    }
+}
+
+
+void set_disk_state(int devnum, BOOL dstate)
+{
+   adfstate[(devnum < 4) ? devnum : 0] = dstate;
+}
+
+BOOL get_disk_state(int devnum)
+{
+   return adfstate[(devnum < 4) ? devnum : 0];
+}
+
+void clear_disk_state(void)
+{
+   for (int cptr = 0; cptr < 4; cptr++)
+      adfstate[cptr] = FALSE;
+}
+
+void manage_disk_state(int devnum, char *imgstr)
+{
+   STRPTR fpstr;
+   fpstr = FilePart(imgstr);
+
+   debug_print("%s (%d) - DEVNum = %d - FP = %s\n", __func__, __LINE__, devnum, fpstr);
+
+   //set_last_adf(devnum, fpstr, TRUE);
+   set_disk_state(devnum, TRUE);
 }
 
 
@@ -1043,10 +1073,10 @@ void insertimagefile(UBYTE unit)
                {
                   strcpy(buf, freq->fr_Drawer);
                   set_floppy_dir(unit, buf);
-                  strcpy(adfbuf, freq->fr_File);
                   set_last_adf(unit, freq->fr_File, TRUE);
                   AddPart(buf, freq->fr_File, sizeof(buf));
                   strcpy (changed_prefs.df[unit], b);
+                  set_disk_state(unit, TRUE);
                }
             }
             
@@ -1255,6 +1285,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   SetAttrs(obj_LEDmcc[1], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF1), TAG_DONE);
                   SetAttrs(obj_LEDmcc[2], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF2), TAG_DONE);
                   SetAttrs(obj_LEDmcc[3], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF3), TAG_DONE);
+                  clear_disk_state();
                }
                else
                {
@@ -1926,7 +1957,7 @@ struct MUI_CustomClass *Init_Render(void)
 
 void update_led_status(int led, int on)
 {
-   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  MUIV_LED_Colour_Off);
+   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  get_disk_state(led-1) ? MUIV_LED_Colour_Blue : MUIV_LED_Colour_Off);
 }
 
 /****************************************************************************/
@@ -2456,6 +2487,11 @@ static int mui_setup_window(void)
 
    gfxvidinfo.width  = currprefs.gfx_width_win;
    gfxvidinfo.height = currprefs.gfx_height_win;
+
+   clear_disk_state();
+   for (int ic = 0; ic < 4; ic++)
+      if (strlen(currprefs.df[ic]))
+         manage_disk_state(ic, currprefs.df[ic]);
 
    for (int tc = 0; tc < 4; tc++)
       set_last_adf(tc, " ", FALSE);

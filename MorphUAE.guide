@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (24-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (25-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -396,6 +396,7 @@ A - No, not at this point.
 
  · Now the requesters keeps track of which ADF file and path is selected on each image device. (Suggested by jPV)
  · Drag and drop multiple ADF images distribute them over several devices. (Suggested by jPV)
+ · ADF Image LED is now shown in a BLUE colour if there is an image mounted to it. (Suggested by jPV)
 
 @ENDNODE
 

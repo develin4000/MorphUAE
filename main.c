@@ -840,56 +840,10 @@ void real_main (int argc, char **argv)
 
    while (uae_target_state != UAE_STATE_QUITTING)
    {
-      //int want_gui;
-
       set_state (uae_target_state);
-
       do_preinit_machine (argc, argv);
-
-
-      /* Should we open the GUI? TODO: This mess needs to go away */
-/*
-      want_gui = currprefs.start_gui;
-      if (restart_program == 2)
-         want_gui = 0;
-      else if (restart_program == 3)
-         want_gui = 1;
-*/
       changed_prefs = currprefs;
 
-/*
-      if (want_gui)
-      {
-         // Handle GUI at start-up
-         int err = gui_open ();
-
-         if (err >= 0)
-         {
-            do
-            {
-               gui_handle_events ();
-
-               uae_msleep (10);
-
-            } while (!uae_state_change_pending ());
-
-         }
-         else if (err == - 1)
-         {
-            if (restart_program == 3)
-            {
-               restart_program = 0;
-               uae_quit ();
-            }
-         }
-         else
-            uae_quit ();
-
-         currprefs = changed_prefs;
-         fix_options ();
-         inputdevice_init ();
-      }
-*/
       restart_program = 0;
 
       if (uae_target_state == UAE_STATE_QUITTING)
