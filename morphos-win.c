@@ -282,7 +282,8 @@ static STRPTR cyc_list_keys[8];
 
 #define DEFAULT_GFX_WIDTH 640
 #define DEFAULT_GFX_HEIGHT 512
-
+#define OVERSCAN_GFX_WIDTH 720
+#define OVERSCAN_GFX_HEIGHT 568
 
 struct RenderData
 {
@@ -1176,10 +1177,10 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->YOffset = 0;
    data->render_state = MUIV_FlushClearScreen;
 
-   data->WinWidth = DEFAULT_GFX_WIDTH;
-   data->WinHeight = DEFAULT_GFX_HEIGHT;
-   data->ScrWidth = DEFAULT_GFX_WIDTH;
-   data->ScrHeight = DEFAULT_GFX_HEIGHT;
+   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
    data->Depth = 24;
    //data->MouseX = 0;
    //data->MouseY = 0;
@@ -1716,12 +1717,12 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
       }
       else
       {
-         msg->MinMaxInfo->MinWidth  += DEFAULT_GFX_WIDTH;
-         msg->MinMaxInfo->DefWidth  += DEFAULT_GFX_WIDTH;
-         msg->MinMaxInfo->MinHeight += DEFAULT_GFX_HEIGHT;
-         msg->MinMaxInfo->DefHeight += DEFAULT_GFX_HEIGHT;
-         msg->MinMaxInfo->MaxWidth  += DEFAULT_GFX_WIDTH;
-         msg->MinMaxInfo->MaxHeight += DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->MinWidth  += uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->DefWidth  += uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->MinHeight += uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->DefHeight += uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+         msg->MinMaxInfo->MaxWidth  += uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+         msg->MinMaxInfo->MaxHeight += uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
       }
    }
 
@@ -1749,7 +1750,9 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          if (data->render_state == MUIV_FlushClearScreen)
          {
             if (_rp(obj))
-               WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
+               //WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
+               FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
+               WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj), _top(obj), 640, 512, RECTFMT_ARGB);
          }
          else if (data->render_state == MUIV_FlushLineCGX)
          {
@@ -2554,8 +2557,8 @@ int graphics_init(void)
 {
    if (!uae_restarted)
    {
-      gfxvidinfo.width  = DEFAULT_GFX_WIDTH;
-      gfxvidinfo.height = DEFAULT_GFX_HEIGHT;
+      gfxvidinfo.width  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+      gfxvidinfo.height = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
 
       gfxvidinfo.width += 7;
       gfxvidinfo.width &= ~7;

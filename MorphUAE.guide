@@ -270,9 +270,12 @@
     @{b}-custom@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
     @{b}-nochecksum@{ub} : This will ignore the checksum control of the Kickstart/ROM file, some homebrew ROM's doesn't work otherwise like diagnostic ROMs.
     @{b}-fullscreen@{ub} : This will start the emulator in fullscreen mode.
+    @{b}-overscan@{ub} : Uses overscan resolution for the display.
 
     @{b}-0 <ADF file>@{ub} : Insert an ADF disk image on DF0: at startup.
     @{b}-1 <ADF file>@{ub} : Insert an ADF disk image on DF1: at startup.
+    @{b}-2 <ADF file>@{ub} : Insert an ADF disk image on DF2: at startup.
+    @{b}-3 <ADF file>@{ub} : Insert an ADF disk image on DF3: at startup.
 
 @ENDNODE
 
@@ -397,6 +400,7 @@ A - No, not at this point.
  · Now the requesters keeps track of which ADF file and path is selected on each image device. (Suggested by jPV)
  · Drag and drop multiple ADF images distribute them over several devices. (Suggested by jPV)
  · ADF Image LED is now shown in a BLUE colour if there is an image mounted to it. (Suggested by jPV)
+ · Added an CLI/Shell option to enable overscan resolution (-overscan).
 
 @ENDNODE
 

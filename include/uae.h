@@ -36,6 +36,9 @@ extern int uae_get_use_fullscreen(void);
 extern void uae_set_usearosrom(int);
 extern int uae_get_usearosrom(void);
 
+extern void uae_set_overscan(int);
+extern int uae_get_overscan(void);
+
 #define UAE_CHKSUM_ON       0
 #define UAE_CHKSUM_OFF      1
 
@@ -50,6 +53,9 @@ extern int uae_get_usearosrom(void);
 
 #define UAE_AROSROM_NO      0
 #define UAE_AROSROM_YES     1
+
+#define UAE_OVERSCAN_OFF    0
+#define UAE_OVERSCAN_ON     1
 
 
 extern void setup_brkhandler (void);
