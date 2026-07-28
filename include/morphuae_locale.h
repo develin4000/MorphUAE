@@ -135,8 +135,18 @@
 #define MSG_CYC_KEYS_4 94
 #define MSG_CYC_KEYS_5 95
 #define MSG_CYC_KEYS_6 96
+#define MSG_SHORTHELP_SAVESTATE 97
+#define MSG_SAVESTATE_LOAD 98
+#define MSG_SAVESTATE_SAVE 99
+#define MSG_BTN_SAVESTATE_LOAD 100
+#define MSG_BTN_SAVESTATE_SAVE 101
+#define MSG_MNU_RESET 102
+#define MSG_MNU_RESET_OCS 103
+#define MSG_MNU_RESET_ECS 104
+#define MSG_MNU_RESET_AGA 105
+#define MSG_MNU_RESET_CUS 106
 
-#define CATCOMP_LASTID 96
+#define CATCOMP_LASTID 106
 
 #endif /* CATCOMP_NUMBERS */
 
@@ -147,7 +157,7 @@
 #ifdef CATCOMP_STRINGS
 
 #define MSG_APPLICATION_DESCRIPTION_STR "MorphUAE - Amiga emulator for MorphOS"
-#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens"
+#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io"
 #define MSG_INSERT_IMAGE_STR "Insert image on DF%d"
 #define MSG_EMULATION_PAUSED_STR "MorphUAE - Paused"
 #define MSG_REQUESTER_TITLE_STR "Error Message"
@@ -243,6 +253,16 @@
 #define MSG_CYC_KEYS_4_STR "FR - French"
 #define MSG_CYC_KEYS_5_STR "IT - Italian"
 #define MSG_CYC_KEYS_6_STR "ES - Spanish"
+#define MSG_SHORTHELP_SAVESTATE_STR "Save/Load Savestate"
+#define MSG_SAVESTATE_LOAD_STR "Load savestate file"
+#define MSG_SAVESTATE_SAVE_STR "Save savestate file"
+#define MSG_BTN_SAVESTATE_LOAD_STR "Load Savestate"
+#define MSG_BTN_SAVESTATE_SAVE_STR "Save Savestate"
+#define MSG_MNU_RESET_STR "\33bReset"
+#define MSG_MNU_RESET_OCS_STR "Reset -> OCS"
+#define MSG_MNU_RESET_ECS_STR "Reset -> ECS"
+#define MSG_MNU_RESET_AGA_STR "Reset -> AGA"
+#define MSG_MNU_RESET_CUS_STR "Reset -> Custom"
 
 #endif /* CATCOMP_STRINGS */
 
@@ -357,6 +377,16 @@ static const struct CatCompArrayType CatCompArray[] =
     {MSG_CYC_KEYS_4,(STRPTR)MSG_CYC_KEYS_4_STR},
     {MSG_CYC_KEYS_5,(STRPTR)MSG_CYC_KEYS_5_STR},
     {MSG_CYC_KEYS_6,(STRPTR)MSG_CYC_KEYS_6_STR},
+    {MSG_SHORTHELP_SAVESTATE,(STRPTR)MSG_SHORTHELP_SAVESTATE_STR},
+    {MSG_SAVESTATE_LOAD,(STRPTR)MSG_SAVESTATE_LOAD_STR},
+    {MSG_SAVESTATE_SAVE,(STRPTR)MSG_SAVESTATE_SAVE_STR},
+    {MSG_BTN_SAVESTATE_LOAD,(STRPTR)MSG_BTN_SAVESTATE_LOAD_STR},
+    {MSG_BTN_SAVESTATE_SAVE,(STRPTR)MSG_BTN_SAVESTATE_SAVE_STR},
+    {MSG_MNU_RESET,(STRPTR)MSG_MNU_RESET_STR},
+    {MSG_MNU_RESET_OCS,(STRPTR)MSG_MNU_RESET_OCS_STR},
+    {MSG_MNU_RESET_ECS,(STRPTR)MSG_MNU_RESET_ECS_STR},
+    {MSG_MNU_RESET_AGA,(STRPTR)MSG_MNU_RESET_AGA_STR},
+    {MSG_MNU_RESET_CUS,(STRPTR)MSG_MNU_RESET_CUS_STR},
 };
 
 #endif /* CATCOMP_ARRAY */
@@ -371,7 +401,7 @@ static const char CatCompBlock[] =
 {
     "\x00\x00\x00\x00\x00\x26"
     MSG_APPLICATION_DESCRIPTION_STR "\x00"
-    "\x00\x00\x00\x01\x01\x12"
+    "\x00\x00\x00\x01\x01\x1E"
     MSG_ABOUTSTR_STR "\x00\x00"
     "\x00\x00\x00\x02\x00\x16"
     MSG_INSERT_IMAGE_STR "\x00\x00"
@@ -563,6 +593,26 @@ static const char CatCompBlock[] =
     MSG_CYC_KEYS_5_STR "\x00\x00"
     "\x00\x00\x00\x60\x00\x0E"
     MSG_CYC_KEYS_6_STR "\x00\x00"
+    "\x00\x00\x00\x61\x00\x14"
+    MSG_SHORTHELP_SAVESTATE_STR "\x00"
+    "\x00\x00\x00\x62\x00\x14"
+    MSG_SAVESTATE_LOAD_STR "\x00"
+    "\x00\x00\x00\x63\x00\x14"
+    MSG_SAVESTATE_SAVE_STR "\x00"
+    "\x00\x00\x00\x64\x00\x10"
+    MSG_BTN_SAVESTATE_LOAD_STR "\x00\x00"
+    "\x00\x00\x00\x65\x00\x10"
+    MSG_BTN_SAVESTATE_SAVE_STR "\x00\x00"
+    "\x00\x00\x00\x66\x00\x08"
+    MSG_MNU_RESET_STR "\x00"
+    "\x00\x00\x00\x67\x00\x0E"
+    MSG_MNU_RESET_OCS_STR "\x00\x00"
+    "\x00\x00\x00\x68\x00\x0E"
+    MSG_MNU_RESET_ECS_STR "\x00\x00"
+    "\x00\x00\x00\x69\x00\x0E"
+    MSG_MNU_RESET_AGA_STR "\x00\x00"
+    "\x00\x00\x00\x6A\x00\x10"
+    MSG_MNU_RESET_CUS_STR "\x00"
 };
 
 #endif /* CATCOMP_BLOCK */

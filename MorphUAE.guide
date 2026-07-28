@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (25-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (28-07-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -138,6 +138,8 @@
 
       This button will reset the emulator in either an Soft or Hard reset (depending on what you have selected
       in the settings window on the General tab).
+      When pressing this button you will be presented with an popup menu where you can select the normal reset
+      or you can also reset and change to a specific machine type.
 
 
     @{b}· Fullscreen :@{ub}
@@ -168,6 +170,12 @@
 
       Here you can change the emulated joystick port during the runtime of the emulation.
       See it like you virtually swapping out the mouse with a joystick or vice versa.
+
+    @{b}· Savestate :@{ub}
+
+      This will let you load or save a savestate file. The savestate file is a snapshot of
+      the current emulation state so you can store what you currently are doing and stop the
+      emulator and load it back at a later date to continue where you where last time.
 
 
     @{b}· Eject Disk Images :@{ub}
@@ -206,7 +214,7 @@
      @{b} Sound section@{ub} will let you configure the output quality of the emulated sound or even disable it completely.
 
      @{b} I/O Devices@{ub} Lets you select which type of emulated device that shall be connected to the Mouse/Joystick port
-      Here you can also set the emulated floppy drive speed. Some games/demos might have issues with faster
+      Here you can also set the amount of the emulated floppy drive and its speed. Some games/demos might have issues with faster
       speed higher than normal hence this might be a good thing to try if issues would occure.
 
      @{b} Graphics section@{ub} Here you can alter how precise the emulated graphics shall be presented.
@@ -401,6 +409,8 @@ A - No, not at this point.
  · Drag and drop multiple ADF images distribute them over several devices. (Suggested by jPV)
  · ADF Image LED is now shown in a BLUE colour if there is an image mounted to it. (Suggested by jPV)
  · Added an CLI/Shell option to enable overscan resolution (-overscan).
+ · The reset button can now also change machine type, via a popup menu (Suggested by bitRocky)
+ · The current active ADF image is also shown in the window title (Suggested by bitRocky)
 
 @ENDNODE
 

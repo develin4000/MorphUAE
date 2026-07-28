@@ -71,7 +71,7 @@ int log_scsi;
 struct gui_info gui_data;
 
 
-int uae_get_fgctype(void)
+int uae_get_cfgtype(void)
 {
     return cfgtype;
 }

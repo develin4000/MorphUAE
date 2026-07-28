@@ -47,6 +47,8 @@ static ULONG Name##_Dispatcher(void) { struct IClass *cl=(struct IClass*)REG_A0;
 #define MUIV_LED_Colour_Blue   (TAGBASE_DEVELIN | 0x000a)
 #define MUIV_LED_Colour_Yellow (TAGBASE_DEVELIN | 0x000b)
 
+#define MUIV_LED_Colour_Blue1x (TAGBASE_DEVELIN | 0x000c)
+#define MUIV_LED_Colour_Blue2x (TAGBASE_DEVELIN | 0x000d)
 
 
 // Size and Style defines...
@@ -68,6 +70,9 @@ static ULONG Name##_Dispatcher(void) { struct IClass *cl=(struct IClass*)REG_A0;
 #define LED_Colour_Yellow  0x00ffff00
 #define LED_Colour_Idle    0x00000000
 
+#define LED_Colour_Blue1x  0x007777cc   // For jPV =)
+#define LED_Colour_Blue2x  0x00223388   // For jPV =)
+
 #define Frame_Colour_Dark  0x00000000
 #define Frame_Colour_Light 0x00ebebeb
 
@@ -87,6 +92,9 @@ unsigned long LED_gfx_green[LED_SIZE_WIDTH*LED_SIZE_HEIGHT];  // 0xAARRGGBB
 unsigned long LED_gfx_blue[LED_SIZE_WIDTH*LED_SIZE_HEIGHT];   // 0xAARRGGBB
 unsigned long LED_gfx_yellow[LED_SIZE_WIDTH*LED_SIZE_HEIGHT]; // 0xAARRGGBB
 unsigned long LED_gfx_off[LED_SIZE_WIDTH*LED_SIZE_HEIGHT];    // 0xAARRGGBB
+
+unsigned long LED_gfx_blue1x[LED_SIZE_WIDTH*LED_SIZE_HEIGHT];   // 0xAARRGGBB
+unsigned long LED_gfx_blue2x[LED_SIZE_WIDTH*LED_SIZE_HEIGHT];   // 0xAARRGGBB
 
 
 // Prototypes...

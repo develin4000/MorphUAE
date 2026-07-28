@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.0 (01.06.2026)
+## Version $VER: MorphUAE.catalog 1.1 (28.07.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0
@@ -12,9 +12,9 @@ MorphUAE - Amiga-emulator för MorphOS
 
 MSG_ABOUTSTR (1//)
 The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n\
- Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens
+ Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
 Amiga-emulator för MorphOS av Stefan Blixth, OnyxSoft \n\n Detta program är baserat på tidigare arbete gjort av : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original-UAE \n Toni Wilen, WinUAE \n\n\n\
- Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens
+ Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
 
 ;
 MSG_INSERT_IMAGE (2//)
@@ -490,5 +490,55 @@ IT - Italiensk
 MSG_CYC_KEYS_6 (96//)
 ES - Spanish
 ES - Spansk
+
+;
+MSG_SHORTHELP_SAVESTATE (97//)
+Save/Load Savestate
+Spara/Ladda Tillstånd
+
+;
+MSG_SAVESTATE_LOAD (98//)
+Load savestate file
+Ladda tillståndsfil
+
+;
+MSG_SAVESTATE_SAVE (99//)
+Save savestate file
+Spara tillståndsfil
+
+;
+MSG_BTN_SAVESTATE_LOAD (100//)
+Load Savestate
+Ladda Tillstånd
+
+;
+MSG_BTN_SAVESTATE_SAVE (101//)
+Save Savestate
+Spara Tillstånd
+
+;
+MSG_MNU_RESET (102//)
+\33bReset
+\33bÅterställ
+
+;
+MSG_MNU_RESET_OCS (103//)
+Reset -> OCS
+Återställ -> OCS
+
+;
+MSG_MNU_RESET_ECS (104//)
+Reset -> ECS
+Återställ -> ECS
+
+;
+MSG_MNU_RESET_AGA (105//)
+Reset -> AGA
+Återställ -> AGA
+
+;
+MSG_MNU_RESET_CUS (106//)
+Reset -> Custom
+Återställ -> Custom
 
 ;

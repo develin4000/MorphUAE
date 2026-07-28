@@ -33,6 +33,10 @@
   * (c) Siemens
   * https://www.svgrepo.com/svg/486929/about
   *
+  * Restore SVG Vector
+  * (c) Sanity.io
+  * https://www.svgrepo.com/svg/459104/restore
+  *
   */
 
 #define CATCOMP_ARRAY
@@ -149,9 +153,9 @@ ULONG lock;
 UBYTE *tmpdata = NULL;
 
 static char *floppy_dir[4];
-static char *last_adf[4];
 BOOL adfstate[4];
-//char adfbuf[128];
+static char last_adf[4][256];
+char titlestr[256];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -254,13 +258,12 @@ static Object *obj_rendermcc   = NULL;  // Render object
 struct Object *btn_settings    = NULL;
 struct Object *btn_camera      = NULL;
 struct Object *btn_reset       = NULL;
+struct Object *btn_savestate   = NULL;
 struct Object *btn_eject       = NULL;
 struct Object *btn_fullscreen  = NULL;
 struct Object *btn_pauseresume = NULL;
 struct Object *btn_about       = NULL;
 struct Object *grp_toolbar     = NULL;
-struct Object *ctm_reset       = NULL;
-struct Object *ctm_eject       = NULL;
 
 struct DiskObject *morphuae_icon = NULL;
 struct Locale *MorphUAE_Locale;
@@ -358,23 +361,24 @@ struct RenderData
 #define MUIV_Reset_Soft         0
 #define MUIV_Reset_Hard         1
 #define MUIV_Reset_UserSelect   2
+#define MUIV_Reset_Menu         3
 
-#define MUIA_Display_Type       (TAGBASE_DEVELIN | 0x001c)
+#define MUIA_Display_Type       (TAGBASE_DEVELIN | 0x001e)
 #define MUIV_Display_Window     0
 #define MUIV_Display_Screen     1
 #define MUIV_Display_Toggle     2
 
-#define MUIA_Toolbar_Active     (TAGBASE_DEVELIN | 0x0020)
+#define MUIA_Toolbar_Active     (TAGBASE_DEVELIN | 0x0022)
 #define MUIV_Toolbar_Off        0
 #define MUIV_Toolbar_On         1
 #define MUIV_Toolbar_Toggle     2
 
-#define MUIA_Control_UAE        (TAGBASE_DEVELIN | 0x0025)
+#define MUIA_Control_UAE        (TAGBASE_DEVELIN | 0x0026)
 #define MUIV_Control_UAE_Pause  0
 #define MUIV_Control_UAE_Resume 1
 #define MUIV_Control_UAE_Toggle 2
 
-#define MUIA_Settings_Adjust    (TAGBASE_DEVELIN | 0x0030)
+#define MUIA_Settings_Adjust    (TAGBASE_DEVELIN | 0x002a)
 #define MUIV_Reset_All          0
 #define MUIV_Reset_General      1
 #define MUIV_Reset_OCS          2
@@ -386,14 +390,18 @@ struct RenderData
 #define MUIV_Settings_Save      8
 #define MUIV_Settings_Cancel    9
 
-#define MUIA_Runtime_Port0     (TAGBASE_DEVELIN | 0x0040)
-#define MUIA_Runtime_Port1     (TAGBASE_DEVELIN | 0x0041)
+#define MUIA_Runtime_Port0     (TAGBASE_DEVELIN | 0x0035)
+#define MUIA_Runtime_Port1     (TAGBASE_DEVELIN | 0x0036)
 
+#define MUIA_Savestate         (TAGBASE_DEVELIN | 0x0037)
+#define MUIV_Savestate_Menu    0
+#define MUIV_Savestate_Load    1
+#define MUIV_Savestate_Save    2
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
 
-MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
+MUI_HOOK(AppMsg, APTR obj, struct AppMessage **x)
 {
    struct WBArg *ap;
    struct AppMessage *amsg = *x;
@@ -412,6 +420,7 @@ MUI_HOOK(AppMsg,APTR obj, struct AppMessage **x)
 
       strcpy (changed_prefs.df[(i < 4) ? i : 0], b); // Attach image to DFx: as default...
       set_disk_state((i < 4) ? i : 0, TRUE);
+      set_window_title();
    }
 
    return(0);
@@ -422,19 +431,19 @@ MUI_HOOK(StrObjFunc, Object *pop, Object *str)
    char *x,*s;
    int i;
 
-   get(str,MUIA_String_Contents,&s);
+   get(str, MUIA_String_Contents, &s);
 
    for (i=0;;i++)
    {
-      DoMethod(pop,MUIM_List_GetEntry,i,&x);
+      DoMethod(pop, MUIM_List_GetEntry, i, &x);
       if (!x)
       {
-         set(pop,MUIA_List_Active,MUIV_List_Active_Off);
+         set(pop, MUIA_List_Active, MUIV_List_Active_Off);
       break;
       }
       else if (!stricmp(x,s))
       {
-         set(pop,MUIA_List_Active,i);
+         set(pop, MUIA_List_Active, i);
          break;
       }
    }
@@ -444,15 +453,15 @@ MUI_HOOK(StrObjFunc, Object *pop, Object *str)
 MUI_HOOK(ObjStrFunc, Object *pop, Object *str)
 {
    char *x;
-   DoMethod(pop,MUIM_List_GetEntry,MUIV_List_GetEntry_Active,&x);
-   set(str,MUIA_String_Contents,x);
+   DoMethod(pop, MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &x);
+   set(str, MUIA_String_Contents, x);
    return 0;
 }
 
 MUI_HOOK(WindowFunc, Object *pop, Object *win)
 {
-   set(win,MUIA_Window_DefaultObject,pop);
-   set(win,MUIA_Window_ID,27);
+   set(win, MUIA_Window_DefaultObject, pop);
+   set(win, MUIA_Window_ID, 27);
    return 0;
 }
 
@@ -495,7 +504,7 @@ char *get_floppy_dir(int devnum)
 
 void set_floppy_dir(int devnum, char *path)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) PP = %s\n", __func__, __LINE__, path);
 
    if (floppy_dir[devnum])
    {
@@ -521,58 +530,30 @@ void free_last_adf(void)
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    for(dcntr = 0; dcntr < 4; dcntr++)
-   {
-      if (last_adf[dcntr])
-      {
-         free(last_adf[dcntr]);
-         last_adf[dcntr] = 0;
-      }
-   }
+      if (strlen(last_adf[dcntr]))
+         strcpy(last_adf[dcntr], "");
 }
 
 char *get_last_adf(int devnum)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
 
-   if (!last_adf[devnum])
-   {
-      static int done = 0;
-      unsigned int len;
+   if (!strlen(last_adf[devnum]))
+      strcpy(last_adf[devnum], "");
 
-      if (!done)
-      {
-         done = 1;
-         atexit(free_last_adf);
-      }
-
-      last_adf[devnum] = my_strdup ("");
-   }
    return last_adf[devnum];
 }
 
 void set_last_adf(int devnum, char *adf, BOOL sethelp)
 {
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) - DEVNum = %d ; SetHelp = %d, ADF-File = %s\n", __func__, __LINE__, devnum, sethelp, adf);
 
-   if (last_adf[devnum])
+   if (strlen(adf))
    {
-      free(last_adf[devnum]);
-      last_adf[devnum] = 0;
-   }
+      strcpy(last_adf[devnum], adf);
 
-   if (adf)
-   {
-      unsigned int len = strlen (adf);
-      if (len)
-      {
-         last_adf[devnum] = malloc (len + 1);
-         if (last_adf[devnum])
-         {
-            strcpy (last_adf[devnum], adf);
-            if (sethelp)
-               SetAttrs(obj_LEDmcc[devnum], MUIA_ShortHelp, last_adf[devnum], TAG_DONE);
-         }
-      }
+      if (sethelp)
+         SetAttrs(obj_LEDmcc[devnum], MUIA_ShortHelp, last_adf[devnum], TAG_DONE);
    }
 }
 
@@ -595,12 +576,10 @@ void clear_disk_state(void)
 
 void manage_disk_state(int devnum, char *imgstr)
 {
-   STRPTR fpstr;
-   fpstr = FilePart(imgstr);
+   debug_print("%s (%d) - DEVNum = %d - FP = %s\n", __func__, __LINE__, devnum, imgstr);
 
-   debug_print("%s (%d) - DEVNum = %d - FP = %s\n", __func__, __LINE__, devnum, fpstr);
-
-   //set_last_adf(devnum, fpstr, TRUE);
+   set_floppy_dir(devnum, "PROGDIR:Floppies/");
+   set_last_adf(devnum, FilePart(imgstr), TRUE);
    set_disk_state(devnum, TRUE);
 }
 
@@ -678,6 +657,13 @@ STRPTR Locale_GetString( long id )
       return defstr;
 }
 /*=*/
+
+
+void set_window_title(void)
+{
+   NewRawDoFmt("MorphUAE%s%s", NULL, titlestr, get_disk_state(0) ? " - " : "", get_disk_state(0) ? get_last_adf(0) : "");
+   set(win_main, MUIA_Window_Title, titlestr);
+}
 
 
 /*=----------------------------- Populate_CycleStrings()----------------------*
@@ -1004,7 +990,7 @@ void setup_generic(void)
 
    get(but_gen_machine, MUIA_Cycle_Active, &mpos);
 
-   clicfg = uae_get_fgctype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
+   clicfg = uae_get_cfgtype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
 
    if (clicfg == UAE_CFGTYPE_DEFAULT)
       setup_specific(mpos);
@@ -1052,7 +1038,6 @@ void setup_generic(void)
  *----------------------------------------------------------------------------*/
 void insertimagefile(UBYTE unit)
 {
-   //struct Library *AslBase = NULL;
    struct FileRequester *freq;
    char tmpstr[100];
    static char buf[256];
@@ -1078,6 +1063,7 @@ void insertimagefile(UBYTE unit)
                   AddPart(buf, freq->fr_File, sizeof(buf));
                   strcpy (changed_prefs.df[unit], b);
                   set_disk_state(unit, TRUE);
+                  set_window_title();
                }
             }
             
@@ -1237,6 +1223,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
    struct TagItem *tag = NULL;
    struct RastPort *rp = _rp(obj);
    LONG val;
+   ULONG poprc;
    int redbits,  greenbits,  bluebits;
    int redshift, greenshift, blueshift;
    int byte_swap = FALSE;
@@ -1244,6 +1231,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
    int found = TRUE;
    int dcnt;
    ULONG serror;
+   Object *mstrip = NULL;
 
    //debug_print("%s (%d)\n", __func__, __LINE__);
 
@@ -1287,6 +1275,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   SetAttrs(obj_LEDmcc[2], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF2), TAG_DONE);
                   SetAttrs(obj_LEDmcc[3], MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_DF3), TAG_DONE);
                   clear_disk_state();
+                  set_window_title();
                }
                else
                {
@@ -1295,13 +1284,55 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                break;
 
             case MUIA_Reset_Type :
-               if (tag->ti_Data == MUIV_Reset_UserSelect)
+               if (tag->ti_Data == MUIV_Reset_Menu)
                {
-                  get(but_gen_sprite, MUIA_Cycle_Active, &val);
+                  if ((mstrip = MenustripObject,
+                     Child, MenuObject,
+                        Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_MNU_RESET), End,
+                        Child, MenuitemObject, MUIA_UserData, 2, MUIA_Menuitem_Title, Locale_GetString(MSG_MNU_RESET_OCS), End,
+                        Child, MenuitemObject, MUIA_UserData, 3, MUIA_Menuitem_Title, Locale_GetString(MSG_MNU_RESET_ECS), End,
+                        Child, MenuitemObject, MUIA_UserData, 4, MUIA_Menuitem_Title, Locale_GetString(MSG_MNU_RESET_AGA), End,
+                        Child, MenuitemObject, MUIA_UserData, 5, MUIA_Menuitem_Title, Locale_GetString(MSG_MNU_RESET_CUS), End,
+                     End,
+                  End))
+                  {
+                     poprc = DoMethod(mstrip, MUIM_Menustrip_Popup,btn_reset, 0, _left(btn_reset), _bottom(btn_reset)+1);
+                     MUI_DisposeObject(mstrip);
+
+                     if (poprc)
+                     {
+
+                        switch (poprc)
+                        {
+                              case 2 : uae_set_cfgtype(UAE_CFGTYPE_OCS); break;
+                              case 3 : uae_set_cfgtype(UAE_CFGTYPE_ECS); break;
+                              case 4 : uae_set_cfgtype(UAE_CFGTYPE_AGA); break;
+                              case 5 : uae_set_cfgtype(UAE_CFGTYPE_CUS); break;
+                              default : break;
+                        }
+
+                        if (poprc != 1)
+                        {
+                           setup_generic();
+                           uae_restarted = TRUE;
+                           uae_restart (-1, NULL);
+                        }
+                        else
+                           set(obj_rendermcc, MUIA_Reset_Type, MUIV_Reset_UserSelect);
+                     }
+                  }
+               }
+               else if (tag->ti_Data == MUIV_Reset_UserSelect)
+               {
+                  get(but_gen_resetmode, MUIA_Cycle_Active, &val);
                   uae_reset(val);
+                  set_window_title();
+                  //set(win_main, MUIA_Window_Title, "MorphUAE");
                }
                else
                   uae_reset (tag->ti_Data);
+                  set_window_title();
+                  //set(win_main, MUIA_Window_Title, "MorphUAE");
                break;
 
             case MUIA_Display_Type :
@@ -1374,6 +1405,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                if (!data->FullScreen)
                   SetAttrs(win_main, MUIA_Window_LeftEdge, data->LeftEdge, MUIA_Window_TopEdge, data->TopEdge, TAG_DONE);
 
+               set_window_title();
                break;
 
             case MUIA_Toolbar_Active :
@@ -1395,8 +1427,40 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      data->ToolBar = FALSE;
 
                   set(grp_toolbar, MUIA_ShowMe, data->ToolBar);
-               }
+               }  break;
 
+            case MUIA_Savestate :
+               if (tag->ti_Data == MUIV_Savestate_Menu)
+               {
+
+                  if ((mstrip = MenustripObject,
+                     Child, MenuObject,
+                        Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_BTN_SAVESTATE_LOAD), End,
+                        Child, MenuitemObject, MUIA_UserData, 2, MUIA_Menuitem_Title, Locale_GetString(MSG_BTN_SAVESTATE_SAVE), End,
+                     End,
+                  End))
+                  {
+                     poprc = DoMethod(mstrip, MUIM_Menustrip_Popup,btn_savestate,0,_left(btn_savestate),_bottom(btn_savestate)+1);
+                     MUI_DisposeObject(mstrip);
+                     if (poprc) set(obj_rendermcc, MUIA_Savestate, poprc);
+                  }
+
+               }
+               else if (tag->ti_Data == MUIV_Savestate_Load)
+               {
+                  debug_print("%s (%d) - MUIV_Savestate_Load\n", __func__, __LINE__);
+                     //set_last_savestate_dir ("RAM:");
+                     //savestate_initsave ("RAM:SaveState1", 1);
+                  //restore_state ("RAM:SaveState1");
+                     //save_state ("RAM:SaveState1", "Description");
+               }
+               else
+               {
+                  debug_print("%s (%d) - MUIV_Savestate_Save\n", __func__, __LINE__);
+                     //set_last_savestate_dir ("RAM:");
+                  //savestate_initsave ("RAM:SaveState1", 1);
+                  //save_state ("RAM:SaveState1", "Description");
+               }  break;
             case MUIA_Initializing_Gfx :
                if (tag->ti_Data == MUIV_InitGraphics)
                {
@@ -1611,8 +1675,8 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                         FreeVec(tmpdata);
 
                      tmpdata = NULL;
-
-                     set(win_main, MUIA_Window_Title, "MorphUAE");
+                     set_window_title();
+                     //set(win_main, MUIA_Window_Title, "MorphUAE");
                   }
                   else
                   {
@@ -1626,7 +1690,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                            ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
                            UnlockIBase (lock);
                      }
-
+                     //set_window_title();
                      set(win_main, MUIA_Window_Title, Locale_GetString(MSG_EMULATION_PAUSED));
                   }
                }
@@ -1749,10 +1813,17 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
       {
          if (data->render_state == MUIV_FlushClearScreen)
          {
-            if (_rp(obj))
-               //WritePixelArray(gfx_logo, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
-               FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
-               WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj), _top(obj), 640, 512, RECTFMT_ARGB);
+            int twidth = 0;
+            int theight = 0;
+
+            if (uae_get_overscan())
+            {
+               twidth = (OVERSCAN_GFX_WIDTH - DEFAULT_GFX_WIDTH) / 2;
+               theight = (OVERSCAN_GFX_HEIGHT - DEFAULT_GFX_HEIGHT) / 2;
+            }
+
+            FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
+            WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, 640, 512, RECTFMT_ARGB);
          }
          else if (data->render_state == MUIV_FlushLineCGX)
          {
@@ -1960,7 +2031,8 @@ struct MUI_CustomClass *Init_Render(void)
 
 void update_led_status(int led, int on)
 {
-   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  get_disk_state(led-1) ? MUIV_LED_Colour_Blue : MUIV_LED_Colour_Off);
+   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  get_disk_state(led-1) ? ((uae_get_cfgtype() == UAE_CFGTYPE_OCS) ? MUIV_LED_Colour_Blue1x : MUIV_LED_Colour_Blue2x) : MUIV_LED_Colour_Off);
+
 }
 
 /****************************************************************************/
@@ -2116,6 +2188,14 @@ static int mui_setup_window(void)
                                     Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
                                     Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                     Child, HVSpace,
+                                    Child, btn_savestate = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_SAVESTATE),
+                                       MUIA_Rawimage_Data, gfx_restore,
+                                    End,
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
@@ -2439,7 +2519,8 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[2], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy2);
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
-   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_UserSelect);
+   DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Menu);
+   DoMethod(btn_savestate, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Savestate, MUIV_Savestate_Menu);
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
    DoMethod(btn_camera, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
 
@@ -2492,15 +2573,15 @@ static int mui_setup_window(void)
    gfxvidinfo.height = currprefs.gfx_height_win;
 
    clear_disk_state();
-   for (int ic = 0; ic < 4; ic++)
-      if (strlen(currprefs.df[ic]))
-         manage_disk_state(ic, currprefs.df[ic]);
 
-   for (int tc = 0; tc < 4; tc++)
-      set_last_adf(tc, " ", FALSE);
+   for (int ic = 0; ic < 4; ic++)
+     if (strlen(currprefs.df[ic]))
+         manage_disk_state(ic, currprefs.df[ic]);
 
    if (uae_get_use_fullscreen())
       set(obj_rendermcc, MUIA_Display_Type, MUIV_Display_Toggle);
+
+   set_window_title();
 
    return 1;
 }
@@ -2530,7 +2611,7 @@ int graphics_setup (void)
          return 0;
    }
 
-   Locale_Open("MorphUAE.catalog", 1, 0);
+   Locale_Open("MorphUAE.catalog", 1, 1);
    Populate_CycleStrings();
    morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
 

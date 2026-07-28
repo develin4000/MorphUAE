@@ -88,7 +88,10 @@ static ULONG LED_New(struct IClass *cl, Object *obj, struct opSet *msg)
    GenerateGfxData(&LED_gfx_green, LED_Size, LED_Colour_Green, LED_Flare);
    GenerateGfxData(&LED_gfx_blue, LED_Size, LED_Colour_Blue, LED_Flare);
    GenerateGfxData(&LED_gfx_yellow, LED_Size, LED_Colour_Yellow, LED_Flare);
-   
+
+   GenerateGfxData(&LED_gfx_blue1x, LED_Size, LED_Colour_Blue1x, LED_Flare);
+   GenerateGfxData(&LED_gfx_blue2x, LED_Size, LED_Colour_Blue2x, LED_Flare);
+
    data->size   = LED_Size; //LED_SIZE_MEDIUM;
    data->style  = LED_Style_Square;
    data->active = FALSE;
@@ -236,6 +239,10 @@ static ULONG LED_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          LED_gfx = LED_gfx_blue; break;
       case MUIV_LED_Colour_Yellow :
          LED_gfx = LED_gfx_yellow; break;
+      case MUIV_LED_Colour_Blue1x :
+         LED_gfx = LED_gfx_blue1x; break;
+      case MUIV_LED_Colour_Blue2x :
+         LED_gfx = LED_gfx_blue2x; break;
       default : // MUIV_LED_Colour_Off
          LED_gfx = LED_gfx_off; break;
    }
