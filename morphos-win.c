@@ -152,6 +152,8 @@ int valid_kick = 0;
 ULONG lock;
 UBYTE *tmpdata = NULL;
 
+int mtest = 0;
+
 static char *floppy_dir[4];
 BOOL adfstate[4];
 static char last_adf[4][256];
@@ -258,12 +260,15 @@ static Object *obj_rendermcc   = NULL;  // Render object
 struct Object *btn_settings    = NULL;
 struct Object *btn_camera      = NULL;
 struct Object *btn_reset       = NULL;
-struct Object *btn_savestate   = NULL;
 struct Object *btn_eject       = NULL;
 struct Object *btn_fullscreen  = NULL;
 struct Object *btn_pauseresume = NULL;
 struct Object *btn_about       = NULL;
 struct Object *grp_toolbar     = NULL;
+
+#ifdef USE_SAVESTATE
+struct Object *btn_savestate   = NULL;
+#endif
 
 struct DiskObject *morphuae_icon = NULL;
 struct Locale *MorphUAE_Locale;
@@ -303,6 +308,12 @@ struct RenderData
    /* Events */
    struct MUI_EventHandlerNode eh;
 
+   // Test InputHandler
+   struct MUI_InputHandlerNode ih;
+   unsigned int TriggerTime;
+   //struct MsgPort     *port;
+   //struct timerequest *req;
+
    struct BitMap *BitMap;
    uae_u8 *Buffer;
    int XOffset,YOffset;
@@ -314,8 +325,8 @@ struct RenderData
    int    Depth;
    WORD   LeftEdge;
    WORD   TopEdge;
-   //WORD   MouseX;
-   //WORD   MouseY;
+   unsigned int MouseX;
+   unsigned int MouseY;
    WORD   OldX;
    WORD   OldY;
 };
@@ -397,6 +408,8 @@ struct RenderData
 #define MUIV_Savestate_Menu    0
 #define MUIV_Savestate_Load    1
 #define MUIV_Savestate_Save    2
+
+#define MUIM_Mouse_Trigger    (TAGBASE_DEVELIN | 0x0042)
 
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
@@ -1146,36 +1159,47 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
    data = (struct RenderData *)INST_DATA(cl, obj);
 
-   data->screen = NULL;
-   data->ogscreen = NULL;
-   data->modeid = 0;
-   data->window = NULL;
-   data->Active = FALSE;
-   data->InitOK = FALSE;
-   data->showpointer = TRUE;
-   data->FullScreen = FALSE;
-   data->ToolBar = TRUE;
-   data->Iconified = FALSE;
+//   if (data->port = CreateMsgPort())
+//   {
+//      if (data->req = CreateIORequest(data->port, sizeof(struct timerequest)))
+//      {
+//         if (!OpenDevice(TIMERNAME, UNIT_MICROHZ, (struct IORequest *)data->req,0))
+//         {
+            data->screen = NULL;
+            data->ogscreen = NULL;
+            data->modeid = 0;
+            data->window = NULL;
+            data->Active = FALSE;
+            data->InitOK = FALSE;
+            data->showpointer = TRUE;
+            data->FullScreen = FALSE;
+            data->ToolBar = TRUE;
+            data->Iconified = FALSE;
 
-   data->BitMap = NULL;
-   data->Buffer = NULL;
-   data->XOffset = 0;
-   data->YOffset = 0;
-   data->render_state = MUIV_FlushClearScreen;
+            data->BitMap = NULL;
+            data->Buffer = NULL;
+            data->XOffset = 0;
+            data->YOffset = 0;
+            data->render_state = MUIV_FlushClearScreen;
 
-   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-   data->Depth = 24;
-   //data->MouseX = 0;
-   //data->MouseY = 0;
-   data->OldX = 0;
-   data->OldY = 0;
-   data->LeftEdge = 0;
-   data->TopEdge = 0;
-   
-   return((ULONG)obj);
+            data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+            data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+            data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+            data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+            data->Depth = 24;
+            data->MouseX = 0;
+            data->MouseY = 0;
+            data->TriggerTime = 500;
+            data->OldX = 0;
+            data->OldY = 0;
+            data->LeftEdge = 0;
+            data->TopEdge = 0;
+
+            return((ULONG)obj);
+//         }
+//      }
+//   }
+//   return(0);
 }
 /*=*/
 
@@ -1190,6 +1214,7 @@ static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
    data->Active = FALSE;
 
    // The below action might need to be moved to the set-dispatcher and called with MUIV_CleanupGraphics
+
    if (data->Buffer)
    {
       FreeVec(data->Buffer);
@@ -1327,12 +1352,10 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   get(but_gen_resetmode, MUIA_Cycle_Active, &val);
                   uae_reset(val);
                   set_window_title();
-                  //set(win_main, MUIA_Window_Title, "MorphUAE");
                }
                else
                   uae_reset (tag->ti_Data);
                   set_window_title();
-                  //set(win_main, MUIA_Window_Title, "MorphUAE");
                break;
 
             case MUIA_Display_Type :
@@ -1428,7 +1451,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                   set(grp_toolbar, MUIA_ShowMe, data->ToolBar);
                }  break;
-
+#ifdef USE_SAVESTATE
             case MUIA_Savestate :
                if (tag->ti_Data == MUIV_Savestate_Menu)
                {
@@ -1461,6 +1484,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   //savestate_initsave ("RAM:SaveState1", 1);
                   //save_state ("RAM:SaveState1", "Description");
                }  break;
+#endif
             case MUIA_Initializing_Gfx :
                if (tag->ti_Data == MUIV_InitGraphics)
                {
@@ -1676,7 +1700,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                      tmpdata = NULL;
                      set_window_title();
-                     //set(win_main, MUIA_Window_Title, "MorphUAE");
                   }
                   else
                   {
@@ -1690,7 +1713,6 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                            ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
                            UnlockIBase (lock);
                      }
-                     //set_window_title();
                      set(win_main, MUIA_Window_Title, Locale_GetString(MSG_EMULATION_PAUSED));
                   }
                }
@@ -1735,14 +1757,26 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
    data->ScrWidth  = data->screen->Width;
    data->ScrHeight = data->screen->Height;
 
-   // IDCMP_DELTAMOVE
 
+/*
+   data->ih.ihn_Object  = obj;
+   data->ih.ihn_Millis  = data->TriggerTime;
+   data->ih.ihn_Method  = MUIM_Mouse_Trigger;
+   data->ih.ihn_Flags   = MUIIHNF_TIMER;
+
+   DoMethod(_app(obj),MUIM_Application_AddInputHandler,&data->ih);
+*/
+   // IDCMP_DELTAMOVE
    data->eh.ehn_Object = obj;
    data->eh.ehn_Class  = cl;
    data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_MOUSEMOVE;
    data->eh.ehn_Flags  = MUI_EHF_GUIMODE; // Check this... React if the object is active or not...
 
    DoMethod(_win(obj), MUIM_Window_AddEventHandler, &data->eh);
+
+
+
+
    return(TRUE);
 }
 /*=*/
@@ -1756,6 +1790,10 @@ static ULONG Render_Cleanup(struct IClass *cl, Object *obj, Msg msg)
    debug_print("%s (%d)\n", __func__, __LINE__);
 
    DoMethod(_win(obj), MUIM_Window_RemEventHandler, &data->eh);
+
+   //DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ih);
+
+
    return(DoSuperMethodA(cl, obj, (Msg)msg));
 }
 /*=*/
@@ -1930,6 +1968,9 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
       code = msg->imsg->Code;
       qualifier = msg->imsg->Qualifier;
 
+      //data->MouseX = msg->imsg->MouseX;
+      //data->MouseY = msg->imsg->MouseY;
+
       switch(msg->imsg->Class)
       {
          case IDCMP_RAWKEY:
@@ -1943,15 +1984,25 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          }  break;
 
          case IDCMP_MOUSEMOVE:
+            data->MouseX = (msg->imsg->MouseX >= 0) ? (msg->imsg->MouseX < data->WinWidth) ? msg->imsg->MouseX : data->WinWidth : 0;
+            data->MouseY = (msg->imsg->MouseY >= 0) ? (msg->imsg->MouseY < data->WinHeight) ? msg->imsg->MouseY : data->WinHeight : 0;
+            //debug_print("%s (%d) - MouseX = %d ; MouseY = %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+            setmousestate_new(data->MouseX, data->MouseY);
+
             if (_isinobject(msg->imsg->MouseX, msg->imsg->MouseY))
             {
-               setmousestate (0, 0, msg->imsg->MouseX, 1);
-               setmousestate (0, 1, msg->imsg->MouseY, 1);
+               //data->TriggerTime = 10;
+
+               //setmousestate_new(data->MouseX, data->MouseY);
                set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
             }
             else
+            {
+               //data->TriggerTime = 500;
+               //setmousestate_new(100, 100);
                set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
-
+            }
+            //data->ih.ihn_Millis  = data->TriggerTime;
             break;
 
          case IDCMP_MOUSEBUTTONS:
@@ -1994,20 +2045,41 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
 }
 /*=*/
 
+/*=----------------------------- Render_MouseTrigger() -----------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_MouseTrigger(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
+   #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
+
+   data->MouseX = twnd->MouseX;
+   data->MouseY = twnd->MouseY;
+   if (_isinobject(data->MouseX, data->MouseY))
+   {
+      //setmousestate_new(data->MouseX, data->MouseY);
+   }
+   debug_print("%s (%d) - MouseX = %d ; MouseY = %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+}
+
+/*=*/
+
 DISPATCHER(Render)
 {
    switch (msg->MethodID)
    {
-      case OM_NEW           : return Render_New          (cl, obj, (APTR)msg); break;
-      case OM_DISPOSE       : return Render_Dispose      (cl, obj, (APTR)msg); break;
-      case OM_SET           : return Render_Set          (cl, obj, (APTR)msg); break;
-      case MUIM_Setup       : return Render_Setup        (cl, obj, (APTR)msg); break;
-      case MUIM_Cleanup     : return Render_Cleanup      (cl, obj, (APTR)msg); break;
-      case MUIM_AskMinMax   : return Render_Askminmax    (cl, obj, (APTR)msg); break;
-      case MUIM_Draw        : return Render_Draw         (cl, obj, (APTR)msg); break;
-      case MUIM_Show        : return Render_Show         (cl, obj, (APTR)msg); break;
-      case MUIM_Hide        : return Render_Hide         (cl, obj, (APTR)msg); break;
-      case MUIM_HandleEvent : return Render_EventHandler (cl, obj, (APTR)msg); break;
+      case OM_NEW             : return Render_New          (cl, obj, (APTR)msg); break;
+      case OM_DISPOSE         : return Render_Dispose      (cl, obj, (APTR)msg); break;
+      case OM_SET             : return Render_Set          (cl, obj, (APTR)msg); break;
+      case MUIM_Setup         : return Render_Setup        (cl, obj, (APTR)msg); break;
+      case MUIM_Cleanup       : return Render_Cleanup      (cl, obj, (APTR)msg); break;
+      case MUIM_AskMinMax     : return Render_Askminmax    (cl, obj, (APTR)msg); break;
+      case MUIM_Draw          : return Render_Draw         (cl, obj, (APTR)msg); break;
+      case MUIM_Show          : return Render_Show         (cl, obj, (APTR)msg); break;
+      case MUIM_Hide          : return Render_Hide         (cl, obj, (APTR)msg); break;
+      case MUIM_HandleEvent   : return Render_EventHandler (cl, obj, (APTR)msg); break;
+      //case MUIM_Mouse_Trigger : return Render_MouseTrigger (cl, obj, (APTR)msg); break;
    }
 
    return DoSuperMethodA(cl, obj, msg);
@@ -2188,6 +2260,7 @@ static int mui_setup_window(void)
                                     Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
                                     Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                     Child, HVSpace,
+#ifdef USE_SAVESTATE
                                     Child, btn_savestate = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
@@ -2196,6 +2269,7 @@ static int mui_setup_window(void)
                                        MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_SAVESTATE),
                                        MUIA_Rawimage_Data, gfx_restore,
                                     End,
+#endif
                                     Child, btn_eject = RawimageObject,
                                        MUIA_DoubleBuffer, 0,
                                        MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
@@ -2520,7 +2594,9 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
    DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Menu);
+#ifdef USE_SAVESTATE
    DoMethod(btn_savestate, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Savestate, MUIV_Savestate_Menu);
+#endif
    DoMethod(btn_eject, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerEjectAll);
    DoMethod(btn_camera, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Render_State, MUIV_ScreenShoot);
 
@@ -2773,68 +2849,6 @@ int mousehack_allowed (void)
 
 /***************************************************************************/
 
-void LED (int on)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-}
-
-/***************************************************************************/
-
-/* sam: need to put all this in a separate module */
-
-#ifdef PICASSO96
-
-void DX_Invalidate (int first, int last)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-}
-
-int DX_BitsPerCannon (void)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-   return 8;
-}
-
-void DX_SetPalette (int start, int count)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-}
-
-int DX_FillResolutions (uae_u16 *ppixel_format)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-   return 0;
-}
-
-void gfx_set_picasso_modeinfo (int w, int h, int depth)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-}
-
-void gfx_set_picasso_state (int on)
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-}
-#endif
-
-/***************************************************************************/
-
-//static int led_state[5];
-
-//#define WINDOW_TITLE PACKAGE_NAME " " PACKAGE_VERSION
-
-/****************************************************************************/
-
-void main_window_led (int led, int on)                /* is used in amigui.c */
-{
-   //debug_print("%s (%d)\n", __func__, __LINE__);
-/*
-#if 0
-   if (led >= 0 && led <= 4)
-      led_state[led] = on;
-#endif
-*/
-}
 
 /****************************************************************************/
 

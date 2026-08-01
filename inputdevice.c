@@ -1185,6 +1185,8 @@ void inputdevice_handle_inputcode (void)
     }
 }
 
+// handle_input_event (id->eventid[ID_AXIS_OFFSET + axis][i], v, 0, 0);
+
 int handle_input_event (int nr, int state, int max, int autofire)
 {
     const struct inputevent *ie;
@@ -2244,6 +2246,71 @@ void setjoystickstate (int joy, int axis, int state, int max)
     id2->states[axis] = state;
 }
 
+
+void setmousestate_new (unsigned int datax, unsigned int datay)
+{
+   int i, vx, vy;
+   double *mouse_px, *mouse_py, *oldm_px, *oldm_py, dx, dy, diffx, diffy;
+   struct uae_input_device *id = &mice[0];
+   static double fract1[MAX_INPUT_DEVICES][MAX_INPUT_DEVICE_EVENTS];
+   static double fract2[MAX_INPUT_DEVICES][MAX_INPUT_DEVICE_EVENTS];
+
+   if (!mice[0].enabled)
+      return;
+
+   dx = 0;
+   mouse_px = &mouse_axis[0][0];
+   oldm_px = &oldm_axis[0][0];
+
+   dx = datax - (int)(*oldm_px);
+   *oldm_px = datax;
+   *mouse_px += dx;
+
+   dy = 0;
+   mouse_py = &mouse_axis[0][1];
+   oldm_py = &oldm_axis[0][1];
+
+   dy = datay - (int)(*oldm_py);
+   *oldm_py = datay;
+   *mouse_py += dy;
+
+   lastmx = datax;
+   lastmy = datay;
+
+    vx = (int)(dx > 0 ? dx + 0.5 : dx - 0.5);
+	 //vx = (int)(dx > 0 ? dx + 1.0 : dx - 1.0);
+    fract1[0][0] += dx;
+    fract2[0][0] += vx;
+    diffx = fract2[0][0] - fract1[0][0];
+
+	 if (diffx > 1 || diffx < -1)
+	 {
+	    vx -= (int)diffx;
+	   fract2[0][0] -= diffx;
+    }
+
+   vy = (int)(dy > 0 ? dy + 0.5 : dy - 0.5);
+   //vy = (int)(dy > 0 ? dy + 1.0 : dy - 1.0);
+   fract1[0][1] += dy;
+   fract2[0][1] += vy;
+   diffy = fract2[0][1] - fract1[0][1];
+
+   if (diffy > 1 || diffy < -1)
+   {
+      vy -= (int)diffy;
+      fract2[0][1] -= diffy;
+   }
+
+   for (i = 0; i < MAX_INPUT_SUB_EVENT; i++)
+   {
+      handle_input_event (id->eventid[ID_AXIS_OFFSET + 0][i], vx, 0, 0);
+      handle_input_event (id->eventid[ID_AXIS_OFFSET + 1][i], vy, 0, 0);
+   }
+
+   mousehack_helper ();
+}
+
+
 void setmousestate (int mouse, int axis, int data, int isabs)
 {
     int i, v;
@@ -2257,11 +2324,13 @@ void setmousestate (int mouse, int axis, int data, int isabs)
     d = 0;
     mouse_p = &mouse_axis[mouse][axis];
     oldm_p = &oldm_axis[mouse][axis];
-    if (!isabs) {
+
+	 if (!isabs) {
 	*oldm_p = *mouse_p;
 	*mouse_p += data;
 	d = (*mouse_p - *oldm_p) * currprefs.input_mouse_speed / 100.0;
     } else {
+
 	d = data - (int)(*oldm_p);
 	*oldm_p = data;
 	*mouse_p += d;
@@ -2282,6 +2351,7 @@ void setmousestate (int mouse, int axis, int data, int isabs)
 	handle_input_event (id->eventid[ID_AXIS_OFFSET + axis][i], v, 0, 0);
     mousehack_helper ();
 }
+
 
 void warpmode (int mode)
 {
