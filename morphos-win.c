@@ -42,6 +42,8 @@
 #define CATCOMP_ARRAY
 #define CATCOMP_NUMBERS
 
+//#define USE_INPUTHANDLER
+
 #include "sysconfig.h"
 #include "sysdeps.h"
 
@@ -308,11 +310,10 @@ struct RenderData
    /* Events */
    struct MUI_EventHandlerNode eh;
 
-   // Test InputHandler
+#ifdef USE_INPUTHANDLER
    struct MUI_InputHandlerNode ih;
    unsigned int TriggerTime;
-   //struct MsgPort     *port;
-   //struct timerequest *req;
+#endif
 
    struct BitMap *BitMap;
    uae_u8 *Buffer;
@@ -327,8 +328,8 @@ struct RenderData
    WORD   TopEdge;
    unsigned int MouseX;
    unsigned int MouseY;
-   WORD   OldX;
-   WORD   OldY;
+   unsigned int OldX;
+   unsigned int OldY;
 };
 
 
@@ -1000,49 +1001,51 @@ void setup_generic(void)
    int clicfg = UAE_CFGTYPE_DEFAULT;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
+   if (!uae_get_oldconfig())
+   {
+      get(but_gen_machine, MUIA_Cycle_Active, &mpos);
 
-   get(but_gen_machine, MUIA_Cycle_Active, &mpos);
+      clicfg = uae_get_cfgtype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
 
-   clicfg = uae_get_cfgtype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
+      if (clicfg == UAE_CFGTYPE_DEFAULT)
+         setup_specific(mpos);
+      else
+         setup_specific(clicfg);
 
-   if (clicfg == UAE_CFGTYPE_DEFAULT)
-      setup_specific(mpos);
-   else
-      setup_specific(clicfg);
+      // Sound
+      get(but_gen_sound, MUIA_Cycle_Active, &spos);
+      changed_prefs.produce_sound = spos;
+      get(but_gen_channels, MUIA_Cycle_Active, &spos);
+      changed_prefs.sound_stereo = spos;
+      get(but_gen_frequency, MUIA_Cycle_Active, &spos);
+      changed_prefs.sound_freq = (spos == 0 ? 11025 : spos == 1 ? 22055 : spos == 2 ? 44100 : 48000);
 
-   // Sound
-   get(but_gen_sound, MUIA_Cycle_Active, &spos);
-   changed_prefs.produce_sound = spos;
-   get(but_gen_channels, MUIA_Cycle_Active, &spos);
-   changed_prefs.sound_stereo = spos;
-   get(but_gen_frequency, MUIA_Cycle_Active, &spos);
-   changed_prefs.sound_freq = (spos == 0 ? 11025 : spos == 1 ? 22055 : spos == 2 ? 44100 : 48000);
+      // IO Devices...
+      get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
+      set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
+      changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
+      get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
+      set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
+      changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
+      get(but_gen_floppynum, MUIA_Cycle_Active, &jpos);
+      changed_prefs.nr_floppies = jpos+1;
 
-   // IO Devices...
-   get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
-   set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
-   changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
-   get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
-   set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
-   changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
-   get(but_gen_floppynum, MUIA_Cycle_Active, &jpos);
-   changed_prefs.nr_floppies = jpos+1;
+      for (fcnt = 0; fcnt < 4; fcnt++)
+         changed_prefs.dfxtype[fcnt] = (fcnt <= jpos) ? 0 : -1;
 
-   for (fcnt = 0; fcnt < 4; fcnt++)
-      changed_prefs.dfxtype[fcnt] = (fcnt <= jpos) ? 0 : -1;
+      get(but_gen_floppyspd, MUIA_Cycle_Active, &jpos);
+      changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
+      get(but_gen_language, MUIA_Cycle_Active, &jpos);
+      changed_prefs.keyboard_lang = jpos;
 
-   get(but_gen_floppyspd, MUIA_Cycle_Active, &jpos);
-   changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
-   get(but_gen_language, MUIA_Cycle_Active, &jpos);
-   changed_prefs.keyboard_lang = jpos;
-
-   // Chipset...
-   get(but_gen_blitter, MUIA_Cycle_Active, &val);
-   changed_prefs.immediate_blits = val;
-   get(but_gen_sprite, MUIA_Cycle_Active, &val);
-   changed_prefs.collision_level = val;
-   get(but_gen_framerate, MUIA_Cycle_Active, &val);
-   changed_prefs.gfx_framerate = val+1;
+      // Chipset...
+      get(but_gen_blitter, MUIA_Cycle_Active, &val);
+      changed_prefs.immediate_blits = val;
+      get(but_gen_sprite, MUIA_Cycle_Active, &val);
+      changed_prefs.collision_level = val;
+      get(but_gen_framerate, MUIA_Cycle_Active, &val);
+      changed_prefs.gfx_framerate = val+1;
+   }
 }
 /*=*/
 
@@ -1159,47 +1162,37 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
 
    data = (struct RenderData *)INST_DATA(cl, obj);
 
-//   if (data->port = CreateMsgPort())
-//   {
-//      if (data->req = CreateIORequest(data->port, sizeof(struct timerequest)))
-//      {
-//         if (!OpenDevice(TIMERNAME, UNIT_MICROHZ, (struct IORequest *)data->req,0))
-//         {
-            data->screen = NULL;
-            data->ogscreen = NULL;
-            data->modeid = 0;
-            data->window = NULL;
-            data->Active = FALSE;
-            data->InitOK = FALSE;
-            data->showpointer = TRUE;
-            data->FullScreen = FALSE;
-            data->ToolBar = TRUE;
-            data->Iconified = FALSE;
+   data->screen = NULL;
+   data->ogscreen = NULL;
+   data->modeid = 0;
+   data->window = NULL;
+   data->Active = FALSE;
+   data->InitOK = FALSE;
+   data->showpointer = TRUE;
+   data->FullScreen = FALSE;
+   data->ToolBar = TRUE;
+   data->Iconified = FALSE;
+   data->BitMap = NULL;
+   data->Buffer = NULL;
+   data->XOffset = 0;
+   data->YOffset = 0;
+   data->render_state = MUIV_FlushClearScreen;
 
-            data->BitMap = NULL;
-            data->Buffer = NULL;
-            data->XOffset = 0;
-            data->YOffset = 0;
-            data->render_state = MUIV_FlushClearScreen;
-
-            data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-            data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-            data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-            data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-            data->Depth = 24;
-            data->MouseX = 0;
-            data->MouseY = 0;
-            data->TriggerTime = 500;
-            data->OldX = 0;
-            data->OldY = 0;
-            data->LeftEdge = 0;
-            data->TopEdge = 0;
-
-            return((ULONG)obj);
-//         }
-//      }
-//   }
-//   return(0);
+   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->Depth = 24;
+   data->MouseX = 0;
+   data->MouseY = 0;
+   data->OldX = 0;
+   data->OldY = 0;
+   data->LeftEdge = 0;
+   data->TopEdge = 0;
+#ifdef USE_INPUTHANDLER
+   data->TriggerTime = 100;
+#endif
+   return((ULONG)obj);
 }
 /*=*/
 
@@ -1757,15 +1750,15 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
    data->ScrWidth  = data->screen->Width;
    data->ScrHeight = data->screen->Height;
 
-
-/*
+#ifdef USE_INPUTHANDLER
    data->ih.ihn_Object  = obj;
    data->ih.ihn_Millis  = data->TriggerTime;
    data->ih.ihn_Method  = MUIM_Mouse_Trigger;
    data->ih.ihn_Flags   = MUIIHNF_TIMER;
 
    DoMethod(_app(obj),MUIM_Application_AddInputHandler,&data->ih);
-*/
+#endif
+
    // IDCMP_DELTAMOVE
    data->eh.ehn_Object = obj;
    data->eh.ehn_Class  = cl;
@@ -1791,8 +1784,9 @@ static ULONG Render_Cleanup(struct IClass *cl, Object *obj, Msg msg)
 
    DoMethod(_win(obj), MUIM_Window_RemEventHandler, &data->eh);
 
-   //DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ih);
-
+#ifdef USE_INPUTHANDLER
+   DoMethod(_app(obj), MUIM_Application_RemInputHandler, &data->ih);
+#endif
 
    return(DoSuperMethodA(cl, obj, (Msg)msg));
 }
@@ -1913,6 +1907,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          {
             WritePixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
          }
+
    }
    return(0);
 }
@@ -1961,15 +1956,10 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
    #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
    #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
 
-   //debug_print("%s (%d)\n", __func__, __LINE__); // IntuiMessage
-
    if (msg->imsg)
    {
       code = msg->imsg->Code;
       qualifier = msg->imsg->Qualifier;
-
-      //data->MouseX = msg->imsg->MouseX;
-      //data->MouseY = msg->imsg->MouseY;
 
       switch(msg->imsg->Class)
       {
@@ -1984,25 +1974,31 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          }  break;
 
          case IDCMP_MOUSEMOVE:
-            data->MouseX = (msg->imsg->MouseX >= 0) ? (msg->imsg->MouseX < data->WinWidth) ? msg->imsg->MouseX : data->WinWidth : 0;
-            data->MouseY = (msg->imsg->MouseY >= 0) ? (msg->imsg->MouseY < data->WinHeight) ? msg->imsg->MouseY : data->WinHeight : 0;
-            //debug_print("%s (%d) - MouseX = %d ; MouseY = %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
-            setmousestate_new(data->MouseX, data->MouseY);
+            data->MouseX = (msg->imsg->MouseX >= _mleft(obj)) ? (msg->imsg->MouseX < _mright(obj)) ? msg->imsg->MouseX : _mright(obj) : _mleft(obj);
+            data->MouseY = (msg->imsg->MouseY >= _mtop(obj)) ? (msg->imsg->MouseY < _mbottom(obj)) ? msg->imsg->MouseY : _mbottom(obj) : _mtop(obj);
 
+#ifndef USE_INPUTHANDLER
+            setmousestate_new(data->MouseX, data->MouseY);
+#endif
             if (_isinobject(msg->imsg->MouseX, msg->imsg->MouseY))
             {
-               //data->TriggerTime = 10;
-
-               //setmousestate_new(data->MouseX, data->MouseY);
+#ifdef USE_INPUTHANDLER
+               data->TriggerTime = 1;
+#endif
                set(obj_rendermcc, MUIA_Pointer_State, MUIV_HidePointer);
             }
             else
             {
-               //data->TriggerTime = 500;
-               //setmousestate_new(100, 100);
+#ifdef USE_INPUTHANDLER
+               data->TriggerTime = 100;
+#endif
+               //resyncmousestate_new(data->MouseX, data->MouseY);
                set(obj_rendermcc, MUIA_Pointer_State, MUIV_ShowPointer);
             }
-            //data->ih.ihn_Millis  = data->TriggerTime;
+
+#ifdef USE_INPUTHANDLER
+            data->ih.ihn_Millis  = data->TriggerTime;
+#endif
             break;
 
          case IDCMP_MOUSEBUTTONS:
@@ -2045,23 +2041,17 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
 }
 /*=*/
 
+#ifdef USE_INPUTHANDLER
 /*=----------------------------- Render_MouseTrigger() -----------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
 static ULONG Render_MouseTrigger(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
-   #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
-
-   data->MouseX = twnd->MouseX;
-   data->MouseY = twnd->MouseY;
-   if (_isinobject(data->MouseX, data->MouseY))
-   {
-      //setmousestate_new(data->MouseX, data->MouseY);
-   }
-   debug_print("%s (%d) - MouseX = %d ; MouseY = %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
+   setmousestate_new(data->MouseX, data->MouseY);
+   //debug_print("%s (%d) - MouseX = %d ; MouseY = %d\n", __func__, __LINE__, data->MouseX, data->MouseY);
 }
+#endif
 
 /*=*/
 
@@ -2079,7 +2069,9 @@ DISPATCHER(Render)
       case MUIM_Show          : return Render_Show         (cl, obj, (APTR)msg); break;
       case MUIM_Hide          : return Render_Hide         (cl, obj, (APTR)msg); break;
       case MUIM_HandleEvent   : return Render_EventHandler (cl, obj, (APTR)msg); break;
-      //case MUIM_Mouse_Trigger : return Render_MouseTrigger (cl, obj, (APTR)msg); break;
+#ifdef USE_INPUTHANDLER
+      case MUIM_Mouse_Trigger : return Render_MouseTrigger (cl, obj, (APTR)msg); break;
+#endif
    }
 
    return DoSuperMethodA(cl, obj, msg);
@@ -2132,6 +2124,7 @@ static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_li
 
 static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
    tmp_gfxinfo = gfxinfo;
    tmp_line_no = line_no;
 
@@ -2140,6 +2133,7 @@ static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no)
 
 static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line)
 {
+   //debug_print("%s (%d)\n", __func__, __LINE__);
    tmp_gfxinfo = gfxinfo;
    tmp_first_line = first_line;
    tmp_last_line = last_line;
@@ -2149,6 +2143,7 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
 
 static void flush_clear_screen_gfxlib (struct vidbuf_description *gfxinfo)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
    tmp_gfxinfo = gfxinfo;
 
    set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);

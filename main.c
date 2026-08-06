@@ -65,6 +65,7 @@ int usechksum = UAE_CHKSUM_ON;
 int usefullscreen = UAE_FULLSCREEN_OFF;
 int usearosrom = UAE_AROSROM_NO;
 int useoverscan = UAE_OVERSCAN_OFF;
+int useoldconfig = UAE_OLDCONFIG_OFF;
 
 int log_scsi;
 
@@ -119,6 +120,16 @@ void uae_set_overscan(int value)
 int uae_get_overscan(void)
 {
    return useoverscan;
+}
+
+void uae_set_oldconfig(int value)
+{
+   useoldconfig = value;
+}
+
+int uae_get_oldconfig(void)
+{
+   return useoldconfig;
 }
 
 int uae_get_kick_status(void)
@@ -442,6 +453,8 @@ debug_print("%s (%d)\n", __func__, __LINE__);
        uae_set_use_fullscreen(UAE_FULLSCREEN_ON);
    } else if (strcmp (argv[i], "-overscan") == 0) {
        uae_set_overscan(UAE_OVERSCAN_ON);
+   } else if (strcmp (argv[i], "-oldconf") == 0) {
+       uae_set_oldconfig(UAE_OLDCONFIG_ON);
 	} else {
 	    if (argv[i][0] == '-' && argv[i][1] != '\0') {
 		const char *arg = argv[i] + 2;

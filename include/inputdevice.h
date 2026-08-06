@@ -88,6 +88,7 @@ extern void setjoybuttonstateall (int joy, uae_u32 buttonbits, uae_u32 buttonmas
 extern void setjoybuttonstate (int joy, int button, int state);
 extern void setmousebuttonstate (int mouse, int button, int state);
 extern void setjoystickstate (int joy, int axle, int state, int max);
+void resyncmousestate_new (unsigned int datax, unsigned int datay);
 void setmousestate_new (unsigned int datax, unsigned int datay);
 void setmousestate (int mouse, int axis, int data, int isabs);
 extern void inputdevice_updateconfig (struct uae_prefs *prefs);

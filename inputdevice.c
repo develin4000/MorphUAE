@@ -2247,6 +2247,12 @@ void setjoystickstate (int joy, int axis, int state, int max)
 }
 
 
+void resyncmousestate_new (unsigned int datax, unsigned int datay)
+{
+   oldm_axis[0][0] = datax;
+   oldm_axis[0][1] = datay;
+}
+
 void setmousestate_new (unsigned int datax, unsigned int datay)
 {
    int i, vx, vy;

@@ -39,6 +39,9 @@ extern int uae_get_usearosrom(void);
 extern void uae_set_overscan(int);
 extern int uae_get_overscan(void);
 
+extern void uae_set_oldconfig(int);
+extern int uae_get_oldconfig(void);
+
 #define UAE_CHKSUM_ON       0
 #define UAE_CHKSUM_OFF      1
 
@@ -56,6 +59,9 @@ extern int uae_get_overscan(void);
 
 #define UAE_OVERSCAN_OFF    0
 #define UAE_OVERSCAN_ON     1
+
+#define UAE_OLDCONFIG_OFF   0
+#define UAE_OLDCONFIG_ON    1
 
 
 extern void setup_brkhandler (void);

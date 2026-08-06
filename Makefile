@@ -73,6 +73,7 @@ CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointe
 #LFLG_MOS	= -lz -lm -ldebug
 CPPFLG_MOS	= -D__AMIGADATE__=\"$(shell date "+%d.%m.%y")\"
 LFLG_MOS	= -lz -lm
+#LFLG_MOS	= -lz -lm -maltivec -mabi=altivec
 
 .PHONY:	clean usage
 
