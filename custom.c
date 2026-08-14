@@ -46,9 +46,6 @@
 #include "drawing.h"
 #include "savestate.h"
 #include "ar.h"
-#ifdef AVIOUTPUT
-#include "avioutput.h"
-#endif
 #include "debug.h"
 #include "akiko.h"
 #include "enforcer.h"
@@ -4182,7 +4179,7 @@ static void fpscounter (void)
 
 static void vsync_handler (void)
 {
-    fpscounter ();
+    //fpscounter ();
 
     //Set the JIT indicator on the UI and then clear it
     if (cache_enabled)

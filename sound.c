@@ -156,7 +156,7 @@ int init_sound (void)
 	       rate, sndbufsize);
 
     sound_available = 1;
-    driveclick_init();
+    //driveclick_init();
     return 1;
 fail:
     sound_available = 0;

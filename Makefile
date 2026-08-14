@@ -68,7 +68,8 @@ INCDIR		= ./include
 #
 # Platform specific compiler and linker flags 
 #
-CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes -Wimplicit-function-declaration -Wno-implicit
+#CFLG_MOS	= -DHAVE_CONFIG_H -g -O2 -noixemul -Wa,--execstack  -fomit-frame-pointer -Wno-unused -Wno-format -W -Wmissing-prototypes -Wstrict-prototypes -Wimplicit-function-declaration -Wno-implicit
+CFLG_MOS	= -DHAVE_CONFIG_H -O2 -noixemul -Wno-unused -Wimplicit-function-declaration
 #CPPFLG_MOS	= -DUSEDEBUG -D__AMIGADATE__=\"$(shell date "+%d.%m.%y")\"
 #LFLG_MOS	= -lz -lm -ldebug
 CPPFLG_MOS	= -D__AMIGADATE__=\"$(shell date "+%d.%m.%y")\"

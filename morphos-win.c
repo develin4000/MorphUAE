@@ -154,6 +154,14 @@ int valid_kick = 0;
 ULONG lock;
 UBYTE *tmpdata = NULL;
 
+APTR buffer;
+int YOffset, XOffset;
+BOOL FullScreen;
+WORD   WinWidth;
+WORD   WinHeight;
+WORD   ScrWidth;
+WORD   ScrHeight;
+
 int mtest = 0;
 
 static char *floppy_dir[4];
@@ -1169,19 +1177,19 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->Active = FALSE;
    data->InitOK = FALSE;
    data->showpointer = TRUE;
-   data->FullScreen = FALSE;
+   data->FullScreen = FullScreen = FALSE;
    data->ToolBar = TRUE;
    data->Iconified = FALSE;
    data->BitMap = NULL;
    data->Buffer = NULL;
-   data->XOffset = 0;
-   data->YOffset = 0;
+   data->XOffset = XOffset = 0;
+   data->YOffset = YOffset = 0;
    data->render_state = MUIV_FlushClearScreen;
 
-   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->WinWidth  = WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->WinHeight = WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->ScrWidth  = ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->ScrHeight = ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
    data->Depth = 24;
    data->MouseX = 0;
    data->MouseY = 0;
@@ -1224,7 +1232,7 @@ static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
    if (data->FullScreen)
    {
       CloseScreen(data->screen);
-      data->FullScreen = FALSE;
+      data->FullScreen = FullScreen = FALSE;
    }
 
    return(DoSuperMethodA(cl, obj, msg));
@@ -1331,6 +1339,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                         if (poprc != 1)
                         {
+                           kill_filesys_unit(currprefs.mountinfo, 0);
+                           kill_filesys_unit(currprefs.mountinfo, 1);
+                           free_mountinfo (currprefs.mountinfo);
                            setup_generic();
                            uae_restarted = TRUE;
                            uae_restart (-1, NULL);
@@ -1358,7 +1369,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   CloseScreen(data->screen);
                   data->screen = data->ogscreen;
 
-                  data->FullScreen = FALSE;
+                  data->FullScreen = FullScreen = FALSE;
 
                   set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
                   SetAttrs(win_main,
@@ -1396,7 +1407,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      if (tmpscreen)
                      {
                         data->screen = tmpscreen;
-                        data->FullScreen = TRUE;
+                        data->FullScreen = FullScreen = TRUE;
                         set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_Off);
                         SetAttrs(win_main,
                                  MUIA_Window_Screen,      data->screen,
@@ -1483,7 +1494,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                {
                   int bytes_per_row;
                   int bytes_per_pixel;
-                  APTR buffer;
+                  //APTR buffer;
 
                   data->InitOK = TRUE;
 
@@ -1747,8 +1758,8 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
 
    //twnd = _win(obj);
 
-   data->ScrWidth  = data->screen->Width;
-   data->ScrHeight = data->screen->Height;
+   data->ScrWidth  = ScrWidth  = data->screen->Width;
+   data->ScrHeight = ScrHeight = data->screen->Height;
 
 #ifdef USE_INPUTHANDLER
    data->ih.ihn_Object  = obj;
@@ -1937,8 +1948,8 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
    data->screen = _screen(obj);
    twnd = data->window = (struct Window *)_window(obj);
    data->Active = TRUE;
-   data->XOffset = _mleft(obj);
-   data->YOffset = _mtop(obj);
+   data->XOffset = XOffset = _mleft(obj);
+   data->YOffset = YOffset = _mtop(obj);
 
    reset_drawing (); // Test
 
@@ -2140,6 +2151,57 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
 
    set(obj_rendermcc, MUIA_Render_State, MUIV_FlushBlockCGX);
 }
+
+//Direct "flush" test
+
+/*
+            if (!data->FullScreen)
+               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), data->XOffset, data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB);
+            else
+            {
+               if (fscheck) // Do this just once on first toggle between window and fullscreen mode...
+               {
+
+                  xdiff = data->ScrWidth - data->WinWidth;
+                  ydiff = data->ScrHeight - data->WinHeight;
+                  xstart = xdiff / 2;
+                  ystart = ydiff / 2;
+                  fscheck = FALSE;
+                  FillPixelArray (_rp(obj), 0, 0, data->ScrWidth, data->ScrHeight, 0x00000000);
+               }
+
+               WritePixelArray(data->Buffer, 0, tmp_first_line, tmp_gfxinfo->rowbytes, _rp(obj), xstart+data->XOffset, ystart+data->YOffset + tmp_first_line, tmp_gfxinfo->width, tmp_last_line - tmp_first_line + 1, RECTFMT_ARGB);
+            }
+*/
+/*
+static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line, int last_line)
+{
+    struct RastPort *rp = _rp(obj_rendermcc);
+    if (!rp || !rp->Layer) return;
+
+    //struct Layer *l = rp->Layer;
+
+    //LockLayerRom(l);
+
+   if (!FullScreen)
+      WritePixelArray(buffer, 0, first_line, gfxinfo->rowbytes, rp, XOffset, YOffset+first_line, tmp_gfxinfo->width, last_line - first_line + 1, RECTFMT_ARGB);
+   else
+   {
+      if (fscheck) // Do this just once on first toggle between window and fullscreen mode...
+      {
+         xdiff = ScrWidth - WinWidth;
+         ydiff = ScrHeight - WinHeight;
+         xstart = xdiff / 2;
+         ystart = ydiff / 2;
+         fscheck = FALSE;
+         FillPixelArray (rp, 0, 0, ScrWidth, ScrHeight, 0x00000000);
+      }
+
+      WritePixelArray(buffer, 0, first_line, gfxinfo->rowbytes, rp, xstart+XOffset, ystart+YOffset + first_line, gfxinfo->width, last_line - first_line + 1, RECTFMT_ARGB);
+   }
+    //UnlockLayerRom(l);
+}
+*/
 
 static void flush_clear_screen_gfxlib (struct vidbuf_description *gfxinfo)
 {

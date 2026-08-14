@@ -1793,48 +1793,53 @@ static void draw_status_line (int line)
 
 void finish_drawing_frame (void)
 {
-    int i;
+   int i;
 
-    if (! lockscr ()) {
-	notice_screen_contents_lost ();
-	return;
-    }
+   if (! lockscr ())
+   {
+      notice_screen_contents_lost ();
+      return;
+   }
 
 #ifndef SMART_UPDATE
-    /* @@@ This isn't exactly right yet. FIXME */
-    if (!interlace_seen)
-	do_flush_screen (first_drawn_line, last_drawn_line);
-    else
-	unlockscr ();
-    return;
+   /* @@@ This isn't exactly right yet. FIXME */
+   if (!interlace_seen)
+      do_flush_screen (first_drawn_line, last_drawn_line);
+   else
+      unlockscr ();
+   return;
 #endif
-    for (i = 0; i < max_ypos_thisframe; i++) {
-	int where;
-	int i1;
-	int line = i + thisframe_y_adjust_real;
+   for (i = 0; i < max_ypos_thisframe; i++)
+   {
+      int where;
+      int i1;
+      int line = i + thisframe_y_adjust_real;
 
-	if (linestate[line] == LINE_UNDECIDED)
-	    break;
+      if (linestate[line] == LINE_UNDECIDED)
+         break;
 
-	i1 = i + min_ypos_for_screen;
+      i1 = i + min_ypos_for_screen;
 
-	where = amiga2aspect_line_map[i1];
-	if (where >= gfxvidinfo.height)
-	    break;
-	if (where == -1)
-	    continue;
+      where = amiga2aspect_line_map[i1];
+      if (where >= gfxvidinfo.height)
+         break;
+      if (where == -1)
+         continue;
 
-	pfield_draw_line (line, where, amiga2aspect_line_map[i1 + 1]);
+      pfield_draw_line (line, where, amiga2aspect_line_map[i1 + 1]);
+   }
+/*
+    if (currprefs.leds_on_screen)
+	 {
+	    int line = gfxvidinfo.height - TD_TOTAL_HEIGHT;
+	    for (i = TD_TOTAL_HEIGHT; i--; line++)
+	    {
+	       draw_status_line (line);
+	       do_flush_line (line);
+	    }
     }
-    if (currprefs.leds_on_screen) {
-	int line = gfxvidinfo.height - TD_TOTAL_HEIGHT;
-	for (i = TD_TOTAL_HEIGHT; i--; line++) {
-	    draw_status_line (line);
-	    do_flush_line (line);
-	}
-    }
-
-    do_flush_screen (first_drawn_line, last_drawn_line);
+*/
+   do_flush_screen (first_drawn_line, last_drawn_line);
 }
 
 void hardware_line_completed (int lineno)
@@ -1880,22 +1885,24 @@ STATIC_INLINE void check_picasso (void)
 
 void redraw_frame (void)
 {
-    last_drawn_line = 0;
-    first_drawn_line = 32767;
-    finish_drawing_frame ();
-    flush_screen (0, 0);
+   last_drawn_line = 0;
+   first_drawn_line = 32767;
+   finish_drawing_frame ();
+   flush_screen (0, 0);
 }
 
 void vsync_handle_redraw (int long_frame, int lof_changed)
 {
-    last_redraw_point++;
-    if (lof_changed || ! interlace_seen || last_redraw_point >= 2 || long_frame) {
-	last_redraw_point = 0;
 
-	if (framecnt == 0)
-	    finish_drawing_frame ();
+   last_redraw_point++;
+   if (lof_changed || ! interlace_seen || last_redraw_point >= 2 || long_frame)
+   {
+      last_redraw_point = 0;
 
-	interlace_seen = 0;
+      if (framecnt == 0)
+         finish_drawing_frame ();
+
+      interlace_seen = 0;
 
 	/* At this point, we have finished both the hardware and the
 	 * drawing frame. Essentially, we are outside of all loops and
@@ -1903,56 +1910,61 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	 * done at other times.
 	 */
 
-	if (savestate_state == STATE_DORESTORE) {
-	    savestate_state = STATE_RESTORE;
-	    reset_drawing ();
-	    uae_reset (0);
-	} else if (savestate_state == STATE_DOREWIND) {
-	    savestate_state = STATE_REWIND;
-	    reset_drawing ();
-	    uae_reset (0);
-	}
+      if (savestate_state == STATE_DORESTORE)
+      {
+         savestate_state = STATE_RESTORE;
+         reset_drawing ();
+         uae_reset (0);
+      }
+      else if (savestate_state == STATE_DOREWIND)
+      {
+         savestate_state = STATE_REWIND;
+         reset_drawing ();
+         uae_reset (0);
+      }
 
-	if (uae_state_change_pending ()) {
-	    set_special (&regs, SPCFLAG_BRK);
-	    init_drawing_frame ();
-	    return;
-	}
+      if (uae_state_change_pending ())
+      {
+         set_special (&regs, SPCFLAG_BRK);
+         init_drawing_frame ();
+         return;
+      }
 
-	savestate_capture (0);
+      savestate_capture (0);
 
-	count_frame ();
-	check_picasso ();
+      count_frame ();
+/*
+      check_picasso ();
 
-	if (check_prefs_changed_gfx ()) {
-	    reset_drawing ();
-	    init_row_map ();
-	    init_aspect_maps ();
-	    notice_screen_contents_lost ();
-	    notice_new_xcolors ();
-	}
+      if (check_prefs_changed_gfx ())
+      {
+         reset_drawing ();
+         init_row_map ();
+         init_aspect_maps ();
+         notice_screen_contents_lost ();
+         notice_new_xcolors ();
+      }
 
-	check_prefs_changed_audio ();
+      check_prefs_changed_audio ();
 
-	check_prefs_changed_comp ();
+      check_prefs_changed_comp ();
 
-	check_prefs_changed_custom ();
-	check_prefs_changed_cpu ();
+      check_prefs_changed_custom ();
+      check_prefs_changed_cpu ();
+*/
+      if (inhibit_frame != 0)
+         framecnt = 1;
 
-	if (inhibit_frame != 0)
-	    framecnt = 1;
-
-	if (framecnt == 0)
-	    init_drawing_frame ();
-    } else {
-	if (is_vsync ())
-	    flush_screen (0, 0); /* vsync mode */
-    }
-    gui_hd_led (0);
-    gui_cd_led (0);
-#ifdef AVIOUTPUT
-    frame_drawn ();
-#endif
+      if (framecnt == 0)
+         init_drawing_frame ();
+   }
+   else
+   {
+      if (is_vsync ())
+         flush_screen (0, 0); /* vsync mode */
+   }
+   //gui_hd_led (0);
+   //gui_cd_led (0);
 }
 
 void hsync_record_line_state (int lineno, enum nln_how how, int changed)

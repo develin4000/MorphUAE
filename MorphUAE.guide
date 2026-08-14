@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (28-07-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (14-08-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -411,6 +411,7 @@ A - No, not at this point.
  · Added an CLI/Shell option to enable overscan resolution (-overscan).
  · The reset button can now also change machine type, via a popup menu (Suggested by bitRocky)
  · The current active ADF image is also shown in the window title (Suggested by bitRocky)
+ · Mounted virtual devices was not fully freed when switching between machine types.
 
 @ENDNODE
 
