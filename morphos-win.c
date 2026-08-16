@@ -155,12 +155,13 @@ ULONG lock;
 UBYTE *tmpdata = NULL;
 
 APTR buffer;
-int YOffset, XOffset;
-BOOL FullScreen;
-WORD   WinWidth;
-WORD   WinHeight;
-WORD   ScrWidth;
-WORD   ScrHeight;
+BOOL UseOverscan = FALSE;
+//int YOffset, XOffset;
+//BOOL FullScreen;
+//WORD   WinWidth;
+//WORD   WinHeight;
+//WORD   ScrWidth;
+//WORD   ScrHeight;
 
 int mtest = 0;
 
@@ -289,6 +290,7 @@ static STRPTR cyc_list_jport[4];
 static STRPTR cyc_list_sndout[5];
 static STRPTR cyc_list_sndchan[4];
 static STRPTR cyc_list_floppy[4];
+static STRPTR cyc_list_resolution[3];
 static STRPTR cyc_list_blits[3];
 static STRPTR cyc_list_sprites[5];
 static STRPTR cyc_list_frames[4];
@@ -710,6 +712,9 @@ void Populate_CycleStrings(void)
       cyc_list_floppy[1] = Locale_GetString(MSG_CYC_FLOPPY_1);
       cyc_list_floppy[2] = Locale_GetString(MSG_CYC_FLOPPY_2);
 
+      cyc_list_resolution[0] = Locale_GetString(MSG_CYC_RESOLUTION_0);
+      cyc_list_resolution[1] = Locale_GetString(MSG_CYC_RESOLUTION_1);
+
       cyc_list_blits[0] = Locale_GetString(MSG_CYC_BLITS_0);
       cyc_list_blits[1] = Locale_GetString(MSG_CYC_BLITS_1);
 
@@ -754,19 +759,20 @@ void reset_tab(unsigned int tab)
    {
       case ID_BUT_GEN_RESET :
       {
-         set(but_gen_machine, MUIA_Cycle_Active, 2);   // AGA
-         set(but_gen_sound, MUIA_Cycle_Active, 2);     // Normal
-         set(but_gen_channels, MUIA_Cycle_Active, 1);  // Stereo
-         set(but_gen_frequency, MUIA_Cycle_Active, 2); // 44100Hz
-         set(but_gen_joy0, MUIA_Cycle_Active, 0);      // Mouse
-         set(but_gen_joy1, MUIA_Cycle_Active, 2);      // Joy1
-         set(but_gen_floppynum, MUIA_Cycle_Active, 1); // 2 Floppys
-         set(but_gen_floppyspd, MUIA_Cycle_Active, 0); // Normal
-         set(but_gen_language, MUIA_Cycle_Active, 0);  // US / UK (Default)
-         set(but_gen_blitter, MUIA_Cycle_Active, 0);   // Off - Check this!
-         set(but_gen_sprite, MUIA_Cycle_Active, 3);    // Full - Check this!
-         set(but_gen_framerate, MUIA_Cycle_Active, 0); // Every one
-         set(but_gen_resetmode, MUIA_Cycle_Active, 0); // Soft!
+         set(but_gen_machine, MUIA_Cycle_Active, 2);    // AGA
+         set(but_gen_sound, MUIA_Cycle_Active, 2);      // Normal
+         set(but_gen_channels, MUIA_Cycle_Active, 1);   // Stereo
+         set(but_gen_frequency, MUIA_Cycle_Active, 2);  // 44100Hz
+         set(but_gen_joy0, MUIA_Cycle_Active, 0);       // Mouse
+         set(but_gen_joy1, MUIA_Cycle_Active, 2);       // Joy1
+         set(but_gen_floppynum, MUIA_Cycle_Active, 1);  // 2 Floppys
+         set(but_gen_floppyspd, MUIA_Cycle_Active, 0);  // Normal
+         set(but_gen_language, MUIA_Cycle_Active, 0);   // US / UK (Default)
+         set(but_gen_resolution, MUIA_Cycle_Active, 0); // Standard
+         set(but_gen_blitter, MUIA_Cycle_Active, 0);    // Off - Check this!
+         set(but_gen_sprite, MUIA_Cycle_Active, 3);     // Full - Check this!
+         set(but_gen_framerate, MUIA_Cycle_Active, 0);  // Every one
+         set(but_gen_resetmode, MUIA_Cycle_Active, 0);  // Soft!
       }  break;
 
       case ID_BUT_OCS_RESET :
@@ -840,7 +846,6 @@ void setup_specific(int conf)
    STRPTR ks, ksk, vhd, devn, voln;
    LONG val;
    BPTR fh = 0;
-   int fscnt = 0;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
 
@@ -911,7 +916,6 @@ void setup_specific(int conf)
          GetAttr(MUIA_String_Contents, cus_devname1_str, (ULONG *)&devn);
          GetAttr(MUIA_String_Contents, cus_volname1_str, (ULONG *)&voln);
          add_filesys_unit(currprefs.mountinfo, devn, voln, vhd, 0, 0, 0, 0, 0, 0, 0, 0);
-         fscnt++;
       }
       else
       {
@@ -1046,7 +1050,26 @@ void setup_generic(void)
       get(but_gen_language, MUIA_Cycle_Active, &jpos);
       changed_prefs.keyboard_lang = jpos;
 
-      // Chipset...
+      // Graphics...
+/*
+      get(but_gen_resolution, MUIA_Cycle_Active, &val);
+      if (uae_get_overscan() != val)
+      {
+         uae_set_overscan(val);
+
+         set(win_main, MUIA_Window_Open, FALSE);
+         set(win_main, MUIA_Window_Open, TRUE);
+         //gfxvidinfo.width  = (val == UAE_OVERSCAN_ON) ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+         //gfxvidinfo.height = (val == UAE_OVERSCAN_ON) ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+
+         //if (val == UAE_OVERSCAN_ON)
+         //   UseOverscan = TRUE;
+         //else
+         //   UseOverscan = FALSE;
+
+         set(obj_rendermcc, MUIA_Render_State, MUIV_FlushClearScreen);
+      }
+*/
       get(but_gen_blitter, MUIA_Cycle_Active, &val);
       changed_prefs.immediate_blits = val;
       get(but_gen_sprite, MUIA_Cycle_Active, &val);
@@ -1177,19 +1200,19 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->Active = FALSE;
    data->InitOK = FALSE;
    data->showpointer = TRUE;
-   data->FullScreen = FullScreen = FALSE;
+   data->FullScreen = FALSE;
    data->ToolBar = TRUE;
    data->Iconified = FALSE;
    data->BitMap = NULL;
    data->Buffer = NULL;
-   data->XOffset = XOffset = 0;
-   data->YOffset = YOffset = 0;
+   data->XOffset = 0;
+   data->YOffset = 0;
    data->render_state = MUIV_FlushClearScreen;
 
-   data->WinWidth  = WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->WinHeight = WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-   data->ScrWidth  = ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->ScrHeight = ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
+   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
    data->Depth = 24;
    data->MouseX = 0;
    data->MouseY = 0;
@@ -1232,7 +1255,7 @@ static ULONG Render_Dispose(struct IClass *cl, Object *obj, Msg msg)
    if (data->FullScreen)
    {
       CloseScreen(data->screen);
-      data->FullScreen = FullScreen = FALSE;
+      data->FullScreen = FALSE;
    }
 
    return(DoSuperMethodA(cl, obj, msg));
@@ -1369,7 +1392,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   CloseScreen(data->screen);
                   data->screen = data->ogscreen;
 
-                  data->FullScreen = FullScreen = FALSE;
+                  data->FullScreen = FALSE;
 
                   set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
                   SetAttrs(win_main,
@@ -1407,7 +1430,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      if (tmpscreen)
                      {
                         data->screen = tmpscreen;
-                        data->FullScreen = FullScreen = TRUE;
+                        data->FullScreen = TRUE;
                         set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_Off);
                         SetAttrs(win_main,
                                  MUIA_Window_Screen,      data->screen,
@@ -1758,8 +1781,8 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
 
    //twnd = _win(obj);
 
-   data->ScrWidth  = ScrWidth  = data->screen->Width;
-   data->ScrHeight = ScrHeight = data->screen->Height;
+   data->ScrWidth  = data->screen->Width;
+   data->ScrHeight = data->screen->Height;
 
 #ifdef USE_INPUTHANDLER
    data->ih.ihn_Object  = obj;
@@ -1880,7 +1903,6 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             {
                if (fscheck) // Do this just once on first toggle between window and fullscreen mode...
                {
-
                   xdiff = data->ScrWidth - data->WinWidth;
                   ydiff = data->ScrHeight - data->WinHeight;
                   xstart = xdiff / 2;
@@ -1948,8 +1970,8 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
    data->screen = _screen(obj);
    twnd = data->window = (struct Window *)_window(obj);
    data->Active = TRUE;
-   data->XOffset = XOffset = _mleft(obj);
-   data->YOffset = YOffset = _mtop(obj);
+   data->XOffset = _mleft(obj);
+   data->YOffset = _mtop(obj);
 
    reset_drawing (); // Test
 
@@ -2423,6 +2445,7 @@ static int mui_setup_window(void)
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_list_keys, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_GFXTITLE), MUIA_FixHeight, 8, End,
+                                           //Child, Label1(Locale_GetString(MSG_SETTINGS_RESOLUTION)), Child, but_gen_resolution = CycleObject, MUIA_Cycle_Entries, cyc_list_resolution, MUIA_ObjectID, ID_PRFS_GEN_RESOLUTION, MUIA_UserData, ID_PRFS_GEN_RESOLUTION, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_list_blits, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_list_sprites, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_list_frames, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
@@ -2705,6 +2728,8 @@ static int mui_setup_window(void)
    gfxvidinfo.width  = currprefs.gfx_width_win;
    gfxvidinfo.height = currprefs.gfx_height_win;
 
+   debug_print("%s (%d) - %d x %d\n", __func__, __LINE__, gfxvidinfo.width, gfxvidinfo.height);
+
    clear_disk_state();
 
    for (int ic = 0; ic < 4; ic++)
@@ -2722,7 +2747,72 @@ static int mui_setup_window(void)
 
 /****************************************************************************/
 
-int graphics_setup (void)
+// Parse the type of tool...
+BOOL FetchType(struct WBArg *wbarg)
+{
+   struct DiskObject *dobj;
+   char **toolarray;
+   char *temp;
+   BOOL success = FALSE;
+
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if ((*wbarg->wa_Name) && (dobj=GetDiskObject(wbarg->wa_Name)))
+   {
+      toolarray = (char **)dobj->do_ToolTypes;
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"OVERSCAN")))
+         uae_set_overscan(UAE_OVERSCAN_ON);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"FULLSCREEN")))
+         uae_set_use_fullscreen(UAE_FULLSCREEN_ON);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"OCS")))
+         uae_set_cfgtype(UAE_CFGTYPE_OCS);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"ECS")))
+         uae_set_cfgtype(UAE_CFGTYPE_ECS);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"AGA")))
+         uae_set_cfgtype(UAE_CFGTYPE_AGA);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"CUSTOM")))
+         uae_set_cfgtype(UAE_CFGTYPE_CUS);
+
+      FreeDiskObject(dobj);
+      success = TRUE;
+   }
+
+   return(success);
+}
+
+// Check ToolTypes settings on icon...
+BOOL FetchTools(int argc, char **argv)
+{
+   struct WBStartup *WBenchMsg;
+   struct WBArg *wbarg;
+   LONG olddir = -1;
+   LONG i;
+
+   WBenchMsg = (struct WBStartup *)argv;
+
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   for (i=0, wbarg = WBenchMsg->sm_ArgList ; i < WBenchMsg->sm_NumArgs; i++, wbarg++)
+   {
+      olddir = -1;
+
+      if ((wbarg->wa_Lock)&&(*wbarg->wa_Name))
+         olddir = CurrentDir(wbarg->wa_Lock);
+
+      FetchType(wbarg);
+
+      if(olddir != -1)
+         CurrentDir(olddir);
+   }
+}
+
+int graphics_setup (int argc, char **argv)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
 
@@ -2744,6 +2834,9 @@ int graphics_setup (void)
          return 0;
    }
 
+   if (argc == 0)
+      FetchTools(argc, argv);
+
    Locale_Open("MorphUAE.catalog", 1, 1);
    Populate_CycleStrings();
    morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
@@ -2762,7 +2855,7 @@ int graphics_setup (void)
 static APTR setup_cgx_buffer (struct vidbuf_description *gfxinfo)
 {
    tmp_gfxinfo = gfxinfo;
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) - tmp_gfxinfo->width = %d ; tmp_gfxinfo->height = %d\n", __func__, __LINE__, tmp_gfxinfo->width, tmp_gfxinfo->height);
    set(obj_rendermcc, MUIA_Initializing_Gfx, MUIV_InitGraphics);
    return tmp_gfxinfo->bufmem;
 }
@@ -2817,7 +2910,7 @@ int graphics_init(void)
    }
 
    setup_generic();
-   reset_drawing ();
+   reset_drawing();
    debug_print("%s (%d) - ROMFile = %s\n", __func__, __LINE__, currprefs.romfile);
 
    return 1; 

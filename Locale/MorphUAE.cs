@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.1 (28.07.2026)
+## Version $VER: MorphUAE.catalog 1.1 (14.08.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0
@@ -540,5 +540,20 @@ Reset -> AGA
 MSG_MNU_RESET_CUS (106//)
 Reset -> Custom
 Återställ -> Custom
+
+;
+MSG_SETTINGS_RESOLUTION (107//)
+Resolution :
+Upplösning :
+
+;
+MSG_CYC_RESOLUTION_0 (108//)
+Standard
+Standard
+
+;
+MSG_CYC_RESOLUTION_1 (109//)
+Overscan
+Overscan
 
 ;

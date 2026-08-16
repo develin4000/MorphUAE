@@ -18,6 +18,7 @@
        +-------- - @{" Main Window  " LINK "usage-main"     }
        +-------- - @{" Settings     " LINK "usage-settings" }
        +-------- - @{" CLI / Shell  " LINK "usage-shell"    }
+       +-------- - @{" Tooltypes    " LINK "usage-tooltype" }
        +-------- - @{" Ambient      " LINK "usage-ambient"  }
        +-------- - @{" Hotkeys      " LINK "usage-hotkeys"  }
        +-------- - @{" ARexx        " LINK "usage-arexx"    }
@@ -287,8 +288,23 @@
 
 @ENDNODE
 
-@NODE "usage-ambient" "MorphUAE - Ambient"
+@NODE "usage-tooltype" "MorphUAE - Tooltypes"
 @PREV "usage-shell"
+@NEXT "usage-ambient"
+
+ @{b}Tooltypes :@{ub}
+
+    @{b}OCS@{ub} : Will override the default settings and use what is setup under the @{b}OCS tab@{ub} in the settings window.
+    @{b}ECS@{ub} : Will override the default settings and use what is setup under the @{b}ECS tab@{ub} in the settings window.
+    @{b}AGA@{ub} : Will override the default settings and use what is setup under the @{b}AGA tab@{ub} in the settings window.
+    @{b}CUSTOM@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
+    @{b}FULLSCREEN@{ub} : This will start the emulator in fullscreen mode.
+    @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
+
+@ENDNODE
+
+@NODE "usage-ambient" "MorphUAE - Ambient"
+@PREV "usage-tooltype"
 @NEXT "usage-hotkeys"
 
  @{b}Ambient :@{ub}
@@ -412,6 +428,7 @@ A - No, not at this point.
  · The reset button can now also change machine type, via a popup menu (Suggested by bitRocky)
  · The current active ADF image is also shown in the window title (Suggested by bitRocky)
  · Mounted virtual devices was not fully freed when switching between machine types.
+ · Tooltypes can be used to change behaviour of the emulation.
 
 @ENDNODE
 
@@ -574,6 +591,7 @@ A - No, not at this point.
  @{" Usage - Main Window  " LINK "usage-main"     }
  @{" Usage - Settings     " LINK "usage-settings" } 
  @{" Usage - CLI / Shell  " LINK "usage-shell"    }
+ @{" Usage - Tooltypes    " LINK "usage-tooltype" }
  @{" Usage - Ambient      " LINK "usage-ambient"  }
  @{" Usage - Hotkeys      " LINK "usage-hotkeys"  }
  @{" Usage - ARexx        " LINK "usage-arexx"    }

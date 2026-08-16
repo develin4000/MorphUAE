@@ -105,7 +105,7 @@ STATIC_INLINE void unlockscr (void)
     gfxvidinfo.unlockscr (&gfxvidinfo);
 }
 
-extern int  graphics_setup        (void);
+extern int  graphics_setup        (int argc, char **argv);
 extern void graphics_leave        (void);
 extern int  graphics_init         (void);
 extern int  graphics_open         (void);

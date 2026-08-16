@@ -44,6 +44,9 @@
 #include "sleep.h"
 #include "version.h"
 
+#include <workbench/workbench.h>
+#include <workbench/startup.h>
+
 #ifdef USEDEBUG
    #include <clib/debug_protos.h>
    #define debug_print(args...) { KPrintF((CONST_STRPTR)args); }
@@ -641,7 +644,7 @@ void uae_restart (int opengui, char *cfgfile)
 static int do_preinit_machine (int argc, char **argv)
 {
    debug_print("%s (%d)\n", __func__, __LINE__);
-   if (! graphics_setup ())
+   if (! graphics_setup (argc, argv))
    {
       exit (1);
    }
@@ -847,6 +850,8 @@ static void do_exit_machine (void)
    cfgfile_addcfgparam (0);
 }
 
+
+
 /*
  * Here's where all the action takes place!
  */
@@ -962,6 +967,7 @@ int main (int argc, char **argv)
    debug_print("%s (%d)\n", __func__, __LINE__);
    //gui_init (argc, argv);
    gui_init ();
+
    real_main (argc, argv);
    return 0;
 }

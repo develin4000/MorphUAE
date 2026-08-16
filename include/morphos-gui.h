@@ -2,10 +2,10 @@
 ->========================================<-
 ->= MorphUAE - © Copyright 2026 OnyxSoft =<-
 ->========================================<-
-->= Version  : 1.0                       =<-
+->= Version  : 1.1                       =<-
 ->= File     : morphos-gui.h             =<-
 ->= Author   : Stefan Blixth             =<-
-->= Compiled : 2026-06-02                =<-
+->= Compiled : 2026-08-14                =<-
 ->========================================<-
 */
 
@@ -32,6 +32,7 @@ static Object *but_gen_joy1 = NULL;
 static Object *but_gen_floppynum = NULL;
 static Object *but_gen_floppyspd = NULL;
 static Object *but_gen_language = NULL;
+static Object *but_gen_resolution = NULL;
 static Object *but_gen_blitter = NULL;
 static Object *but_gen_sprite = NULL;
 static Object *but_gen_framerate = NULL;
@@ -113,7 +114,8 @@ enum
    ID_PRFS_CUS_VOLNAME2,
    ID_PRFS_GEN_FRAMERATE,
    ID_PRFS_GEN_LANGUAGE,
-   ID_PRFS_GEN_FLOPPYNUM
+   ID_PRFS_GEN_FLOPPYNUM,
+   ID_PRFS_GEN_RESOLUTION
 };
 
 
