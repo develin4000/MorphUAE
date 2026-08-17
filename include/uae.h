@@ -39,6 +39,9 @@ extern int uae_get_usearosrom(void);
 extern void uae_set_overscan(int);
 extern int uae_get_overscan(void);
 
+extern void uae_set_doublebuffer(int);
+extern int uae_get_doublebuffer(void);
+
 extern void uae_set_oldconfig(int);
 extern int uae_get_oldconfig(void);
 
@@ -59,6 +62,8 @@ extern int uae_get_oldconfig(void);
 
 #define UAE_OVERSCAN_OFF    0
 #define UAE_OVERSCAN_ON     1
+
+#define UAE_DOUBLEBUFFER_ON 1
 
 #define UAE_OLDCONFIG_OFF   0
 #define UAE_OLDCONFIG_ON    1

@@ -300,6 +300,7 @@
     @{b}CUSTOM@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
     @{b}FULLSCREEN@{ub} : This will start the emulator in fullscreen mode.
     @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
+    @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered surface.
 
 @ENDNODE
 

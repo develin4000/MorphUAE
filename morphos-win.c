@@ -1185,7 +1185,7 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
                     MUIA_Frame,        MUIV_Frame_None,
                     MUIA_Background,   MUII_WindowBack,
                     MUIA_FillArea,     FALSE,
-                    MUIA_DoubleBuffer, FALSE,
+                    MUIA_DoubleBuffer, uae_get_doublebuffer() ? TRUE : FALSE,
                     TAG_MORE,          msg->ops_AttrList);
 
    if (!obj)
@@ -2766,6 +2766,9 @@ BOOL FetchType(struct WBArg *wbarg)
 
       if ((temp = FindToolType((STRPTR *)toolarray,"FULLSCREEN")))
          uae_set_use_fullscreen(UAE_FULLSCREEN_ON);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"DOUBLEBUFFER")))
+         uae_set_doublebuffer(UAE_DOUBLEBUFFER_ON);
 
       if ((temp = FindToolType((STRPTR *)toolarray,"OCS")))
          uae_set_cfgtype(UAE_CFGTYPE_OCS);

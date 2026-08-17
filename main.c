@@ -68,6 +68,7 @@ int usechksum = UAE_CHKSUM_ON;
 int usefullscreen = UAE_FULLSCREEN_OFF;
 int usearosrom = UAE_AROSROM_NO;
 int useoverscan = UAE_OVERSCAN_OFF;
+int usedoublebuffer = 0;
 int useoldconfig = UAE_OLDCONFIG_OFF;
 
 int log_scsi;
@@ -123,6 +124,16 @@ void uae_set_overscan(int value)
 int uae_get_overscan(void)
 {
    return useoverscan;
+}
+
+void uae_set_doublebuffer(int value)
+{
+   usedoublebuffer = value;
+}
+
+int uae_get_doublebuffer(void)
+{
+   return usedoublebuffer;
 }
 
 void uae_set_oldconfig(int value)
