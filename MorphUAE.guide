@@ -188,6 +188,13 @@
       joystick or vice versa.
 
 
+    @{b}· Save/Load Savestate :@{ub}
+
+      Pressing this you will get a popup menu which lets you to either load or
+      save the current machine state. This is great to have incase you need to
+      quit your game at the moment but can continue later on.
+
+
     @{b}· Eject Disk Images :@{ub}
 
       Pressing this ejects all previously added/mounted disk images in DF0-DF3
@@ -501,6 +508,8 @@ A - No, not at this point.
    machine types.
 
  · Tooltypes can be used to change behaviour of the emulation.
+
+ · Savestates can now be saved or loaded from the GUI.
 
 @ENDNODE
 

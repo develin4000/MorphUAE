@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.1 (14.08.2026)
+## Version $VER: MorphUAE.catalog 1.1 (18.08.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0

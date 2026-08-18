@@ -104,6 +104,7 @@
 #include "debug.h"
 #include "hotkeys.h"
 #include "version.h"
+#include "savestate.h"
 
 #include <gfx-icons.h>
 #include <gfx-logo.h>
@@ -169,6 +170,8 @@ static char *floppy_dir[4];
 BOOL adfstate[4];
 static char last_adf[4][256];
 char titlestr[256];
+//char savestatedir[1024];
+//char savestatefile[256];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -415,10 +418,17 @@ struct RenderData
 #define MUIA_Runtime_Port0     (TAGBASE_DEVELIN | 0x0035)
 #define MUIA_Runtime_Port1     (TAGBASE_DEVELIN | 0x0036)
 
+#ifdef USE_SAVESTATE
 #define MUIA_Savestate         (TAGBASE_DEVELIN | 0x0037)
 #define MUIV_Savestate_Menu    0
 #define MUIV_Savestate_Load    1
 #define MUIV_Savestate_Save    2
+#endif
+
+#define ASL_LOAD_IMAGEFILE     0
+#define ASL_SAVE_SAVESTATE     1
+#define ASL_LOAD_SAVESTATE     2
+
 
 #define MUIM_Mouse_Trigger    (TAGBASE_DEVELIN | 0x0042)
 
@@ -1080,10 +1090,10 @@ void setup_generic(void)
 }
 /*=*/
 
-/*=----------------------------- openfile() ----------------------------------*
+/*=----------------------------- OpenFileReq () ------------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
-void insertimagefile(UBYTE unit)
+void OpenFileReq(char reqtype, UBYTE unit)
 {
    struct FileRequester *freq;
    char tmpstr[100];
@@ -1094,15 +1104,31 @@ void insertimagefile(UBYTE unit)
 
    if ((AslBase = OpenLibrary("asl.library", 37L)))
    {
+      if (reqtype == ASL_LOAD_IMAGEFILE)
+      {
          sprintf(tmpstr, Locale_GetString(MSG_INSERT_IMAGE), unit);
 
-         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, get_floppy_dir(unit), ASLFR_InitialFile, get_last_adf(unit), TAG_DONE}; // "Insert image on DFx"
+         ULONG filetags[] = {ASLFR_TitleText, tmpstr, ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.adf|.dms)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, get_floppy_dir(unit), ASLFR_InitialFile, get_last_adf(unit), TAG_DONE};
+         freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags);
+      }
+      else if (reqtype == ASL_SAVE_SAVESTATE)
+      {
+         ULONG filetags[] = {ASLFR_TitleText, Locale_GetString(MSG_SAVESTATE_SAVE), ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.uss)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, "PROGDIR:Savestate/", TAG_DONE};
+         freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags);
+      }
+      else // reqtype == ASL_LOAD_SAVESTATE
+      {
+         ULONG filetags[] = {ASLFR_TitleText, Locale_GetString(MSG_SAVESTATE_LOAD), ASLFR_DoPatterns, TRUE, ASLFR_InitialPattern, "#?(.uss)", ASLFR_PopToFront, TRUE, ASLFR_InitialDrawer, "PROGDIR:Savestate/", TAG_DONE};
+         freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags);
+      }
 
-         if ((freq = (struct FileRequester *) AllocAslRequest(ASL_FileRequest, (struct TagItem*)&filetags)))
+      if (freq)
+      {
+         if (AslRequest(freq, NULL))
          {
-            if (AslRequest(freq, NULL))
+            if (strcmp(freq->fr_File, "") != 0)
             {
-               if (strcmp(freq->fr_File, "") != 0)
+               if (reqtype == ASL_LOAD_IMAGEFILE)
                {
                   strcpy(buf, freq->fr_Drawer);
                   set_floppy_dir(unit, buf);
@@ -1112,10 +1138,25 @@ void insertimagefile(UBYTE unit)
                   set_disk_state(unit, TRUE);
                   set_window_title();
                }
+               else if (reqtype == ASL_SAVE_SAVESTATE)
+               {
+                  strcpy(buf, freq->fr_Drawer);
+                  AddPart(buf, freq->fr_File, sizeof(buf));
+                  savestate_initsave(b, 1);
+                  save_state(b, "Description");
+               }
+               else // reqtype == ASL_LOAD_SAVESTATE
+               {
+                  strcpy(buf, freq->fr_Drawer);
+                  AddPart(buf, freq->fr_File, sizeof(buf));
+                  savestate_initsave(b, 1);
+                  savestate_state = STATE_DORESTORE;
+               }
             }
-            
-            FreeAslRequest(freq);
          }
+            
+         FreeAslRequest(freq);
+      }
 
       CloseLibrary(AslBase);
       AslBase = NULL;
@@ -1328,7 +1369,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                }
                else
                {
-                  insertimagefile(tag->ti_Data);
+                  OpenFileReq(ASL_LOAD_IMAGEFILE, tag->ti_Data);
                }
                break;
 
@@ -1499,17 +1540,16 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else if (tag->ti_Data == MUIV_Savestate_Load)
                {
                   debug_print("%s (%d) - MUIV_Savestate_Load\n", __func__, __LINE__);
-                     //set_last_savestate_dir ("RAM:");
-                     //savestate_initsave ("RAM:SaveState1", 1);
-                  //restore_state ("RAM:SaveState1");
-                     //save_state ("RAM:SaveState1", "Description");
+                  set(btn_savestate, MUIA_Disabled, TRUE);
+                  OpenFileReq(ASL_LOAD_SAVESTATE, NULL);
+                  set(btn_savestate, MUIA_Disabled, FALSE);
                }
                else
                {
                   debug_print("%s (%d) - MUIV_Savestate_Save\n", __func__, __LINE__);
-                     //set_last_savestate_dir ("RAM:");
-                  //savestate_initsave ("RAM:SaveState1", 1);
-                  //save_state ("RAM:SaveState1", "Description");
+                  set(btn_savestate, MUIA_Disabled, TRUE);
+                  OpenFileReq(ASL_SAVE_SAVESTATE, NULL);
+                  set(btn_savestate, MUIA_Disabled, FALSE);
                }  break;
 #endif
             case MUIA_Initializing_Gfx :
