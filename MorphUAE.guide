@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (14-08-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (18-08-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -45,14 +45,15 @@
  
  MorphUAE is an enhanced variant of the emulator E-UAE specially made for MorphOS.
 
- You might think to yourself, isn't there allready a port of E-UAE for MorphOS ?
- And the answer to that is ofcourse yes, however the version ported done by Fabien Coeurjoly was last updated
- more than 10 years ago.
+ You might think to yourself, isn't there already a port of E-UAE for MorphOS ?
+ ... and the answer to that is of course yes! However, the version ported done 
+ by Fabien Coeurjoly was last updated more than 10 years ago.
 
- E-UAE is very Un*x-like in it's configuration handling which only consist of textfiles.
- It also lack MUI-support so it's purely a Intuition window.
+ E-UAE is very Un*x-like in it's configuration handling which only consists of 
+ textfiles. It also lacks MUI-support, so it's purely an Intuition window.
 
- And that was the key idea of the birth of MorphUAE. Add a better and easier user experince with some new features.
+ So, that was the key idea of the birth of MorphUAE. 
+ Add an improved and easier user experience with some extra new features.
 
 @ENDNODE
 
@@ -62,11 +63,11 @@
 
  @{b}@{u}Requirements@{uu}@{ub}
 
- This program needs following to run :
+ This program needs the following to run :
 
  · MorphOS 3.x or higher
  · TrueColour / 24Bit graphics
- · Amiga Kickstart ROMs (for best compability)
+ · Amiga Kickstart ROMs (for best compatibility)
 
 @ENDNODE
 
@@ -76,23 +77,28 @@
 
  @{b}@{u}Installation@{uu}@{ub}
 
- This program doesn't need any installation and because of that doesn't come with
- any form of installer script. Just place it where you want and run it from there! =)
+ This program doesn't need any installation, so because of that it doesn't come
+ with any form of installer script. Just place it where you want and run it 
+ from there! =)
 
  Place your Amiga Kickstart files in the folder named @{b}Kickstarts@{ub}
- The default name which the emulator uses for the name here is
+ The default name which the emulator uses for the name here is:-
 
  @{b}Kick1.rom@{ub} : OCS based hardware
  @{b}Kick2.rom@{ub} : ECS based hardware
  @{b}Kick3.rom@{ub} : AGA based hardware
- @{b}rom.key@{ub}   : Your AmigaForever/Cloanto keyfile (if you have encrypted ROM files that is)
+ @{b}rom.key@{ub}   : Your AmigaForever/Cloanto keyfile 
+ . . . . . . . . . . . (if you have encrypted ROM files that is)
 
- However the name can be anything and can be adjusted in the settings window on each machine type.
- Naming the files as in the list above should get you a running emulator directly withouth any changes.
+ However, the name can be anything and can be modified in the settings window 
+ for each machine type. Naming the files as in the list above should get you a 
+ running emulator directly, without the need for any changes.
 
- MorphUAE comes bundled with AROS m68k ROM images which is used incase there is no real Amiga Kickstarts found.
- This is a re-implementaion of the official Kickstart for m68k Amigas. It's not perfect but should work "good enough" in most cases.
- For best compability it's always best to try to use a real Amiga Kickstart ROM.
+ MorphUAE comes bundled with AROS m68k ROM images which is used in case there 
+ are no real Amiga Kickstarts found. This is a re-implementaion of the official
+ Kickstart for m68k Amigas. It's not perfect but should work "well enough" in 
+ most cases. For best compatibility it's always best to try to use a real Amiga
+ Kickstart ROM.
 
 @ENDNODE
 
@@ -108,6 +114,7 @@
   @{" Main Window  " LINK "usage-main"     }
   @{" Settings     " LINK "usage-settings" }
   @{" CLI / Shell  " LINK "usage-shell"    }
+  @{" Tooltypes    " LINK "usage-tooltype" }
   @{" Ambient      " LINK "usage-ambient"  }
   @{" Hotkeys      " LINK "usage-hotkeys"  }
   @{" ARexx        " LINK "usage-arexx"    }
@@ -121,45 +128,52 @@
  @{b}· Main window :@{ub}
 
    The first thing you see when you start the emulator is the main window.
-   This window consist mostly of a render area for the emulated graphics and below that you have a toolbar.
+   This window consists mainly of a render area for the emulated graphics and 
+   below that you have a toolbar.
 
 
  @{b}· Toolbar :@{ub}
    
-   From this toolbar you can adjust the emulator settings and control the behaviour of it.
-   The toolbar consist of number of clickable symbols which are described below.
+   From this toolbar you can change the emulator settings and control its 
+   behaviour. The toolbar consists of a number of clickable symbols that are 
+   described below.
 
 
     @{b}· Settings :@{ub}
 
-      This button will open the settings window where you can adjust the different setups on
+      This button will open the settings window so you can change your various 
+      setups easily.
 
 
     @{b}· Reset :@{ub}
 
-      This button will reset the emulator in either an Soft or Hard reset (depending on what you have selected
-      in the settings window on the General tab).
-      When pressing this button you will be presented with an popup menu where you can select the normal reset
-      or you can also reset and change to a specific machine type.
+      This button will reset the emulator in either a Soft or Hard reset
+      (depending on what you select in the settings window on the General tab).
+      When pressing this button you will be presented with an popup menu where
+      you can select the normal reset or you can also reset and change to 
+      a specific machine type.
 
 
     @{b}· Fullscreen :@{ub}
 
-      By pressing this button the emulator opens up a fullscreen window and scale the graphics to fit the full screen.
-      It will remove the toolbar and only show the render data on the window. If you want to revert back to window mode
-      please use the hotkey combination
+      By pressing this button the emulator opens up a fullscreen window and 
+      scales those graphics to fit it. It will remove the toolbar and then only
+      shows the render data in the window. If you want to revert back to window
+      mode please use the Hotkey (toggles on/off) : @{b}lalt+enter@{ub}
 
 
     @{b}· Screenshot :@{ub}
 
-      By pressing this button you will get a screenshot of what is currently rendered in the main window.
-      The saved image will be stored in @{b}RAM:@{ub} named @{b}MorphUAE-Screenshoot.png@{ub}
+      By pressing this button you will get a screenshot of what is currently 
+      rendered in the main window. A saved image gets stored in @{b}RAM:@{ub} 
+      named @{b}MorphUAE-Screenshot.png@{ub}, by default.
 
 
     @{b}· Pause/Resume :@{ub}
 
-      This button will Pause or Resume emulation depending on what current state is.
-      An paused emulation is identified by that the window title is change to @{b}MorphUAE - Paused@{ub}
+      This button will Pause or Resume emulation depending on what the current 
+      state is. Paused emulation is shown by the window title changing to: 
+      @{b}MorphUAE - Paused@{ub}
 
 
     @{b}· About :@{ub}
@@ -169,29 +183,27 @@
 
     @{b}· Joystick port 0 & 1 Selector:@{ub}
 
-      Here you can change the emulated joystick port during the runtime of the emulation.
-      See it like you virtually swapping out the mouse with a joystick or vice versa.
-
-    @{b}· Savestate :@{ub}
-
-      This will let you load or save a savestate file. The savestate file is a snapshot of
-      the current emulation state so you can store what you currently are doing and stop the
-      emulator and load it back at a later date to continue where you where last time.
+      Here you can change the emulated joystick port during the runtime of the 
+      emulation. See it as if you virtually swapped out the mouse with a 
+      joystick or vice versa.
 
 
     @{b}· Eject Disk Images :@{ub}
 
-      Pressing this will eject all previously added/mounted disk images in DF0-DF3
+      Pressing this ejects all previously added/mounted disk images in DF0-DF3
 
 
     @{b}· Disk Images / LED indicators :@{ub}
     
-      Theese buttons represents the disk images and will indicate read/write operations when it's active.
+      These buttons represent the disk images and will indicate read/write 
+      operations when it's active.
       They are enumerated from left to right : DF0, DF1, DF2, DF3.
-      Pressing them will open up an ASL-requester where you can select the .ADF-file you want to mount/use on the emulator.
+      Pressing any one of them will open up an ASL-requester to allow you to 
+      select the .ADF-file you want to mount/use in the emulator.
 
-      If you drag'n'drop an ADF-file to the main window, DF0 will add and mount that file to it's container.
-      This can be done if you quickly want to swap disks.
+      If you drag'n'drop ADF-files into the main window, the emulator will
+      mount them into the disk containers (maximum of 4).  
+      This allows you to quickly swap disks.
 
 @ENDNODE
 
@@ -201,68 +213,87 @@
 
  @{b}Settings :@{ub}
 
-   This window consist of a number of tabs which you can configure General settings for the emulator or specific ones
-   related to the machine type.
+   This window consists of a number of tabs that allow you to configure General
+   settings for the emulator or specific ones related to the machine type.
    
-   All of the configurable tabs have a "Reset to Default" button if you want to get back to originat state of the settings.
+   All of the configurable tabs have a "Reset to Default" option button - in 
+   case you want to reset to the original state of the settings.
 
     @{b}· General tab :@{ub}
 
-      The @{b}Machine Type@{ub} button let you select which of the tabs that shall be the default emulated machine when it start up.
-      Each of the selected tabs have options to select Kickstart ROM and other machine specific parameters.
-      This selection can be overrided by using CLI/Shell flags if needed.
+      The @{b}Machine Type@{ub} button will let you select which of the tabs 
+      you want to be the default emulated machine when it starts up.
+      Each of the selected tabs have options to select specific Kickstart ROM 
+      and other machine specific parameters.
+      This selection can be overridden by using CLI/Shell flags if needed.
 
-     @{b} Sound section@{ub} will let you configure the output quality of the emulated sound or even disable it completely.
+     @{b} Sound section@{ub} will let you configure the output quality of the 
+      emulated sound or even disable it completely.
 
-     @{b} I/O Devices@{ub} Lets you select which type of emulated device that shall be connected to the Mouse/Joystick port
-      Here you can also set the amount of the emulated floppy drive and its speed. Some games/demos might have issues with faster
-      speed higher than normal hence this might be a good thing to try if issues would occure.
+     @{b} I/O Devices@{ub} lets you select which type of emulated device that 
+      you will connect to the Mouse/Joystick port. Here you can also set the 
+      emulated floppy drive speed. Some games/demos may have issues with faster
+      speed higher than normal, so it may be good to try it if issues do occur.
 
-     @{b} Graphics section@{ub} Here you can alter how precise the emulated graphics shall be presented.
-      If your machine struggles with graphics intensive parts that result in choppy sound or general slugginess, this might
-      be a good "playground" to change it for a better result.
+     @{b} Graphics section@{ub} Here you can alter how precisely the emulated 
+      graphics should be displayed. If your machine struggles with graphics 
+      intensive parts that result in choppy sound or general slugginess, this 
+      may be a good "playground" to "fine-tune" it for better results.
 
 
 
     @{b}· OCS tab :@{ub}
-     This machine type is intended to emulate the first generations of Amiga with OCS chipset, lower memory fotprint and Kickstart 1.x ROM.
-     Typical machine here is A500/A1000/A2000 (MC68000)
+
+      This machine type is intended to emulate the first generations of Amiga 
+      with OCS chipset, lower memory footprint and Kickstart 1.x ROM.
+      Typical machine here is A500/A1000/A2000 (MC68000)
 
 
     @{b}· ECS tab :@{ub}
-     This machine type is very similar to the OCS settings but configuration is using the ECS chipset (which where you can select
-     if you want ECS Agnus, Denise or both emulated. Kickstart 2.x ROM, typical machine A500+/A600 (MC68000).
+
+      This machine type is very similar to the OCS settings but configuration 
+      utilises the ECS chipset (and where you can select if you want ECS Agnus, 
+      Denise or both emulated. Kickstart 2.x ROM.
+      Typical machine A500+/A600 (MC68000).
 
 
     @{b}· AGA tab :@{ub}
-    This is the last generation of Amigas using AGA chipset and default 2Mb CHIP RAM with optional 1-8 Mb FAST RAM. Kickstart 3.x ROM
-    Typical machine A1200. (MC68020)
+
+      This is the last generation of Amigas that use the AGA chipset and default
+      2Mb CHIP RAM with optional 1-8 Mb FAST RAM. Kickstart 3.x ROM.
+      Typical machine A1200. (MC68020)
 
 
     @{b}· Custom tab :@{ub}
 
-    In this machine type you can pretty much customize your emulated machine to be what ever you like.
-    You can add up to 2 virtual harddisks (a path to your host OS where files can be easily copied from and to).
-    Device and Volume name will be used in the emulated environment.
-    You can select which emulated CPU is going to be used (68020, 68040 or 68060).
-    There is also an option to turn of PPC JIT Compiler with different amount of caches, this option can cause issues during emulation but also
-    boost emulation speeds a huge bit, This is very much depended of what type of binaries/software that is used during the emulation.
+      In this machine type you can pretty much customise your emulated machine
+      to be whatever you like. You can add up to 2 virtual harddisks (a path to
+      your host OS where files can be easily copied from and to). Device and
+      Volume name are utilised in the emulated environment. You can select which
+      emulated CPU is going to be used (68020, 68040 or 68060).
+      There is also an option to turn off the PPC JIT Compiler with a variety of 
+      cache-sizes, this option can cause issues during emulation but also boost 
+      emulation speeds a huge amount. This is very much dependant of what type
+      of binaries/software that are used during emulation.
     
 
    @{b}· About tab :@{ub}
 
-   Here you can see the software version/revision and credits.
+     Here you can see the software version/revision and credits.
 
 
-   @{b}·Use, Save or Cancel buttons :@{ub}
+   @{b}· Use, Save or Cancel buttons :@{ub}
 
-     @{b}Use@{ub} button will store all settings in ENV: and restart the emulator with the new settings...
+     @{b}Use@{ub} button stores all settings in ENV: (Not Saved on QUIT/EXIT)
+         restarts emulator USING new settings.
 
-     @{b}Save & Use@{ub} button stores all settings in both ENV and ENVARC and restart the emulator with the new settings.
+     @{b}Save & Use@{ub} button SAVES all settings in both ENV and ENVARC 
+                restarts emulator using new settings.
 
-     @{b}Save@{ub} button stores the settings to ENVARC: and uses it next reboot of the system
+     @{b}Save@{ub} button SAVES the settings in ENVARC: (Continues as START-UP)
+          SAVED settings used at next system reboot.
 
-     @{b}Cancel@{ub} button just closes the settings window
+     @{b}Cancel@{ub} button just closes the settings window.
 
 
 @ENDNODE
@@ -273,12 +304,24 @@
 
  @{b}CLI/Shell :@{ub}
 
-    @{b}-ocs@{ub} : Will override the default settings and use what is setup under the @{b}OCS tab@{ub} in the settings window.
-    @{b}-ecs@{ub} : Will override the default settings and use what is setup under the @{b}ECS tab@{ub} in the settings window.
-    @{b}-aga@{ub} : Will override the default settings and use what is setup under the @{b}AGA tab@{ub} in the settings window.
-    @{b}-custom@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
-    @{b}-nochecksum@{ub} : This will ignore the checksum control of the Kickstart/ROM file, some homebrew ROM's doesn't work otherwise like diagnostic ROMs.
+    @{b}-ocs@{ub} : Overrides default settings and uses those setup under the 
+           @{b}OCS tab@{ub} in the settings GUI.
+
+    @{b}-ecs@{ub} : Overrides default settings and uses the ones set in 
+           @{b}ECS tab@{ub} in the settings GUI.
+
+    @{b}-aga@{ub} : Overrides default settings and uses those set in 
+           @{b}AGA tab@{ub} in the settings GUI.
+
+    @{b}-custom@{ub} : Overrides default settings and uses those set in 
+              @{b}Custom tab@{ub} in the settings GUI.
+
+    @{b}-nochecksum@{ub} : Ignores the checksum control of a Kickstart/ROM file
+                  some homebrew ROM's don't work, basically it's like a 
+                  diagnostic ROM.
+
     @{b}-fullscreen@{ub} : This will start the emulator in fullscreen mode.
+
     @{b}-overscan@{ub} : Uses overscan resolution for the display.
 
     @{b}-0 <ADF file>@{ub} : Insert an ADF disk image on DF0: at startup.
@@ -294,12 +337,22 @@
 
  @{b}Tooltypes :@{ub}
 
-    @{b}OCS@{ub} : Will override the default settings and use what is setup under the @{b}OCS tab@{ub} in the settings window.
-    @{b}ECS@{ub} : Will override the default settings and use what is setup under the @{b}ECS tab@{ub} in the settings window.
-    @{b}AGA@{ub} : Will override the default settings and use what is setup under the @{b}AGA tab@{ub} in the settings window.
-    @{b}CUSTOM@{ub} : Will override the default settings and use what is setup under the @{b}Custom tab@{ub} in the settings window.
+    @{b}OCS@{ub} : Will override the default settings and use what is setup
+          under the @{b}OCS tab@{ub} in the settings window.
+
+    @{b}ECS@{ub} : Will override the default settings and use what is setup
+          under the @{b}ECS tab@{ub} in the settings window.
+
+    @{b}AGA@{ub} : Will override the default settings and use what is setup
+          under the @{b}AGA tab@{ub} in the settings window.
+
+    @{b}CUSTOM@{ub} : Will override the default settings and use what is setup 
+             under the @{b}Custom tab@{ub} in the settings window.
+
     @{b}FULLSCREEN@{ub} : This will start the emulator in fullscreen mode.
+
     @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
+
     @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered surface.
 
 @ENDNODE
@@ -310,22 +363,27 @@
 
  @{b}Ambient :@{ub}
 
-   If you want to automatically start and load an ADF disk image in Ambient on MorphOS you can go to the Settings menu in Ambient.
+   If you want to automatically start and load an ADF disk image in Ambient on
+   MorphOS you can go to the Settings menu in Ambient.
 
    Settings
       |
       +- Ambient...
 
-   In the settings, locate the "Mime" option in the left panel.
-   Search for 'adf' when you see the x-adf type double click on this.
+   In the Ambient Settings GUI, locate the "Mime" option in the left panel. Use the
+   Search option for 'adf' in the GUI to find "x-adf" type, double-click on it.
 
-   · Add a new event type, name it something suitable.
+   · Add a new event type, name it something appropriate.
    · Change the type to @{b}AmigaDOS@{ub}
    · Set the event type to : DoubleClick
    · Check the option "Change working directory to destination"
    
-   · Add following string to the field : @{b}run >NIL: Work:Emulators/MorphUAE/MorphUAE -0 %sp@{ub}
-     The above string you will have to change to the location where you have MorphUAE located, this is just an example.
+   · Add the following string to the associated field : 
+   
+   @{b}run >NIL: Work:Emulators/MorphUAE/MorphUAE -0 %sp@{ub}
+   
+   You may have to change the above string to suit where MorphUAE is stored.
+   ( this is just an example )
 
 @ENDNODE
 
@@ -333,9 +391,7 @@
 @PREV "usage-ambient"
 @NEXT "usage-arexx"
 
- There are hotkeys associated to the toolbar in the main window and 
-
- @{b}· Toolbar hotkeys :@{ub}
+ @{b}· Toolbar Hotkeys :@{ub}
 
     · Reset : @{b}ctrl+lalt+r@{ub}
     · Fullscreen/Window toggle : @{b}lalt+enter@{ub}
@@ -347,7 +403,7 @@
     · Insert DF2 Image : @{b}ctrl+lalt+3@{ub}
     · Insert DF3 Image : @{b}ctrl+lalt+4@{ub}
 
- @{b}· Other hotkeys :@{ub}
+ @{b}· Other Hotkeys :@{ub}
 
     · Toggle the toolbar on / off : @{b}ctrl+lalt+t@{ub}
     · Quit the emulator : @{b}ctrl+lalt+q@{ub}
@@ -374,44 +430,46 @@
 * @{b}Q = Question@{ub}
 * @{b}A = Answer@{ub}
 
--------------------------------------------------------------------------------------
-Q - Where can I find Amiga ROM files ?
+-------------------------------------------------------------------------------
+Q - Where can I find Amiga ROM files?
 
 A - Easiest way is to buy a licence from www.amigaforever.com
     The cheapest way is to obtain them for Android (via Google Play) :
     https://play.google.com/store/apps/details?id=com.cloanto.amigaforever.essentials
 
-    If you allready have a real Amiga you can dump the content of the kickstart
-    directly from that and use it in the emulator. There are several tools on
+    If you already have a real Amiga you can dump the content of the kickstart
+    directly from it and use that in the emulator. There are several tools on
     Aminet for this purpose.
 
 
-Q - The render window does not have the correct colours and the graphics looks strange ?
+Q - The render GUI doesn't show the correct colours and the graphics look weird?
 
 A - This emulator NEEDS 24bit resolution to be able to work as intended.
 
 
-Q - The mouse position on the Amiga (emulation) side is not fully in sync with the
-    host mouse coordinations ?
+Q - The mouse position on the Amiga (emulation) side is not fully in sync with 
+    the host mouse co-ordinates?
 
-A - This issue needs to be adressed in future versions of MorphUAE and it's a
-    well known issue.
-
-
-Q - When using the fullscreen mode the graphics is not as "big" as expected, how come ?
-
-A - Add a 24/32 bit screenmode with the resolution 640 x 512 pixels in the monitor
-    preferences and the screen should fill it up better.
+A - This issue needs to be adressed in future versions of MorphUAE and it's an
+    already known issue.
 
 
-Q - Can I use P96 driver for RTG software with MorphUAE ?
+Q - When using the fullscreen mode the graphics are not as "large" as expected, 
+    how come?
+
+A - Add a 24/32 bit screenmode with the resolution 640 x 512 pixels in the 
+    monitor preferences and the screen should fill it up better.
+
+
+Q - Can I use the P96 driver for RTG software with MorphUAE?
 
 A - No, not at this point.
-    The main idea behind this emulator is to have compability with games & demos
-    back from the Amiga days. Apart from that, system friendly RTG programs runs
-    straight into MorphOS directly so there is nothing really to gain with adding
-    this into the emulator. Maybe one day but it's not at all on the prio list.
---------------------------------------------------------------------------------------
+    The main idea behind this emulator is to have compability with games & 
+    demos back from the Amiga days. Apart from that, system friendly RTG 
+    programs runs straight into MorphOS directly. So, there is nothing really
+    to gain by adding this into the emulator. Maybe one day, but it's not at 
+    all on the priority list.
+-------------------------------------------------------------------------------
 
 
 @ENDNODE
@@ -422,13 +480,26 @@ A - No, not at this point.
 
  @{b}@{u}What's new@{uu}@{ub}
 
- · Now the requesters keeps track of which ADF file and path is selected on each image device. (Suggested by jPV)
- · Drag and drop multiple ADF images distribute them over several devices. (Suggested by jPV)
- · ADF Image LED is now shown in a BLUE colour if there is an image mounted to it. (Suggested by jPV)
+ · Now the requesters keeps track of which ADF file and path is selected on
+   each image device. (Suggested by jPV)
+
+ · Drag and drop multiple ADF images distribute them over several devices.
+   (Suggested by jPV)
+
+ · ADF Image LED is now shown in a BLUE colour if there is an image
+   mounted to it. (Suggested by jPV)
+
  · Added an CLI/Shell option to enable overscan resolution (-overscan).
- · The reset button can now also change machine type, via a popup menu (Suggested by bitRocky)
- · The current active ADF image is also shown in the window title (Suggested by bitRocky)
- · Mounted virtual devices was not fully freed when switching between machine types.
+
+ · The reset button can now also change machine type, via a popup menu.
+   (Suggested by bitRocky)
+
+ · The current active ADF image is also shown in the window title.
+   (Suggested by bitRocky)
+
+ · Mounted virtual devices was not fully freed when switching between
+   machine types.
+
  · Tooltypes can be used to change behaviour of the emulation.
 
 @ENDNODE
@@ -466,26 +537,25 @@ A - No, not at this point.
 
  @{b}@{u}Copyright and Disclaimer@{uu}@{ub}
 
- MorphUAE is totally free (FreeWare) but @{"donations" LINK "donate"} are always welcome.
- If you like the program the @{"author" LINK "author"} would be very glad if
- you would send him an e-mail or a postcard to tell him so... ;-)
+ MorphUAE is totally free (FreeWare) but @{"donations" LINK "donate"} are 
+ always welcome. If you like the program the @{"author" LINK "author"} would be
+ very glad if you would send him an e-mail or a postcard to tell him so... ;-)
 
- Permission is granted to make and distribute verbatim copies of this 
- program provided the copyright notice and this permission notice are 
- preserved on all copies.
+ Permission is granted to make and distribute verbatim copies of this program 
+ provided the copyright notice and this permission notice are preserved on all 
+ copies.
 
- No guarantee of any kind is given that the programs described in this 
- document are 100% reliable. You are using this material at your own risk. 
- The author cannot be held responsible for any damage that is caused by 
- using this program.
+ No guarantee of any kind is given that the programs described in this document
+ are 100% reliable. You are using this material at your own risk. The author 
+ cannot be held responsible for any damage that is caused by using this program.
 
- This package is freely distributable, but the copyrights still apply. 
- This means that you can copy it freely as long as you don't ask for more 
- than a nominal copying fee.
+ This package is freely distributable, but copyrights still apply. This means 
+ that you can copy it freely as long as you don't ask for more than a nominal 
+ copying fee.
 
  Permission is granted to include this package in Public-Domain collections,
- Aminet (CD's) etc. etc. The package may be uploaded to Bulletin-
- Board-Systems or FTP servers.
+ Aminet (CD's) etc., etc.. The package may be uploaded to Bulletin-Board-Systems
+ or FTP servers.
  
 @ENDNODE
 
@@ -495,17 +565,19 @@ A - No, not at this point.
 
  @{b}@{u}About the author@{uu}@{ub}
 
- My name is Stefan Blixth, and I'm a programmer/electrical engineer from Karlstad, Sweden.
+ My name is Stefan Blixth, and I'm a programmer/electrical engineer from 
+ Karlstad, Sweden.
 
- If you would like to contact me about this program (or any other program I've done),
- the best way is to do so by e-mail.
- So if you have any comments, found any bugs or have a complaint, don't hesitate to
- use one of the following addresses :
+ If you would like to contact me about this program (or any other program I've 
+ done), the best way is to do so by e-mail. So, if you have any comments, found
+ any bugs, or have a complaint, don't hesitate to use one of the following 
+ addresses :
 
  Personal e-mail : @{b}stefan@onyxsoft.se@{ub}
 
- You can also catch me on MorphOS-Discord server : @{b}https://discord.com/invite/B8dT7z8JJD@{ub}
- Here you find me under the nickname "Develin4k"
+ You can also catch me on MorphOS-Discord server : 
+ @{b}https://discord.com/invite/B8dT7z8JJD@{ub}
+ There you will find me using the nickname: "Develin4k"
 
  If you would like to send me a postcard, my address is :
 
@@ -519,7 +591,8 @@ A - No, not at this point.
 
  @{b}www.onyxsoft.se@{ub}
  
- ...And my open source projects on following page : @{b}github.com/develin4000@{ub}
+ ...And my open source projects are on the following page : 
+ @{b}github.com/develin4000@{ub}
 
 @ENDNODE
 
@@ -529,24 +602,35 @@ A - No, not at this point.
 
  @{b}@{u}Thanks to@{uu}@{ub}
 
- I'd like to thank the following people/groups for making it possible for me to create this program.
+ I'd like to thank the following people/groups for making it possible for me to
+ create this program.
 
- MorphOS Team......................... For creating the best system there is, I love it!
+ @{b}MorphOS Team@{ub}
+ For creating the best system there is, I love it!
 
- AROS Development Team................ For making a cool OS and an free redistributed Kickstart replacement!
+ @{b}AROS Dev. Team@{ub}
+ For such a cool OS, freely redistributed Kickstart replacement!
 
- Fram 'cyfm' Mariak................... For helping me out with CyberGraphX issues for the fullscreen mode and much more!
+ @{b}Frank 'cyfm' Mariak@{ub}
+ For helping me out with CyberGraphX issues fullscreen mode and much more!
 
- Dave 'skateman' Koelman.............. For letting me be part of the "Mirari family" which sparked my coding passion again =)
+ @{b}Dave 'skateman' Koelman@{ub}
+ For letting me be part of the "Mirari family" =)
 
- Grzegorz Kraszewski.................. For the Reggae framework which is used for saving the screenshoot graphics.
+ @{b}Grzegorz Kraszewski@{ub}
+ For the Reggae framework used to save screenshot GFX.
 
- Stefan Stuntz........................ For the superb Magic User Interface (MUI).
+ @{b}Stefan Stuntz@{ub}
+ For the superb Magic User Interface (MUI).
 
- Guido 'Geit' Mersmann................ For the great SimpleCat.
- 
- Hugo "FrankBrana" Espiñeira.......... For the Spanish translation.
+ @{b}Guido 'Geit' Mersmann@{ub}
+ For the great SimpleCat.
 
+ @{b}Neil Pearson@{ub}
+ For proof-reading and correcting this manual.
+
+ @{b}Hugo "FrankBrana" Espiñeira@{ub}
+ For the Spanish translation.
 
 @ENDNODE
 
@@ -555,16 +639,20 @@ A - No, not at this point.
 
  @{b}@{u}Donations are welcome@{uu}@{ub}
 
- We at OnyxSoft have been releasing freeware applications since 1995 and are still going strong
- with the greatest enthusiasm, and ambitions for the future of the Amiga-like platform(s).
+ We at OnyxSoft have been releasing freeware applications since 1995 and are 
+ still going strong with the greatest enthusiasm, and ambitions for the future 
+ of the Amiga-like platform(s).
 
  This is of course something we would like to continue to do in the future.
- All our titles are totally free of charge without any crippled functions, etc.
+ All our titles are totally free of charge without any crippled functions, etc..
 
- We have now established a PayPal account, as many users asked us how they could donate
- money to us (to motivate us even more, and keep the software releases "flowing").
+ We have now established a PayPal account, as many users asked us how they could
+ donate money to us (to motivate us even more, and keep our software releases 
+ "flowing").
 
- To send us donations, please use the following e-mail : @{b}donate@onyxsoft.se@{ub}
+ To send us donations, please use the following e-mail:
+
+ @{b}donate@onyxsoft.se@{ub}
 
 
  Thank you for your support!
