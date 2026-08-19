@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (18-08-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.1 (19-08-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -46,14 +46,14 @@
  MorphUAE is an enhanced variant of the emulator E-UAE specially made for MorphOS.
 
  You might think to yourself, isn't there already a port of E-UAE for MorphOS ?
- ... and the answer to that is of course yes! However, the version ported done 
- by Fabien Coeurjoly was last updated more than 10 years ago.
+ ... and the answer to that is of course yes! However, the ported version, done 
+ by Fabien Coeurjoly, was last updated more than 10 years ago.
 
- E-UAE is very Un*x-like in it's configuration handling which only consists of 
- textfiles. It also lacks MUI-support, so it's purely an Intuition window.
+ E-UAE is very Un*x-like in it's configuration handling, so it actually consists
+ of textfiles. It also lacks MUI-support, so it's purely an Intuition window.
 
- So, that was the key idea of the birth of MorphUAE. 
- Add an improved and easier user experience with some extra new features.
+ So, that was the key idea for the birth of MorphUAE. 
+ Add to it an improved and easier user experience with some extra new features.
 
 @ENDNODE
 
@@ -78,25 +78,25 @@
  @{b}@{u}Installation@{uu}@{ub}
 
  This program doesn't need any installation, so because of that it doesn't come
- with any form of installer script. Just place it where you want and run it 
+ with any form of installer script. Just place it where you want to and run it
  from there! =)
 
  Place your Amiga Kickstart files in the folder named @{b}Kickstarts@{ub}
- The default name which the emulator uses for the name here is:-
+ The default name(s) that the emulator uses for its name is below:-
 
  @{b}Kick1.rom@{ub} : OCS based hardware
  @{b}Kick2.rom@{ub} : ECS based hardware
  @{b}Kick3.rom@{ub} : AGA based hardware
- @{b}rom.key@{ub}   : Your AmigaForever/Cloanto keyfile 
+ @{b}rom.key@{ub}   : Your AmigaForever/Cloanto keyfile
  . . . . . . . . . . . (if you have encrypted ROM files that is)
 
  However, the name can be anything and can be modified in the settings window 
  for each machine type. Naming the files as in the list above should get you a 
  running emulator directly, without the need for any changes.
 
- MorphUAE comes bundled with AROS m68k ROM images which is used in case there 
+ MorphUAE comes bundled with AROS m68k ROM images which is used in case there
  are no real Amiga Kickstarts found. This is a re-implementaion of the official
- Kickstart for m68k Amigas. It's not perfect but should work "well enough" in 
+ Kickstart for m68k Amigas. It's not perfect but should work "well enough" in
  most cases. For best compatibility it's always best to try to use a real Amiga
  Kickstart ROM.
 
@@ -108,8 +108,8 @@
 
  @{b}@{u}Usage@{uu}@{ub}
 
- This program's user interface consists of a couple of fields/elements,
- which are briefly explained below...
+ This program's user interface consists of a couple of fields/elements, which
+ are briefly explained below...
 
   @{" Main Window  " LINK "usage-main"     }
   @{" Settings     " LINK "usage-settings" }
@@ -149,8 +149,8 @@
 
       This button will reset the emulator in either a Soft or Hard reset
       (depending on what you select in the settings window on the General tab).
-      When pressing this button you will be presented with an popup menu where
-      you can select the normal reset or you can also reset and change to 
+      When pressing this button you will be presented with a popup menu where
+      you can select the normal reset or you can also reset and change it to 
       a specific machine type.
 
 
@@ -184,15 +184,15 @@
     @{b}· Joystick port 0 & 1 Selector:@{ub}
 
       Here you can change the emulated joystick port during the runtime of the 
-      emulation. See it as if you virtually swapped out the mouse with a 
+      emulation. It works as though you virtually swapped out the mouse with a
       joystick or vice versa.
 
 
     @{b}· Save/Load Savestate :@{ub}
 
       Pressing this you will get a popup menu which lets you to either load or
-      save the current machine state. This is great to have incase you need to
-      quit your game at the moment but can continue later on.
+      save the current machine state. This is great to have in case you need to
+      quit your game at that moment but want to continue later on.
 
 
     @{b}· Eject Disk Images :@{ub}
@@ -203,10 +203,10 @@
     @{b}· Disk Images / LED indicators :@{ub}
     
       These buttons represent the disk images and will indicate read/write 
-      operations when it's active.
-      They are enumerated from left to right : DF0, DF1, DF2, DF3.
+      operations when they are active.
+      They are labelled from left to right : DF0, DF1, DF2, DF3.
       Pressing any one of them will open up an ASL-requester to allow you to 
-      select the .ADF-file you want to mount/use in the emulator.
+      select an .ADF-file you want to mount/use in the emulator.
 
       If you drag'n'drop ADF-files into the main window, the emulator will
       mount them into the disk containers (maximum of 4).  
@@ -229,18 +229,18 @@
     @{b}· General tab :@{ub}
 
       The @{b}Machine Type@{ub} button will let you select which of the tabs 
-      you want to be the default emulated machine when it starts up.
-      Each of the selected tabs have options to select specific Kickstart ROM 
-      and other machine specific parameters.
+      you want to use as the default emulated machine when it starts up.
+      Each of the selected tabs have options that allow you to select specific
+      Kickstart ROM(s) and other machine specific parameters.
       This selection can be overridden by using CLI/Shell flags if needed.
 
      @{b} Sound section@{ub} will let you configure the output quality of the 
       emulated sound or even disable it completely.
 
-     @{b} I/O Devices@{ub} lets you select which type of emulated device that 
-      you will connect to the Mouse/Joystick port. Here you can also set the 
+     @{b} I/O Devices@{ub} lets you select the type of emulated device that you
+      intend to connect to the Mouse/Joystick port. Here you can also set the
       emulated floppy drive speed. Some games/demos may have issues with faster
-      speed higher than normal, so it may be good to try it if issues do occur.
+      speed(s) than normal, so it's a good idea to check if such issues occur.
 
      @{b} Graphics section@{ub} Here you can alter how precisely the emulated 
       graphics should be displayed. If your machine struggles with graphics 
@@ -259,7 +259,7 @@
     @{b}· ECS tab :@{ub}
 
       This machine type is very similar to the OCS settings but configuration 
-      utilises the ECS chipset (and where you can select if you want ECS Agnus, 
+      utilises the ECS chipset (and is so you can select if you want ECS Agnus,
       Denise or both emulated. Kickstart 2.x ROM.
       Typical machine A500+/A600 (MC68000).
 
@@ -331,10 +331,10 @@
 
     @{b}-overscan@{ub} : Uses overscan resolution for the display.
 
-    @{b}-0 <ADF file>@{ub} : Insert an ADF disk image on DF0: at startup.
-    @{b}-1 <ADF file>@{ub} : Insert an ADF disk image on DF1: at startup.
-    @{b}-2 <ADF file>@{ub} : Insert an ADF disk image on DF2: at startup.
-    @{b}-3 <ADF file>@{ub} : Insert an ADF disk image on DF3: at startup.
+    @{b}-0 <ADF file>@{ub} : Insert an ADF disk image to DF0: at startup.
+    @{b}-1 <ADF file>@{ub} : Insert an ADF disk image to DF1: at startup.
+    @{b}-2 <ADF file>@{ub} : Insert an ADF disk image to DF2: at startup.
+    @{b}-3 <ADF file>@{ub} : Insert an ADF disk image to DF3: at startup.
 
 @ENDNODE
 
@@ -360,7 +360,7 @@
 
     @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
 
-    @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered surface.
+    @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered display.
 
 @ENDNODE
 
@@ -400,10 +400,10 @@
 
  @{b}· Toolbar Hotkeys :@{ub}
 
-    · Reset : @{b}ctrl+lalt+r@{ub}
-    · Fullscreen/Window toggle : @{b}lalt+enter@{ub}
-    · Screenshoot : @{b}ctrl+lalt+s@{ub}
-    · Pause/Resume : @{b}ctrl+lalt+p@{ub}
+    · Reset . . . . . . : @{b}ctrl+lalt+r@{ub}
+    · Fullscreen/Window : @{b}lalt+enter@{ub} ( toggles )
+    · Screenshot . . . : @{b}ctrl+lalt+s@{ub}
+    · Pause/Resume . . : @{b}ctrl+lalt+p@{ub}
     · Eject Disk Images : @{b}ctrl+lalt+e@{ub}
     · Insert DF0 Image : @{b}ctrl+lalt+1@{ub}
     · Insert DF1 Image : @{b}ctrl+lalt+2@{ub}
@@ -412,8 +412,8 @@
 
  @{b}· Other Hotkeys :@{ub}
 
-    · Toggle the toolbar on / off : @{b}ctrl+lalt+t@{ub}
-    · Quit the emulator : @{b}ctrl+lalt+q@{ub}
+    · Toolbar (Toggle ON/OFF) : @{b}ctrl+lalt+t@{ub}
+    · Quit the emulator . . . : @{b}ctrl+lalt+q@{ub}
 
 @ENDNODE
 
@@ -444,7 +444,7 @@ A - Easiest way is to buy a licence from www.amigaforever.com
     The cheapest way is to obtain them for Android (via Google Play) :
     https://play.google.com/store/apps/details?id=com.cloanto.amigaforever.essentials
 
-    If you already have a real Amiga you can dump the content of the kickstart
+    If you already have a real Amiga you can dump the contents of the kickstart
     directly from it and use that in the emulator. There are several tools on
     Aminet for this purpose.
 
@@ -457,7 +457,7 @@ A - This emulator NEEDS 24bit resolution to be able to work as intended.
 Q - The mouse position on the Amiga (emulation) side is not fully in sync with 
     the host mouse co-ordinates?
 
-A - This issue needs to be adressed in future versions of MorphUAE and it's an
+A - This issue needs to be addressed in future versions of MorphUAE and it's an
     already known issue.
 
 
@@ -473,9 +473,9 @@ Q - Can I use the P96 driver for RTG software with MorphUAE?
 A - No, not at this point.
     The main idea behind this emulator is to have compability with games & 
     demos back from the Amiga days. Apart from that, system friendly RTG 
-    programs runs straight into MorphOS directly. So, there is nothing really
-    to gain by adding this into the emulator. Maybe one day, but it's not at 
-    all on the priority list.
+    programs run directly in MorphOS. So, there is really nothing to gain by
+    adding this into the emulator.
+    Maybe one day, but it's not at all on the priority list.
 -------------------------------------------------------------------------------
 
 
@@ -487,7 +487,7 @@ A - No, not at this point.
 
  @{b}@{u}What's new@{uu}@{ub}
 
- · Now the requesters keeps track of which ADF file and path is selected on
+ · Now the requesters keep track of which ADF file and path is selected on
    each image device. (Suggested by jPV)
 
  · Drag and drop multiple ADF images distribute them over several devices.
@@ -496,7 +496,7 @@ A - No, not at this point.
  · ADF Image LED is now shown in a BLUE colour if there is an image
    mounted to it. (Suggested by jPV)
 
- · Added an CLI/Shell option to enable overscan resolution (-overscan).
+ · Added a CLI/Shell option to enable overscan resolution (-overscan).
 
  · The reset button can now also change machine type, via a popup menu.
    (Suggested by bitRocky)
@@ -504,7 +504,7 @@ A - No, not at this point.
  · The current active ADF image is also shown in the window title.
    (Suggested by bitRocky)
 
- · Mounted virtual devices was not fully freed when switching between
+ · Mounted virtual devices were not fully freed when switching between
    machine types.
 
  · Tooltypes can be used to change behaviour of the emulation.
@@ -518,6 +518,35 @@ A - No, not at this point.
 @NEXT "future"
 
  @{b}@{u}History@{uu}@{ub}
+
+
+ 19-Aug-2026 - Second public release (1.1)
+
+
+ * Now the requesters keep track of which ADF file and path is selected on
+   each image device. (Suggested by jPV)
+
+ * Drag and drop multiple ADF images distribute them over several devices.
+   (Suggested by jPV)
+
+ * ADF Image LED is now shown in a BLUE colour if there is an image
+   mounted to it. (Suggested by jPV)
+
+ * Added a CLI/Shell option to enable overscan resolution (-overscan).
+
+ * The reset button can now also change machine type, via a popup menu.
+   (Suggested by bitRocky)
+
+ * The current active ADF image is also shown in the window title.
+   (Suggested by bitRocky)
+
+ * Mounted virtual devices were not fully freed when switching between
+   machine types.
+
+ * Tooltypes can be used to change behaviour of the emulation.
+
+ * Savestates can now be saved or loaded from the GUI.
+
 
  · 23-Jul-2026
 

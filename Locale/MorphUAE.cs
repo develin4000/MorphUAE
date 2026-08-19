@@ -104,7 +104,7 @@ Om MorphUAE
 ;
 MSG_ABOUT_COPYRIGHT (19//)
 Amiga are trademark of Amiga Corporation
-Amiga är varumärken som tillhör Amiga Corporation
+Amiga är ett varumärke som tillhör Amiga Corporation
 
 ;
 MSG_SETTINGS_WINDOWTITLE (20//)
