@@ -1,17 +1,17 @@
 /* confdefs.h */
 #define PACKAGE_NAME "MorphUAE"
 #define PACKAGE_TARNAME "morphuae"
-#define PACKAGE_VERSION "1.0"
-#define PACKAGE_STRING "MorphUAE 1.0"
+#define PACKAGE_VERSION "1.2"
+#define PACKAGE_STRING "MorphUAE 1.2"
 #define PACKAGE_BUGREPORT ""
 #define PACKAGE_URL ""
 #define PACKAGE "morphuae"
-#define VERSION "1.0"
+#define VERSION "1.2"
 #define UAE_VERSION_MAJOR 1
 #define UAE_VERSION_MINOR 0
-#define UAE_VERSION_REVISION 0
+#define UAE_VERSION_REVISION 2
 #define UAE_VERSION_TAG ""
-#define UAE_VERSION "1.0"
+#define UAE_VERSION "1.2"
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_STDLIB_H 1

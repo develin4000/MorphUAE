@@ -36,6 +36,7 @@ static Object *but_gen_resolution = NULL;
 static Object *but_gen_blitter = NULL;
 static Object *but_gen_sprite = NULL;
 static Object *but_gen_framerate = NULL;
+static Object *but_gen_renderer = NULL;  //*chk_gen_overlay = NULL;
 static Object *but_gen_resetmode = NULL;
 
 static Object *but_tmp_joy0 = NULL;
@@ -115,7 +116,8 @@ enum
    ID_PRFS_GEN_FRAMERATE,
    ID_PRFS_GEN_LANGUAGE,
    ID_PRFS_GEN_FLOPPYNUM,
-   ID_PRFS_GEN_RESOLUTION
+   ID_PRFS_GEN_RESOLUTION,
+   ID_PRFS_GEN_RENDERER
 };
 
 

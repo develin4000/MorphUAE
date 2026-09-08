@@ -287,7 +287,7 @@
 #define PACKAGE_NAME "MorphUAE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "MorphUAE 1.0"
+#define PACKAGE_STRING "MorphUAE 1.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "morphuae"
@@ -296,7 +296,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0"
+#define PACKAGE_VERSION "1.2"
 
 /* PPC CPU */
 #define PPC_CPU powerpc
@@ -373,7 +373,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Define to the UAE version */
-#define UAE_VERSION "1.0"
+#define UAE_VERSION "1.2"
 
 /* Define to the UAE major version number */
 #define UAE_VERSION_MAJOR 1
@@ -382,7 +382,7 @@
 #define UAE_VERSION_MINOR 0
 
 /* Define to the UAE revision number */
-#define UAE_VERSION_REVISION 0
+#define UAE_VERSION_REVISION 2
 
 /* Define to the optional UAE version tag */
 #define UAE_VERSION_TAG ""

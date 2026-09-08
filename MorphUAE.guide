@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.1 (19-08-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.2 (09-09-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -487,29 +487,8 @@ A - No, not at this point.
 
  @{b}@{u}What's new@{uu}@{ub}
 
- · Now the requesters keep track of which ADF file and path is selected on
-   each image device. (Suggested by jPV)
+ · Overlay support. (Thanks to rzookol)
 
- · Drag and drop multiple ADF images distribute them over several devices.
-   (Suggested by jPV)
-
- · ADF Image LED is now shown in a BLUE colour if there is an image
-   mounted to it. (Suggested by jPV)
-
- · Added a CLI/Shell option to enable overscan resolution (-overscan).
-
- · The reset button can now also change machine type, via a popup menu.
-   (Suggested by bitRocky)
-
- · The current active ADF image is also shown in the window title.
-   (Suggested by bitRocky)
-
- · Mounted virtual devices were not fully freed when switching between
-   machine types.
-
- · Tooltypes can be used to change behaviour of the emulation.
-
- · Savestates can now be saved or loaded from the GUI.
 
 @ENDNODE
 
@@ -667,8 +646,8 @@ A - No, not at this point.
  @{b}Neil Pearson@{ub}
  For proof-reading and correcting this manual.
 
- @{b}Hugo "FrankBrana" Espiñeira@{ub}
- For the Spanish translation.
+ @{b}Michal 'rzookol' Zukowski@{ub}
+ For the Overlay code support.
 
 @ENDNODE
 

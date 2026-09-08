@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.1 (18.08.2026)
+## Version $VER: MorphUAE.catalog 1.2 (09.09.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0
@@ -555,5 +555,20 @@ Standard
 MSG_CYC_RESOLUTION_1 (109//)
 Overscan
 Overscan
+
+;
+MSG_SETTINGS_RENDER (110//)
+Render Type :
+Renderingstyp :
+
+;
+MSG_CYC_RENDER_0 (111//)
+WritePixelArray
+WritePixelArray
+
+;
+MSG_CYC_RENDER_1 (112//)
+Overlay
+Overlay
 
 ;
