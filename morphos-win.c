@@ -2495,7 +2495,8 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             }
 
             FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
-            WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, 640, 512, RECTFMT_ARGB);
+            ScalePixelArray(gfx_logo, 640, 512, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, _width(obj), _height(obj), RECTFMT_ARGB);
+            //WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, 640, 512, RECTFMT_ARGB);
          }
          else if (data->render_state == MUIV_FlushScreenOverlay)
          {
