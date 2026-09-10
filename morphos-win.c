@@ -2478,9 +2478,6 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
       {
          if (data->render_state == MUIV_FlushClearScreen)
          {
-            int twidth = 0;
-            int theight = 0;
-
             /* A hardware overlay would cover the normal MUI logo/clear draw. */
             if (data->VLayer)
             {
@@ -2488,15 +2485,8 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
                overlay_failed = FALSE;
             }
 
-            if (uae_get_overscan())
-            {
-               twidth = (OVERSCAN_GFX_WIDTH - DEFAULT_GFX_WIDTH) / 2;
-               theight = (OVERSCAN_GFX_HEIGHT - DEFAULT_GFX_HEIGHT) / 2;
-            }
-
             FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
-            ScalePixelArray(gfx_logo, 640, 512, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, _width(obj), _height(obj), RECTFMT_ARGB);
-            //WritePixelArray(gfx_logo, 0, 0, 640*4, _rp(obj), _left(obj)+twidth, _top(obj)+theight, 640, 512, RECTFMT_ARGB);
+            ScalePixelArray(gfx_logo, 640, 512, 640*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
          }
          else if (data->render_state == MUIV_FlushScreenOverlay)
          {
