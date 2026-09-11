@@ -163,7 +163,7 @@
 #ifdef CATCOMP_STRINGS
 
 #define MSG_APPLICATION_DESCRIPTION_STR "MorphUAE - Amiga emulator for MorphOS"
-#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io"
+#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\nAdditional programming by Michal Zukowski\n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io"
 #define MSG_INSERT_IMAGE_STR "Insert image on DF%d"
 #define MSG_EMULATION_PAUSED_STR "MorphUAE - Paused"
 #define MSG_REQUESTER_TITLE_STR "Error Message"
@@ -419,8 +419,8 @@ static const char CatCompBlock[] =
 {
     "\x00\x00\x00\x00\x00\x26"
     MSG_APPLICATION_DESCRIPTION_STR "\x00"
-    "\x00\x00\x00\x01\x01\x1E"
-    MSG_ABOUTSTR_STR "\x00\x00"
+    "\x00\x00\x00\x01\x01\x48"
+    MSG_ABOUTSTR_STR "\x00"
     "\x00\x00\x00\x02\x00\x16"
     MSG_INSERT_IMAGE_STR "\x00\x00"
     "\x00\x00\x00\x03\x00\x12"

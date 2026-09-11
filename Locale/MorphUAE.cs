@@ -11,10 +11,10 @@ MorphUAE - Amiga emulator for MorphOS
 MorphUAE - Amiga-emulator för MorphOS
 
 MSG_ABOUTSTR (1//)
-The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n\
- Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
-Amiga-emulator för MorphOS av Stefan Blixth, OnyxSoft \n\n Detta program är baserat på tidigare arbete gjort av : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original-UAE \n Toni Wilen, WinUAE \n\n\n\
- Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
+The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\nAdditional programming by Michal Zukowski\n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd \
+Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
+Amiga-emulator för MorphOS av Stefan Blixth, OnyxSoft \n\nBidragande programmering av Michal Zukowski\n\n Detta program är baserat på tidigare arbete gjort av : \n\n Richard Drummond, E-UAE \n Bernd \
+Schmidt, original-UAE \n Toni Wilen, WinUAE \n\n\n Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
 
 ;
 MSG_INSERT_IMAGE (2//)

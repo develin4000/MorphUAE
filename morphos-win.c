@@ -82,9 +82,6 @@
 
 #include <proto/cybergraphics.h>
 #include <cybergraphx/cybergraphics.h>
-#include <proto/cgxvideo.h>
-#include <cybergraphx/cgxvideo.h>
-
 #include <proto/multimedia.h>
 #include <classes/multimedia/video.h>
 #include <classes/multimedia/metadata.h>
@@ -114,6 +111,7 @@
 #include <gfx-logo.h>
 #include <morphos-gui.h>
 #include <morphuae_locale.h>
+#include "morphos-overlay.h"
 
 // MCC Classes
 #include <mui/Rawimage_mcc.h>
@@ -172,17 +170,6 @@ char titlestr[256];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
-
-/* CGXVideo overlay state. There is one Render MCC instance. */
-static BOOL overlay_active = FALSE;
-static BOOL overlay_failed = FALSE;
-static BOOL overlay_suspended = FALSE;
-
-/* Detected once during graphics_setup().  Keep CPU feature detection out of
- * the frame hot path; an AltiVec RGB16->RGB16PC converter can dispatch on
- * this flag without probing Exec for every frame.
- */
-static BOOL cpu_has_altivec = FALSE;
 
 static int init_colors(void);
 static int dummy_lock (struct vidbuf_description *gfxinfo);
@@ -339,11 +326,7 @@ struct RenderData
 
    struct BitMap *BitMap;
    uae_u8 *Buffer;
-   struct VLayerHandle *VLayer;
-   LONG OverlayLeft;
-   LONG OverlayTop;
-   LONG OverlayWidth;
-   LONG OverlayHeight;
+   BOOL LiveResize;
    int PixelFormat;
    int XOffset,YOffset;
    unsigned long render_state;
@@ -1213,395 +1196,90 @@ BOOL Save_Reggae(char *fname, UBYTE *imgdata, WORD width, WORD height, WORD dept
 }
 
 /*=-------------------------------------------------------------------------------------------------*
- * CGXVideo VLayer overlay helpers.                                                                  *
+ * CGXVideo VLayer overlay coordination.                                                            *
  *                                                                                                   *
- * The lifecycle mirrors the MorphOS openMSX backend: attach a VLayer to the Intuition window,       *
- * keep its indents in sync with the MUI render area, lock/copy/unlock one complete frame and swap.  *
+ * The hardware backend itself lives in morphos-overlay.c.  These wrappers keep the Render MCC       *
+ * call sites small and pass the current MUI/window/frame state to that module.                       *
  *---------------------------------------------------------------------------------------------------*/
 static void Render_DestroyOverlay(struct RenderData *data)
 {
-   if (data->VLayer)
-   {
-      DetachVLayer(data->VLayer);
-      DeleteVLayerHandle(data->VLayer);
-      data->VLayer = NULL;
-   }
-
-   overlay_active = FALSE;
-   data->OverlayLeft = -1;
-   data->OverlayTop = -1;
-   data->OverlayWidth = -1;
-   data->OverlayHeight = -1;
+   (void)data;
+   MorphOverlay_Destroy();
 }
 
 static BOOL Render_FullscreenScreenIsActive(const struct RenderData *data)
 {
-   struct Screen *frontscreen;
-   ULONG ibaselock;
-
-   /* Windowed overlays are allowed to stay attached when the window merely
-    * loses focus.  A fullscreen VLayer is different: CGXVideo may remain
-    * visible above another public screen, so only allow it while MorphUAE's
-    * custom screen is actually the frontmost Intuition screen.
-    */
-   if (!data->FullScreen)
-      return TRUE;
-
-   if (!IntuitionBase || !data->screen || !data->window ||
-       data->window->WScreen != data->screen)
-      return FALSE;
-
-   ibaselock = LockIBase(0);
-   frontscreen = IntuitionBase->FirstScreen;
-   UnlockIBase(ibaselock);
-
-   return frontscreen == data->screen;
+   return MorphOverlay_FullscreenScreenIsActive(data->FullScreen,
+                                                 data->screen,
+                                                 data->window);
 }
 
 static void Render_UpdateOverlayGeometry(struct RenderData *data, Object *obj)
 {
-   LONG inner_width, inner_height;
-   LONG area_left, area_top, area_width, area_height;
-   LONG dst_left, dst_top, dst_width, dst_height;
-   LONG draw_left, draw_top;
-   LONG right, bottom;
-   ULONG src_width, src_height;
+   MorphOverlay_UpdateGeometry(obj, data->window, data->FullScreen,
+                               (ULONG)((gfxvidinfo.width > 0) ? gfxvidinfo.width : 1),
+                               (ULONG)((gfxvidinfo.height > 0) ? gfxvidinfo.height : 1));
+}
 
-   if (!data->VLayer || !data->window)
-      return;
-
-   /* VLayer indents are relative to the Intuition window's inner area.
-    * MUI coordinates are window coordinates, so remove the window borders.
-    */
-   inner_width  = (LONG)data->window->Width  - (LONG)data->window->BorderLeft - (LONG)data->window->BorderRight;
-   inner_height = (LONG)data->window->Height - (LONG)data->window->BorderTop  - (LONG)data->window->BorderBottom;
-
-   if (inner_width < 1)  inner_width = 1;
-   if (inner_height < 1) inner_height = 1;
-
-   if (data->FullScreen)
-   {
-      /* In fullscreen use the complete borderless Intuition window as the
-       * destination.  Do not inherit a stale MUI Area size from the previous
-       * windowed layout.  The aspect-fit calculation below then provides
-       * pillarbox/letterbox bars when the selected screen mode has a different
-       * aspect ratio than the UAE framebuffer.
-       */
-      area_left = 0;
-      area_top = 0;
-      area_width = inner_width;
-      area_height = inner_height;
-   }
-   else
-   {
-      area_left   = (LONG)_mleft(obj) - (LONG)data->window->BorderLeft;
-      area_top    = (LONG)_mtop(obj)  - (LONG)data->window->BorderTop;
-      area_width  = (LONG)_mwidth(obj);
-      area_height = (LONG)_mheight(obj);
-   }
-
-   if (area_left < 0) area_left = 0;
-   if (area_top < 0) area_top = 0;
-   if (area_width < 1) area_width = 1;
-   if (area_height < 1) area_height = 1;
-
-   /* Convert the inner-area coordinates back to the window RastPort
-    * coordinates used by FillPixelArray().  In windowed mode this resolves to
-    * _mleft/_mtop; in borderless fullscreen it is normally 0/0.
-    */
-   draw_left = (LONG)data->window->BorderLeft + area_left;
-   draw_top  = (LONG)data->window->BorderTop  + area_top;
-
-   /* Keep the framebuffer aspect ratio while CGXVideo scales it.  Fit the
-    * source completely inside the MUI render area and center it.  The unused
-    * part of the Area becomes a black pillarbox/letterbox.
-    */
-   src_width  = (gfxvidinfo.width  > 0) ? (ULONG)gfxvidinfo.width  : 1UL;
-   src_height = (gfxvidinfo.height > 0) ? (ULONG)gfxvidinfo.height : 1UL;
-
-   dst_width = area_width;
-   dst_height = area_height;
-
-   if (((unsigned long long)area_width * (unsigned long long)src_height) >
-       ((unsigned long long)area_height * (unsigned long long)src_width))
-   {
-      /* Destination is wider than the source aspect: black bars left/right. */
-      dst_width = (LONG)(((unsigned long long)area_height * src_width) / src_height);
-      if (dst_width < 1) dst_width = 1;
-   }
-   else
-   {
-      /* Destination is taller than the source aspect: black bars top/bottom. */
-      dst_height = (LONG)(((unsigned long long)area_width * src_height) / src_width);
-      if (dst_height < 1) dst_height = 1;
-   }
-
-   dst_left = area_left + (area_width - dst_width) / 2;
-   dst_top  = area_top  + (area_height - dst_height) / 2;
-
-   right  = inner_width  - (dst_left + dst_width);
-   bottom = inner_height - (dst_top + dst_height);
-   if (right < 0) right = 0;
-   if (bottom < 0) bottom = 0;
-
-   /* Only touch the normal CyberGraphX surface when geometry actually changes.
-    * It stays visible in the portions not covered by the hardware VLayer.
-    */
-   if (dst_left != data->OverlayLeft || dst_top != data->OverlayTop ||
-       dst_width != data->OverlayWidth || dst_height != data->OverlayHeight)
-   {
-      LONG bar;
-
-      if (dst_width < area_width)
-      {
-         bar = dst_left - area_left;
-         if (bar > 0)
-            FillPixelArray(_rp(obj), draw_left, draw_top, (ULONG)bar, (ULONG)area_height, 0x00000000);
-
-         bar = (area_left + area_width) - (dst_left + dst_width);
-         if (bar > 0)
-            FillPixelArray(_rp(obj), draw_left + (dst_left - area_left) + dst_width, draw_top,
-                           (ULONG)bar, (ULONG)area_height, 0x00000000);
-      }
-      else if (dst_height < area_height)
-      {
-         bar = dst_top - area_top;
-         if (bar > 0)
-            FillPixelArray(_rp(obj), draw_left, draw_top, (ULONG)area_width, (ULONG)bar, 0x00000000);
-
-         bar = (area_top + area_height) - (dst_top + dst_height);
-         if (bar > 0)
-            FillPixelArray(_rp(obj), draw_left, draw_top + (dst_top - area_top) + dst_height,
-                           (ULONG)area_width, (ULONG)bar, 0x00000000);
-      }
-
-      data->OverlayLeft = dst_left;
-      data->OverlayTop = dst_top;
-      data->OverlayWidth = dst_width;
-      data->OverlayHeight = dst_height;
-   }
-
-   SetVLayerAttrTags(data->VLayer,
-                     VOA_LeftIndent,   (ULONG)dst_left,
-                     VOA_RightIndent,  (ULONG)right,
-                     VOA_TopIndent,    (ULONG)dst_top,
-                     VOA_BottomIndent, (ULONG)bottom,
-                     TAG_DONE);
+static void Render_ClearOverlayBacking(struct RenderData *data, Object *obj)
+{
+   MorphOverlay_ClearBacking(obj, data->window, data->FullScreen);
 }
 
 static BOOL Render_AttachOverlay(struct RenderData *data, Object *obj)
 {
-   ULONG error = 0;
-   ULONG srcfmt;
-
-   if (!currprefs.amiga_use_overlay || overlay_suspended || !CGXVideoBase || !data->window || !data->window->WScreen)
+   if (!currprefs.amiga_use_overlay)
       return FALSE;
 
-   if (!Render_FullscreenScreenIsActive(data))
-      return FALSE;
-
-   if (data->VLayer)
-   {
-      Render_UpdateOverlayGeometry(data, obj);
-      overlay_active = TRUE;
-      return TRUE;
-   }
-
-#if defined(SRCFMT_RGB16)
-   srcfmt = SRCFMT_RGB16;
-#elif defined(SRCFMT_R5G6B5PC)
-   srcfmt = SRCFMT_R5G6B5PC;
-#else
-   return FALSE;
-#endif
-
-   data->VLayer = CreateVLayerHandleTags(data->window->WScreen,
-                                         VOA_SrcType,      srcfmt,
-                                         VOA_SrcWidth,     (ULONG)gfxvidinfo.width,
-                                         VOA_SrcHeight,    (ULONG)gfxvidinfo.height,
-                                         VOA_DoubleBuffer, TRUE,
-                                         VOA_UseFilter,    TRUE,
-                                         VOA_Error,        (ULONG)&error,
-                                         TAG_DONE);
-   if (!data->VLayer)
-   {
-      write_log("MUIGFX: Unable to create CGXVideo overlay (error %lu).\n", error);
-      return FALSE;
-   }
-
-   if ((LONG)AttachVLayerTags(data->VLayer, data->window,
-                              VOA_LeftIndent,   0UL,
-                              VOA_RightIndent,  0UL,
-                              VOA_TopIndent,    0UL,
-                              VOA_BottomIndent, 0UL,
-                              TAG_DONE) != 0)
-   {
-      write_log("MUIGFX: Unable to attach CGXVideo overlay.\n");
-      Render_DestroyOverlay(data);
-      return FALSE;
-   }
-
-   Render_UpdateOverlayGeometry(data, obj);
-   overlay_active = TRUE;
-   write_log("MUIGFX: CGXVideo overlay enabled (%dx%d).\n", gfxvidinfo.width, gfxvidinfo.height);
-   return TRUE;
-}
-
-static UWORD Render_RGB565Pixel(const struct RenderData *data, const UBYTE *src, int pixbytes)
-{
-   ULONG r, g, b;
-   UWORD value;
-
-   if (pixbytes == 4)
-   {
-      /* The existing surface path submits this buffer as RECTFMT_ARGB. */
-      r = src[1];
-      g = src[2];
-      b = src[3];
-      return (UWORD)(((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3));
-   }
-
-   /* 15/16-bit native CyberGraphX buffers. */
-   if (data->PixelFormat == PIXFMT_RGB15PC || data->PixelFormat == PIXFMT_RGB16PC)
-      value = (UWORD)(((UWORD)src[1] << 8) | src[0]);
-   else
-      value = (UWORD)(((UWORD)src[0] << 8) | src[1]);
-
-   if (data->PixelFormat == PIXFMT_RGB15PC || data->PixelFormat == PIXFMT_RGB15)
-   {
-      r = (value >> 10) & 31;
-      g = (value >> 5)  & 31;
-      b = value & 31;
-      g = (g << 1) | (g >> 4);
-      value = (UWORD)((r << 11) | (g << 5) | b);
-   }
-
-   return value;
-}
-
-/* Fast path for the common native RGB565 -> CGXVideo RGB16PC conversion.
- * MorphOS/PPC stores native RGB16 words big-endian, while SRCFMT_RGB16 is
- * the PC/little-endian R5G6B5 layout expected by CGXVideo.  Swapping two
- * pixels at a time avoids the per-pixel conversion helper overhead.
- */
-static void Render_CopyRGB16ToRGB16PC(const UBYTE *src, ULONG src_pitch,
-                                      UBYTE *dst, ULONG dst_pitch,
-                                      int width, int height)
-{
-   int y;
-
-   for (y = 0; y < height; y++)
-   {
-      const UBYTE *s = src + ((ULONG)y * src_pitch);
-      UBYTE *d = dst + ((ULONG)y * dst_pitch);
-      int x = 0;
-
-      if ((((ULONG)(APTR)s | (ULONG)(APTR)d) & 3UL) == 0)
-      {
-         const ULONG *s32 = (const ULONG *)(APTR)s;
-         ULONG *d32 = (ULONG *)(APTR)d;
-         int pairs = width >> 1;
-         int i;
-
-         for (i = 0; i < pairs; i++)
-         {
-            ULONG v = s32[i];
-            d32[i] = ((v & 0x00ff00ffUL) << 8) | ((v & 0xff00ff00UL) >> 8);
-         }
-         x = pairs << 1;
-      }
-
-      for (; x < width; x++)
-      {
-         d[x * 2 + 0] = s[x * 2 + 1];
-         d[x * 2 + 1] = s[x * 2 + 0];
-      }
-   }
-}
-
-static void Render_CopyRGB16PC(const UBYTE *src, ULONG src_pitch,
-                               UBYTE *dst, ULONG dst_pitch,
-                               int width, int height)
-{
-   int y;
-   ULONG bytes = (ULONG)width * 2UL;
-
-   for (y = 0; y < height; y++)
-      memcpy(dst + ((ULONG)y * dst_pitch), src + ((ULONG)y * src_pitch), bytes);
+   return MorphOverlay_Attach(obj, data->window, data->screen, data->FullScreen,
+                              (ULONG)((gfxvidinfo.width > 0) ? gfxvidinfo.width : 1),
+                              (ULONG)((gfxvidinfo.height > 0) ? gfxvidinfo.height : 1));
 }
 
 static BOOL Render_PresentOverlay(struct RenderData *data, Object *obj)
 {
-   struct VLayerHandle *vlayer;
-   UBYTE *dst;
-   ULONG modulo;
-   int width, height, pitch, pixbytes;
-   int x, y;
+   return MorphOverlay_Present(obj, data->window, data->screen, data->FullScreen,
+                               data->LiveResize,
+                               data->Buffer, data->PixelFormat,
+                               gfxvidinfo.width, gfxvidinfo.height,
+                               gfxvidinfo.rowbytes, gfxvidinfo.pixbytes,
+                               currprefs.gfx_vsync ? TRUE : FALSE);
+}
 
-   if (!data->VLayer || !data->Buffer)
-      return FALSE;
+static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj);
 
+static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
+{
+   if (!data->Active || !currprefs.amiga_use_overlay || MorphOverlay_IsSuspended() || !CGXVideoBase)
+      return;
+
+   /* A fullscreen VLayer must not remain above another public screen. */
    if (!Render_FullscreenScreenIsActive(data))
    {
-      Render_DestroyOverlay(data);
-      return TRUE;
+      if (MorphOverlay_HasLayer())
+         Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+      return;
    }
 
-   width = gfxvidinfo.width;
-   height = gfxvidinfo.height;
-   pitch = gfxvidinfo.rowbytes;
-   pixbytes = gfxvidinfo.pixbytes;
-
-   if (width <= 0 || height <= 0 || pitch <= 0 || (pixbytes != 2 && pixbytes != 4))
-      return FALSE;
-
-   Render_UpdateOverlayGeometry(data, obj);
-
-   vlayer = data->VLayer;
-   if (!LockVLayer(vlayer))
-      return FALSE;
-
-   dst = (UBYTE *)(APTR)GetVLayerAttr(vlayer, VOA_BaseAddress);
-   modulo = GetVLayerAttr(vlayer, VOA_Modulo);
-   if (!dst || modulo < (ULONG)(width * 2))
+   if (!MorphOverlay_HasLayer() && !MorphOverlay_IsFailed())
    {
-      UnlockVLayer(vlayer);
-      return FALSE;
+      if (!Render_AttachOverlay(data, obj))
+         MorphOverlay_SetFailed(TRUE);
    }
 
-   if (pixbytes == 2 && data->PixelFormat == PIXFMT_RGB16)
+   if (MorphOverlay_HasLayer())
    {
-      Render_CopyRGB16ToRGB16PC(data->Buffer, (ULONG)pitch, dst, modulo, width, height);
-   }
-   else if (pixbytes == 2 && data->PixelFormat == PIXFMT_RGB16PC)
-   {
-      /* Source already has the byte order required by CGXVideo RGB16PC. */
-      Render_CopyRGB16PC(data->Buffer, (ULONG)pitch, dst, modulo, width, height);
-   }
-   else
-   {
-      for (y = 0; y < height; y++)
+      if (!Render_PresentOverlay(data, obj))
       {
-         const UBYTE *src = data->Buffer + (y * pitch);
-         UBYTE *out = dst + (y * modulo);
-
-         for (x = 0; x < width; x++)
-         {
-            UWORD rgb565 = Render_RGB565Pixel(data, src + (x * pixbytes), pixbytes);
-
-            out[x * 2 + 0] = (UBYTE)(rgb565 & 0xff);
-            out[x * 2 + 1] = (UBYTE)(rgb565 >> 8);
-         }
+         write_log("MUIGFX: CGXVideo overlay presentation failed, using surface output.\n");
+         Render_DestroyOverlay(data);
+         MorphOverlay_SetFailed(TRUE);
+         Render_DrawSurfaceFrame(data, obj);
       }
    }
-
-   UnlockVLayer(vlayer);
-
-   if (currprefs.gfx_vsync)
-      WaitTOF();
-
-   SwapVLayerBuffer(vlayer);
-   return TRUE;
+   else if (MorphOverlay_IsFailed())
+      Render_DrawSurfaceFrame(data, obj);
 }
 
 static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj)
@@ -1625,8 +1303,8 @@ static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj)
 
 static void Render_SuspendOverlayForUI(struct RenderData *data, Object *obj)
 {
-   overlay_suspended = TRUE;
-   if (data->VLayer)
+   MorphOverlay_Suspend();
+   if (MorphOverlay_HasLayer())
    {
       Render_DestroyOverlay(data);
       Render_DrawSurfaceFrame(data, obj);
@@ -1635,8 +1313,7 @@ static void Render_SuspendOverlayForUI(struct RenderData *data, Object *obj)
 
 static void Render_ResumeOverlayAfterUI(void)
 {
-   overlay_suspended = FALSE;
-   overlay_failed = FALSE;
+   MorphOverlay_Resume();
 }
 
 /* Apply an overlay preference change immediately to the already-created MUI
@@ -1652,10 +1329,9 @@ static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, 
    changed_prefs.amiga_use_overlay = enable ? 1 : 0;
    currprefs.amiga_use_overlay = enable ? 1 : 0;
 
-   overlay_failed = FALSE;
-   overlay_suspended = FALSE;
+   MorphOverlay_ResetRuntimeState();
 
-   if (!enable && data->VLayer)
+   if (!enable && MorphOverlay_HasLayer())
       Render_DestroyOverlay(data);
 
    if (!data->FullScreen && win_main)
@@ -1698,10 +1374,10 @@ static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, 
    }
 
    /* Fullscreen is never user-resizable.  Only update the VLayer state. */
-   if (enable && data->Active && !data->VLayer)
+   if (enable && data->Active && !MorphOverlay_HasLayer())
    {
       if (!Render_AttachOverlay(data, obj))
-         overlay_failed = TRUE;
+         MorphOverlay_SetFailed(TRUE);
    }
 }
 
@@ -1742,11 +1418,8 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->Iconified = FALSE;
    data->BitMap = NULL;
    data->Buffer = NULL;
-   data->VLayer = NULL;
-   data->OverlayLeft = -1;
-   data->OverlayTop = -1;
-   data->OverlayWidth = -1;
-   data->OverlayHeight = -1;
+   MorphOverlay_MarkBackingDirty();
+   data->LiveResize = FALSE;
    data->PixelFormat = -1;
    data->XOffset = 0;
    data->YOffset = 0;
@@ -1836,7 +1509,19 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
          {
             case MUIA_Render_State :
                data->render_state = tag->ti_Data;
-               MUI_Redraw(obj_rendermcc, MADF_DRAWOBJECT);
+
+               /* Hardware overlay presentation is not a MUI drawing operation.
+                * Calling MUI_Redraw() for every video frame makes the Area's
+                * normal background race with the VLayer during live resize,
+                * which appears as alternating grey/video flashes.
+                */
+               if (data->render_state == MUIV_FlushScreenOverlay)
+               {
+                  Render_FlushOverlayFrame(data, obj);
+                  data->render_state = 0;
+               }
+               else
+                  MUI_Redraw(obj_rendermcc, MADF_DRAWOBJECT);
                break;
 
             case MUIA_Pointer_State :
@@ -2375,7 +2060,7 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
    // IDCMP_DELTAMOVE
    data->eh.ehn_Object = obj;
    data->eh.ehn_Class  = cl;
-   data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_MOUSEMOVE|IDCMP_NEWSIZE|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW;
+   data->eh.ehn_Events = IDCMP_MOUSEBUTTONS|IDCMP_RAWKEY|IDCMP_MOUSEMOVE|IDCMP_NEWSIZE|IDCMP_ACTIVEWINDOW|IDCMP_INACTIVEWINDOW|IDCMP_REFRESHWINDOW;
    data->eh.ehn_Flags  = MUI_EHF_GUIMODE; // Check this... React if the object is active or not...
 
    DoMethod(_win(obj), MUIM_Window_AddEventHandler, &data->eh);
@@ -2467,8 +2152,21 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
 static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   struct RastPort *rp = _rp(obj);
    //debug_print("%s (%d)\n", __func__, __LINE__);
+
+   /* MUI redraws must not trigger an extra video-buffer flip.  The emulation
+    * frame path owns LockVLayer()/SwapVLayerBuffer(); redraw/resize only
+    * updates the destination geometry and the black backing area.
+    */
+   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() &&
+       data->render_state != MUIV_FlushClearScreen &&
+       data->render_state != MUIV_ScreenShoot)
+   {
+      MorphOverlay_MarkBackingDirty();
+      Render_UpdateOverlayGeometry(data, obj);
+      Render_ClearOverlayBacking(data, obj);
+      return(0);
+   }
 
    DoSuperMethodA(cl, obj, (Msg)msg);
 
@@ -2478,49 +2176,34 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
       {
          if (data->render_state == MUIV_FlushClearScreen)
          {
+            ULONG area_width = _width(obj);
+            ULONG area_height = _height(obj);
+            ULONG logo_width = area_width;
+            ULONG logo_height;
+            LONG logo_left;
+            LONG logo_top;
+
             /* A hardware overlay would cover the normal MUI logo/clear draw. */
-            if (data->VLayer)
+            if (MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               overlay_failed = FALSE;
+               MorphOverlay_SetFailed(FALSE);
             }
 
-            FillPixelArray (_rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, 0x00000000);
-            ScalePixelArray(gfx_logo, 640, 512, 640*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
-         }
-         else if (data->render_state == MUIV_FlushScreenOverlay)
-         {
-            /* A fullscreen CGXVideo VLayer must exist only while MorphUAE's
-             * custom screen is frontmost.  When Ambient/another screen is in
-             * front, detach it and deliberately do not fall back to the normal
-             * surface: that screen is not visible anyway.
-             */
-            if (!Render_FullscreenScreenIsActive(data))
+            /* Keep the 640:512 logo aspect ratio and center it in the render area. */
+            logo_height = (logo_width * 512UL) / 640UL;
+            if (logo_height > area_height)
             {
-               if (data->VLayer)
-                  Render_DestroyOverlay(data);
-               overlay_failed = FALSE;
-               return(0);
+               logo_height = area_height;
+               logo_width = (logo_height * 640UL) / 512UL;
             }
 
-            if (!data->VLayer && !overlay_failed)
-            {
-               if (!Render_AttachOverlay(data, obj))
-                  overlay_failed = TRUE;
-            }
+            logo_left = _left(obj) + ((LONG)area_width - (LONG)logo_width) / 2;
+            logo_top = _top(obj) + ((LONG)area_height - (LONG)logo_height) / 2;
 
-            if (data->VLayer)
-            {
-               if (!Render_PresentOverlay(data, obj))
-               {
-                  write_log("MUIGFX: CGXVideo overlay presentation failed, using surface output.\n");
-                  Render_DestroyOverlay(data);
-                  overlay_failed = TRUE;
-                  Render_DrawSurfaceFrame(data, obj);
-               }
-            }
-            else
-               Render_DrawSurfaceFrame(data, obj);
+            FillPixelArray(_rp(obj), _left(obj), _top(obj), area_width, area_height, 0x00000000);
+            ScalePixelArray(gfx_logo, 640, 512, 640 * 4, _rp(obj),
+                            logo_left, logo_top, logo_width, logo_height, RECTFMT_ARGB);
          }
          else if (data->render_state == MUIV_FlushLineCGX)
          {
@@ -2551,10 +2234,10 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             UBYTE *sdata = NULL;
 
             /* ReadPixelArray cannot see pixels produced by a hardware VLayer. */
-            if (data->VLayer)
+            if (MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               overlay_failed = FALSE;
+               MorphOverlay_SetFailed(FALSE);
                Render_DrawSurfaceFrame(data, obj);
             }
 
@@ -2585,16 +2268,89 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
 }
 /*=*/
 
+/*=----------------------------- Render_InitResize ---------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_InitResize(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   ULONG result;
+
+   data->LiveResize = TRUE;
+   result = DoSuperMethodA(cl, obj, msg);
+
+   if (MorphOverlay_HasLayer())
+   {
+      MorphOverlay_MarkBackingDirty();
+      Render_UpdateOverlayGeometry(data, obj);
+      Render_ClearOverlayBacking(data, obj);
+   }
+
+   return result;
+}
+/*=*/
+
+/*=----------------------------- Render_ExitResize ---------------------------*
+ *                                                                            *
+ *----------------------------------------------------------------------------*/
+static ULONG Render_ExitResize(struct IClass *cl, Object *obj, Msg msg)
+{
+   struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   ULONG result;
+
+   result = DoSuperMethodA(cl, obj, msg);
+   data->LiveResize = FALSE;
+
+   if (MorphOverlay_HasLayer())
+   {
+      MorphOverlay_MarkBackingDirty();
+      Render_UpdateOverlayGeometry(data, obj);
+      Render_ClearOverlayBacking(data, obj);
+
+      /* Refresh exactly once after live resize has finished. */
+      if (data->Active && data->Buffer)
+         Render_PresentOverlay(data, obj);
+   }
+
+   return result;
+}
+/*=*/
+
 /*=----------------------------- Render_Hide ---------------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
 static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   ULONG result;
+
+   /* MorphOS MUI repeatedly sends MUIM_Hide/MUIM_Show to the render object
+    * while the window size gadget is being dragged.  It does not send
+    * MUIM_InitResize/MUIM_ExitResize to this class, so LiveResize cannot be
+    * used to recognise those temporary hides.
+    *
+    * A windowed VLayer is attached to the Intuition Window, not to MUI's
+    * temporary visibility state.  Keep the same handle and attachment for
+    * every windowed Hide.  Real teardown is done by Cleanup/Dispose and the
+    * explicit overlay-suspend paths.  Fullscreen keeps the old conservative
+    * behaviour because a fullscreen layer must never survive a screen/window
+    * transition.
+    */
+   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay && !data->FullScreen)
+   {
+      MorphOverlay_MarkBackingDirty();
+      result = DoSuperMethodA(cl, obj, (Msg)msg);
+
+      /* Keep frame delivery enabled.  A matching MUIM_Show normally follows
+       * immediately during live window resizing; setting Active=FALSE here
+       * would unnecessarily stop the VLayer path between the pair.
+       */
+      data->Active = TRUE;
+      return result;
+   }
+
    data->Active = FALSE;
    Render_DestroyOverlay(data);
-
    return(DoSuperMethodA(cl, obj, (Msg)msg));
 }
 /*=*/
@@ -2605,19 +2361,18 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
 static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
+   struct Window *old_window = data->window;
+   struct Window *new_window;
    ULONG result;
 
-   debug_print("%s (%d)\n", __func__, __LINE__);
-
-   /* As in the openMSX MUI backend, let MUI finish showing the Area first.
-    * Only then attach the VLayer to the now valid Intuition window.
-    */
+   /* Let MUI finish showing the Area before reading its committed geometry. */
    result = DoSuperMethodA(cl, obj, (Msg)msg);
    if (!result)
       return(result);
 
    data->screen = _screen(obj);
-   twnd = data->window = (struct Window *)_window(obj);
+   new_window = (struct Window *)_window(obj);
+   twnd = data->window = new_window;
    data->Active = TRUE;
    data->XOffset = _mleft(obj);
    data->YOffset = _mtop(obj);
@@ -2628,12 +2383,30 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
       data->ScrHeight = data->screen->Height;
    }
 
-   overlay_failed = FALSE;
-   overlay_suspended = FALSE;
-   if (currprefs.amiga_use_overlay && !Render_AttachOverlay(data, obj))
-      overlay_failed = TRUE;
+   MorphOverlay_ResetRuntimeState();
 
-   reset_drawing (); // Test
+   /* A temporary resize Hide/Show keeps the same Intuition Window.  In that
+    * case preserve the existing attached VLayer and only let the normal frame
+    * path update its indents.  If MUI really recreated the Window, the old
+    * attachment is no longer valid and must be rebuilt.
+    */
+   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay && !data->FullScreen)
+   {
+      if (old_window && new_window && old_window == new_window)
+      {
+         MorphOverlay_MarkBackingDirty();
+         Render_UpdateOverlayGeometry(data, obj);
+         return result;
+      }
+
+      Render_DestroyOverlay(data);
+   }
+
+   /* Do not attach here. MUIM_Show may run before the complete window group
+    * has settled its final child geometry. The first completed UAE frame will
+    * attach the VLayer with the final render-area indents.
+    */
+   reset_drawing ();
 
    return(result);
 }
@@ -2717,12 +2490,25 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          }  break;
 
          case IDCMP_NEWSIZE:
-            /* The VLayer destination is defined by window indents. Update them
-             * immediately while the user resizes the MUI window; CGXVideo does
-             * the actual framebuffer scaling in hardware.
+            /* Keep the existing VLayer handle and attachment.  Change only the
+             * destination indents so the currently visible hardware layer can
+             * follow the size gadget immediately; MUIM_Draw performs a second
+             * guarded update after MUI has finalized the child layout.
              */
-            if (data->VLayer)
+            if (MorphOverlay_HasLayer())
+            {
+               MorphOverlay_MarkBackingDirty();
                Render_UpdateOverlayGeometry(data, obj);
+            }
+            break;
+
+         case IDCMP_REFRESHWINDOW:
+            /* Window movement/exposure can reveal stale pixels in the normal
+             * RastPort around the hardware layer.  Clear it once on the next
+             * overlay draw/present instead of doing a surface blit every frame.
+             */
+            if (MorphOverlay_HasLayer())
+               MorphOverlay_MarkBackingDirty();
             break;
 
          case IDCMP_ACTIVEWINDOW:
@@ -2730,7 +2516,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
              * Fullscreen is special: after returning from Ambient/another
              * screen, allow the next frame to recreate the detached VLayer.
              */
-            overlay_failed = FALSE;
+            MorphOverlay_SetFailed(FALSE);
             inputdevice_acquire ();
             inputdevice_release_all_keys ();
             break;
@@ -2740,10 +2526,10 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
              * leave a fullscreen overlay attached when MorphUAE's custom screen
              * is no longer active/frontmost.
              */
-            if (data->FullScreen && data->VLayer)
+            if (data->FullScreen && MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               overlay_failed = FALSE;
+               MorphOverlay_SetFailed(FALSE);
             }
             inputdevice_unacquire ();
             break;
@@ -2782,6 +2568,12 @@ DISPATCHER(Render)
       case MUIM_Cleanup       : return Render_Cleanup      (cl, obj, (APTR)msg); break;
       case MUIM_AskMinMax     : return Render_Askminmax    (cl, obj, (APTR)msg); break;
       case MUIM_Draw          : return Render_Draw         (cl, obj, (APTR)msg); break;
+#ifdef MUIM_InitResize
+      case MUIM_InitResize    : return Render_InitResize   (cl, obj, (APTR)msg); break;
+#endif
+#ifdef MUIM_ExitResize
+      case MUIM_ExitResize    : return Render_ExitResize   (cl, obj, (APTR)msg); break;
+#endif
       case MUIM_Show          : return Render_Show         (cl, obj, (APTR)msg); break;
       case MUIM_Hide          : return Render_Hide         (cl, obj, (APTR)msg); break;
       case MUIM_HandleEvent   : return Render_EventHandler (cl, obj, (APTR)msg); break;
@@ -2839,7 +2631,7 @@ static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_li
    /* flush_screen() is called once after all changed blocks of a frame.
     * This is the correct place to swap the double-buffered hardware overlay.
     */
-   if (currprefs.amiga_use_overlay && !overlay_suspended && CGXVideoBase && !overlay_failed)
+   if (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed())
    {
       tmp_gfxinfo = gfxinfo;
       set(obj_rendermcc, MUIA_Render_State, MUIV_FlushScreenOverlay);
@@ -2852,11 +2644,11 @@ static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no)
 
    /* Do not paint the same frame to the normal MUI surface while the
     * hardware overlay path is requested.  The VLayer scales by itself; if
-    * attaching/presenting it fails, overlay_failed is set and subsequent
+    * attaching/presenting it fails, MorphOverlay_IsFailed() is set and subsequent
     * flushes fall back to the surface path.
     */
-   if (overlay_active ||
-       (currprefs.amiga_use_overlay && !overlay_suspended && CGXVideoBase && !overlay_failed))
+   if (MorphOverlay_IsActive() ||
+       (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed()))
       return;
 
    tmp_gfxinfo = gfxinfo;
@@ -2869,8 +2661,8 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
 {
    //debug_print("%s (%d)\n", __func__, __LINE__);
 
-   if (overlay_active ||
-       (currprefs.amiga_use_overlay && !overlay_suspended && CGXVideoBase && !overlay_failed))
+   if (MorphOverlay_IsActive() ||
+       (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed()))
       return;
 
    tmp_gfxinfo = gfxinfo;
@@ -3481,18 +3273,11 @@ BOOL FetchTools(int argc, char **argv)
 
 int graphics_setup (int argc, char **argv)
 {
-   ULONG altivec = 0;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
 
-   /* Query this once at startup. SYSTEMINFOTYPE_PPC_ALTIVEC returns a
-    * non-zero ULONG when the CPU implements the AltiVec/VMX unit.
-    */
-   cpu_has_altivec = FALSE;
-   if (NewGetSystemAttrs(&altivec, sizeof(altivec),
-                         SYSTEMINFOTYPE_PPC_ALTIVEC, TAG_DONE))
-      cpu_has_altivec = altivec ? TRUE : FALSE;
-
+   MorphOverlay_Init();
+   MorphOverlay_DetectCPU();
 
    if (!(IntuitionBase = (void*) OpenLibrary ("intuition.library", 0L))) return 0;
    if (!(IconBase = OpenLibrary ("icon.library", 37L))) return 0;

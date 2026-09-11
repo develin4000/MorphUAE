@@ -33,7 +33,7 @@ LIB_MACHDEP	= libmachdep.a
 OBJ_THREADDEP	= thread.o
 LIB_THREADDEP	= libthreaddep.a
 
-OBJ_GFXDEP	= morphos-win.o LEDmcc.o
+OBJ_GFXDEP	= morphos-win.o morphos-overlay.o LEDmcc.o
 LIB_GFXDEP	= libgfxdep.a
 
 OBJ_SOUNDDEP	= sound.o
@@ -341,8 +341,11 @@ $(LIB_GFXDEP): $(OBJ_GFXDEP)
 
 
 #$OBJ_GFXDEP
-morphos-win.o: morphos-win.c
-	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $^ -o $@
+morphos-win.o: morphos-win.c $(INCDIR)/morphos-overlay.h
+	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $< -o $@
+
+morphos-overlay.o: morphos-overlay.c $(INCDIR)/morphos-overlay.h
+	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $< -o $@
 
 LEDmcc.o: LEDmcc.c
 	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $^ -o $@
