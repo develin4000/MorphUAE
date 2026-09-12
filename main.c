@@ -70,6 +70,7 @@ int usearosrom = UAE_AROSROM_NO;
 int useoverscan = UAE_OVERSCAN_OFF;
 int usedoublebuffer = 0;
 int useoldconfig = UAE_OLDCONFIG_OFF;
+int usetoolbar = UAE_TOOLBAR_ON;
 
 int log_scsi;
 
@@ -134,6 +135,16 @@ void uae_set_doublebuffer(int value)
 int uae_get_doublebuffer(void)
 {
    return usedoublebuffer;
+}
+
+void uae_set_toolbar(int value)
+{
+   usetoolbar = value;
+}
+
+int uae_get_toolbar(void)
+{
+   return usetoolbar;
 }
 
 void uae_set_oldconfig(int value)
@@ -467,6 +478,8 @@ debug_print("%s (%d)\n", __func__, __LINE__);
        uae_set_use_fullscreen(UAE_FULLSCREEN_ON);
    } else if (strcmp (argv[i], "-overscan") == 0) {
        uae_set_overscan(UAE_OVERSCAN_ON);
+   } else if (strcmp (argv[i], "-notoolbar") == 0) {
+       uae_set_toolbar(UAE_TOOLBAR_OFF);
    } else if (strcmp (argv[i], "-oldconf") == 0) {
        uae_set_oldconfig(UAE_OLDCONFIG_ON);
 	} else {

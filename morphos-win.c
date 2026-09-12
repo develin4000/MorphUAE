@@ -62,6 +62,7 @@
 #include <libraries/asl.h>
 #include <intuition/intuitionbase.h>
 #include <intuition/pointerclass.h>
+#include <devices/rawkeycodes.h>
 #include <libraries/gadtools.h>
 #include <libraries/locale.h>
 
@@ -310,6 +311,7 @@ struct RenderData
    BOOL InitOK;
    BOOL showpointer;
    BOOL FullScreen;
+   BOOL DisplayTransition;
    BOOL ToolBar;
    BOOL Iconified;
    struct Window *window;
@@ -1214,6 +1216,32 @@ static BOOL Render_FullscreenScreenIsActive(const struct RenderData *data)
                                                  data->window);
 }
 
+static void Render_PollOverlayVisibility(void)
+{
+   struct RenderData *data;
+
+   if (!obj_rendermcc || !render_mcc || !MorphOverlay_HasLayer())
+      return;
+
+   data = (struct RenderData *)INST_DATA(render_mcc->mcc_Class, obj_rendermcc);
+
+   /* Check the screen recorded by the VLayer itself.  This catches both a
+    * fullscreen layer and any stale windowed layer when another screen is
+    * brought to the front. */
+   if (!MorphOverlay_OwnerScreenIsVisible())
+   {
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+      return;
+   }
+
+   if (data->FullScreen && !Render_FullscreenScreenIsActive(data))
+   {
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+   }
+}
+
 static void Render_UpdateOverlayGeometry(struct RenderData *data, Object *obj)
 {
    MorphOverlay_UpdateGeometry(obj, data->window, data->FullScreen,
@@ -1250,8 +1278,24 @@ static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj);
 
 static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
 {
-   if (!data->Active || !currprefs.amiga_use_overlay || MorphOverlay_IsSuspended() || !CGXVideoBase)
+   /* Never touch an attached Window/RastPort while the application is
+    * iconified.  Render_Hide destroys the VLayer for this case, but keep the
+    * frame path guarded as well because frame flushes may race MUI's hide
+    * notifications.
+    */
+   if (data->Iconified || !data->Active || !currprefs.amiga_use_overlay ||
+       MorphOverlay_IsSuspended() || !CGXVideoBase)
       return;
+
+   /* Reject a layer that belongs to an old Window/Screen.  In particular, a
+    * persistent windowed layer must never be accepted as the fullscreen one.
+    */
+   if (MorphOverlay_HasLayer() &&
+       !MorphOverlay_BelongsTo(data->window, data->screen, data->FullScreen))
+   {
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+   }
 
    /* A fullscreen VLayer must not remain above another public screen. */
    if (!Render_FullscreenScreenIsActive(data))
@@ -1414,6 +1458,7 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->InitOK = FALSE;
    data->showpointer = TRUE;
    data->FullScreen = FALSE;
+   data->DisplayTransition = FALSE;
    data->ToolBar = TRUE;
    data->Iconified = FALSE;
    data->BitMap = NULL;
@@ -1619,15 +1664,54 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                break;
 
             case MUIA_Display_Type :
+            {
+               struct Screen *old_fullscreen_screen = NULL;
+
+               /* A normal window resize also generates MUIM_Hide/MUIM_Show,
+                * so Render_Hide keeps a windowed VLayer attached.  A display
+                * mode transition is different: the Intuition Window itself is
+                * about to be closed/recreated.  Mark the transition and let
+                * Render_Hide tear the VLayer down in the normal MUI order.
+                */
+               data->DisplayTransition = TRUE;
+
+               /* The VLayer is tied to the Window used by AttachVLayerTags().
+                * Tear it down explicitly before rebinding MUI to another
+                * Window/Screen.  Do not rely on MUIM_Hide here because the
+                * resize workaround deliberately preserves windowed VLayers.
+                */
+               if (MorphOverlay_HasLayer())
+               {
+                  Render_DestroyOverlay(data);
+                  MorphOverlay_SetFailed(FALSE);
+               }
+
+               /* Save window position while the Intuition Window is still
+                * valid.  Reading twnd after MUIA_Window_Open=FALSE is a use of
+                * a closed Window pointer and can corrupt the return-to-window
+                * path.
+                */
+               if (!data->FullScreen && data->window)
+               {
+                  data->LeftEdge = data->window->LeftEdge;
+                  data->TopEdge = data->window->TopEdge;
+                  data->ogscreen = data->screen;
+               }
+
                set(win_main, MUIA_Window_Open, FALSE);
+               data->Active = FALSE;
+               data->window = NULL;
+               twnd = NULL;
+
                if (data->FullScreen)
                {
-                  CloseScreen(data->screen);
+                  old_fullscreen_screen = data->screen;
                   data->screen = data->ogscreen;
-
                   data->FullScreen = FALSE;
 
-                  set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
+                  if (uae_get_toolbar())
+                     set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
+
                   SetAttrs(win_main,
                            MUIA_Window_Screen,      data->ogscreen,
                            MUIA_Window_Borderless,  FALSE,
@@ -1638,19 +1722,20 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                            MUIA_Window_Frontdrop,   FALSE,
                            MUIA_Window_Title,       "MorphUAE",
                            TAG_DONE);
+
+                  /* The MUI window no longer references the custom screen, so
+                   * it is now safe to close it.
+                   */
+                  if (old_fullscreen_screen && old_fullscreen_screen != data->ogscreen)
+                     CloseScreen(old_fullscreen_screen);
                }
                else
                {
-                  data->LeftEdge = twnd->LeftEdge;
-                  data->TopEdge = twnd->TopEdge;
-
                   data->modeid = BestCModeIDTags(CYBRBIDTG_NominalWidth,  data->WinWidth, CYBRBIDTG_NominalHeight, data->WinHeight, CYBRBIDTG_Depth, data->Depth, TAG_DONE);
 
                   if (data->modeid != INVALID_ID)
                   {
                      struct Screen *tmpscreen;
-
-                     data->ogscreen = data->screen; // Store the orginal ID
 
                      tmpscreen = OpenScreenTags(NULL,
                                                 SA_Title,     "MorphUAE Screen",
@@ -1684,24 +1769,34 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                   fscheck = TRUE;
                }
+
                set(win_main, MUIA_Window_Open, TRUE);
-               SetWindowPointer(data->window, WA_PointerType, (data->FullScreen) ? POINTERTYPE_INVISIBLE : POINTERTYPE_NORMAL, WM_ObtainEvents, TRUE, TAG_DONE);
+               data->DisplayTransition = FALSE;
+
+               /* MUIM_Show normally refreshes data->window synchronously when
+                * the MUI window is reopened.  Guard the pointer nevertheless
+                * so a failed reopen cannot dereference the old closed Window.
+                */
+               if (data->window)
+                  SetWindowPointer(data->window, WA_PointerType, (data->FullScreen) ? POINTERTYPE_INVISIBLE : POINTERTYPE_NORMAL, WM_ObtainEvents, TRUE, TAG_DONE);
 
                if (!data->FullScreen)
                   SetAttrs(win_main, MUIA_Window_LeftEdge, data->LeftEdge, MUIA_Window_TopEdge, data->TopEdge, TAG_DONE);
 
                set_window_title();
-               break;
+            }  break;
 
             case MUIA_Toolbar_Active :
                if (tag->ti_Data == MUIV_Toolbar_On)
                {
                   data->ToolBar = TRUE;
+                  uae_set_toolbar(UAE_TOOLBAR_ON);
                   set(grp_toolbar, MUIA_ShowMe, TRUE);
                }
                else if (tag->ti_Data == MUIV_Toolbar_Off)
                {
                   data->ToolBar = FALSE;
+                  uae_set_toolbar(UAE_TOOLBAR_OFF);
                   set(grp_toolbar, MUIA_ShowMe, FALSE);
                }
                else // MUIV_Toolbar_Toggle
@@ -1887,15 +1982,26 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                }
                else if (tag->ti_Data == MUIV_Iconified)
                {
+                  /* Iconification is a real window hide, unlike the temporary
+                   * MUIM_Hide/MUIM_Show pairs generated by live resizing.  A
+                   * VLayer must not remain attached to an Intuition Window that
+                   * MUI is about to iconify/close.  Keeping it here leaves CGXVideo
+                   * with a stale Window/RastPort and can lead to invalid accesses.
+                   */
                   data->Iconified = TRUE;
+                  data->Active = FALSE;
+                  if (MorphOverlay_HasLayer())
+                     Render_DestroyOverlay(data);
+                  MorphOverlay_SetFailed(FALSE);
                }
                else if (tag->ti_Data == MUIV_UnIconified)
                {
-                 if (uae_get_state() == UAE_STATE_PAUSED)
+                 if (uae_get_state() == UAE_STATE_PAUSED && tmpdata)
                  {
                     MUI_Redraw(obj_rendermcc, MADF_DRAWUPDATE);
                  }
                  data->Iconified = FALSE;
+                 MorphOverlay_SetFailed(FALSE);
                } break;
             case MUIA_Settings_Adjust :
                if (tag->ti_Data == MUIV_Reset_General)
@@ -2154,6 +2260,19 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
    //debug_print("%s (%d)\n", __func__, __LINE__);
 
+   /* Do not let a fullscreen VLayer remain visible when MorphUAE's custom
+    * screen is behind Ambient/another screen.  The fast overlay redraw path
+    * returns before the normal render-state switch, so this check has to be
+    * done before that early return as well as in the frame-present path.
+    */
+   if (data->FullScreen && MorphOverlay_HasLayer() &&
+       !Render_FullscreenScreenIsActive(data))
+   {
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+      return(0);
+   }
+
    /* MUI redraws must not trigger an extra video-buffer flip.  The emulation
     * frame path owns LockVLayer()/SwapVLayerBuffer(); redraw/resize only
     * updates the destination geometry and the black backing area.
@@ -2258,7 +2377,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             return(0);
       }
       else if ((msg->flags & MADF_DRAWUPDATE))
-         if (data->Iconified)
+         if (data->Iconified && tmpdata && _rp(obj))
          {
             WritePixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _mbottom(obj)-_mtop(obj)+1, RECTFMT_ARGB);
          }
@@ -2323,6 +2442,31 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
 {
    struct RenderData *data = (struct RenderData *)INST_DATA(cl, obj);
    ULONG result;
+   ULONG app_iconified = FALSE;
+
+   /* Iconification must tear down the VLayer.  The persistent-windowed-layer
+    * rule below is only for temporary Hide/Show pairs during resizing.  MUI
+    * may deliver the application Iconified notify just before or around this
+    * method, so check both our cached flag and the application attribute.
+    */
+   if (app)
+      get(app, MUIA_Application_Iconified, &app_iconified);
+
+   if (data->Iconified || app_iconified)
+   {
+      data->Iconified = TRUE;
+      data->Active = FALSE;
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+
+      result = DoSuperMethodA(cl, obj, (Msg)msg);
+
+      /* Do not retain stale Intuition pointers across iconification. */
+      data->window = NULL;
+      data->screen = NULL;
+      twnd = NULL;
+      return result;
+   }
 
    /* MorphOS MUI repeatedly sends MUIM_Hide/MUIM_Show to the render object
     * while the window size gadget is being dragged.  It does not send
@@ -2336,7 +2480,8 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
     * behaviour because a fullscreen layer must never survive a screen/window
     * transition.
     */
-   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay && !data->FullScreen)
+   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay &&
+       !data->FullScreen && !data->DisplayTransition)
    {
       MorphOverlay_MarkBackingDirty();
       result = DoSuperMethodA(cl, obj, (Msg)msg);
@@ -2422,6 +2567,17 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
    #define _between(a,x,b) ((x)>=(a) && (x)<=(b))
    #define _isinobject(x,y) (_between(_mleft(obj),(x),_mright(obj)) && _between(_mtop(obj),(y),_mbottom(obj)))
 
+   /* Sending the custom fullscreen screen behind Ambient does not always
+    * produce IDCMP_INACTIVEWINDOW first.  Detach as soon as any event proves
+    * that the MorphUAE screen is no longer the frontmost Intuition screen.
+    */
+   if (data->FullScreen && MorphOverlay_HasLayer() &&
+       !Render_FullscreenScreenIsActive(data))
+   {
+      Render_DestroyOverlay(data);
+      MorphOverlay_SetFailed(FALSE);
+   }
+
    if (msg->imsg)
    {
       code = msg->imsg->Code;
@@ -2433,6 +2589,18 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
          {
             int keycode = code & 127;
             int state   = code & 128 ? 0 : 1;
+
+            /* Intuition's Amiga+M screen-depth shortcut may move the current
+             * screen behind Ambient before we get any useful inactive-window
+             * notification.  Remove the hardware plane on key-down, before
+             * the screen switch.  This also removes a stale windowed VLayer. */
+            if (state && keycode == RAWKEY_M &&
+                (qualifier & (IEQUALIFIER_LCOMMAND | IEQUALIFIER_RCOMMAND)) &&
+                MorphOverlay_HasLayer())
+            {
+               Render_DestroyOverlay(data);
+               MorphOverlay_SetFailed(FALSE);
+            }
 
             if ((qualifier & IEQUALIFIER_REPEAT) == 0)
                inputdevice_do_keyboard (keycode, state);
@@ -3172,6 +3340,9 @@ static int mui_setup_window(void)
    if (uae_get_oldconfig())
       set(but_gen_renderer, MUIA_Cycle_Active, currprefs.amiga_use_overlay ? 1 : 0);
 
+   if(!uae_get_toolbar())
+      set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_Off);
+
    setup_generic();
    uae_restarted = TRUE;
    uae_restart (-1, NULL);
@@ -3222,6 +3393,9 @@ BOOL FetchType(struct WBArg *wbarg)
 
       if ((temp = FindToolType((STRPTR *)toolarray,"DOUBLEBUFFER")))
          uae_set_doublebuffer(UAE_DOUBLEBUFFER_ON);
+
+      if ((temp = FindToolType((STRPTR *)toolarray,"NOTOOLBAR")))
+         uae_set_toolbar(UAE_TOOLBAR_OFF);
 
       if ((temp = FindToolType((STRPTR *)toolarray,"OCS")))
          uae_set_cfgtype(UAE_CFGTYPE_OCS);
@@ -3449,8 +3623,17 @@ void handle_events(void)
 {
    ULONG muisig = 0;
 
+   /* Amiga+M can send the custom fullscreen screen behind Ambient without
+    * delivering an IDCMP event to the MorphUAE window.  Poll screen depth in
+    * the normal MUI input pump so the hardware VLayer is detached even when
+    * frame drawing has stopped because the fullscreen window is inactive.
+    */
+   Render_PollOverlayVisibility();
+
    if (DoMethod(app, MUIM_Application_NewInput, &muisig) == MUIV_Application_ReturnID_Quit)
       uae_quit();
+
+   Render_PollOverlayVisibility();
 }
 
 /***************************************************************************/

@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.2 (09-09-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.2 (12-09-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -247,6 +247,9 @@
       intensive parts that result in choppy sound or general slugginess, this 
       may be a good "playground" to "fine-tune" it for better results.
 
+      In this section you can adjust the render type on the graphics area
+      currently there is WritePixelArray (default) and Overlay.
+      Using Overlay let you freely scale the window of the program.
 
 
     @{b}· OCS tab :@{ub}
@@ -331,6 +334,9 @@
 
     @{b}-overscan@{ub} : Uses overscan resolution for the display.
 
+    @{b}-notoolbar@{ub} : Hides the toolbar from start.
+
+
     @{b}-0 <ADF file>@{ub} : Insert an ADF disk image to DF0: at startup.
     @{b}-1 <ADF file>@{ub} : Insert an ADF disk image to DF1: at startup.
     @{b}-2 <ADF file>@{ub} : Insert an ADF disk image to DF2: at startup.
@@ -361,6 +367,8 @@
     @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
 
     @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered display.
+
+    @{b}NOTOOLBAR@{ub} : Hides the toolbar from start.
 
 @ENDNODE
 
@@ -488,7 +496,7 @@ A - No, not at this point.
  @{b}@{u}What's new@{uu}@{ub}
 
  · Overlay support. (Thanks to rzookol)
-
+ · Added tooltype and CLI argument to start window without the toolbar on.
 
 @ENDNODE
 

@@ -44,6 +44,10 @@ struct MorphOverlayState
    BOOL failed;
    BOOL suspended;
    BOOL cpu_has_altivec;
+   struct Window *owner_window;
+   struct Screen *owner_screen;
+   BOOL owner_fullscreen;
+   BOOL use_colorkey;
 };
 
 static struct MorphOverlayState overlay;
@@ -151,6 +155,10 @@ void MorphOverlay_Destroy(void)
    overlay.width = -1;
    overlay.height = -1;
    overlay.backing_dirty = TRUE;
+   overlay.owner_window = NULL;
+   overlay.owner_screen = NULL;
+   overlay.owner_fullscreen = FALSE;
+   overlay.use_colorkey = FALSE;
 }
 
 BOOL MorphOverlay_HasLayer(void)
@@ -161,6 +169,23 @@ BOOL MorphOverlay_HasLayer(void)
 BOOL MorphOverlay_IsActive(void)
 {
    return overlay.active;
+}
+
+BOOL MorphOverlay_BelongsTo(struct Window *window, struct Screen *screen, BOOL fullscreen)
+{
+   if (!overlay.vlayer || !window || !window->WScreen)
+      return FALSE;
+
+   if (overlay.owner_window != window)
+      return FALSE;
+   if (overlay.owner_screen != window->WScreen)
+      return FALSE;
+   if (screen && overlay.owner_screen != screen)
+      return FALSE;
+   if (overlay.owner_fullscreen != fullscreen)
+      return FALSE;
+
+   return TRUE;
 }
 
 BOOL MorphOverlay_IsFailed(void)
@@ -200,6 +225,7 @@ BOOL MorphOverlay_FullscreenScreenIsActive(BOOL fullscreen,
                                             struct Window *window)
 {
    struct Screen *frontscreen;
+   struct Screen *activescreen;
    ULONG ibaselock;
 
    if (!fullscreen)
@@ -208,11 +234,55 @@ BOOL MorphOverlay_FullscreenScreenIsActive(BOOL fullscreen,
    if (!IntuitionBase || !screen || !window || window->WScreen != screen)
       return FALSE;
 
+   /* Screen cycling (Left Amiga+M / the screen-depth gadget) changes
+    * IntuitionBase->ActiveScreen even when no useful IDCMP event reaches our
+    * fullscreen window.  ActiveWindow is not reliable here: it may still
+    * refer to the old fullscreen window after Ambient has become visible.
+    *
+    * Be deliberately strict for fullscreen overlays.  If MorphUAE's custom
+    * screen is not both the active screen and the front screen, the caller
+    * must detach/delete the VLayer immediately.  A new layer will be created
+    * normally when the MorphUAE screen becomes active again.
+    */
    ibaselock = LockIBase(0);
    frontscreen = IntuitionBase->FirstScreen;
+   activescreen = IntuitionBase->ActiveScreen;
    UnlockIBase(ibaselock);
 
-   return frontscreen == screen;
+   if (activescreen != screen)
+      return FALSE;
+
+   if (frontscreen != screen)
+      return FALSE;
+
+   return TRUE;
+}
+
+BOOL MorphOverlay_OwnerScreenIsVisible(void)
+{
+   struct Screen *frontscreen;
+   struct Screen *activescreen;
+   ULONG ibaselock;
+
+   if (!overlay.vlayer || !overlay.owner_screen || !IntuitionBase)
+      return FALSE;
+
+   /* CGXVideo overlays are hardware planes.  Do not rely on the driver to
+    * hide a plane merely because its Intuition screen was sent behind another
+    * screen.  Use the VLayer's recorded owner, not the current MUI state, so
+    * a stale windowed layer is caught too. */
+   ibaselock = LockIBase(0);
+   frontscreen = IntuitionBase->FirstScreen;
+   activescreen = IntuitionBase->ActiveScreen;
+   UnlockIBase(ibaselock);
+
+   if (frontscreen != overlay.owner_screen)
+      return FALSE;
+
+   if (overlay.owner_fullscreen && activescreen != overlay.owner_screen)
+      return FALSE;
+
+   return TRUE;
 }
 
 void MorphOverlay_MarkBackingDirty(void)
@@ -286,10 +356,35 @@ void MorphOverlay_ClearBacking(Object *obj, struct Window *window,
    if (area_width <= 0 || area_height <= 0)
       return;
 
+   /* Windowed overlays deliberately do not use a color key.  MUI can repaint
+    * the Area several times while the size gadget is being dragged; with a
+    * keyed VLayer those transient repaints overwrite the key and make live
+    * resize flicker/stall.  The ordinary hardware plane can instead follow
+    * SetVLayerAttrTags() continuously, which is the behaviour used before
+    * the Ambient screen-cycling workaround.
+    *
+    * Fullscreen is different.  There the key is a safety net for Amiga+M:
+    * Ambient does not contain our key, so the fullscreen hardware plane
+    * cannot leak onto it even if the driver leaves the VLayer programmed for
+    * a short time after the custom screen is sent behind.
+    */
    FillPixelArray(rp,
                   (UWORD)area_left, (UWORD)area_top,
                   (UWORD)area_width, (UWORD)area_height,
                   0x00000000);
+
+   if (overlay.use_colorkey && overlay.vlayer &&
+       overlay.width > 0 && overlay.height > 0)
+   {
+      LONG key_left = (LONG)window->BorderLeft + overlay.left;
+      LONG key_top  = (LONG)window->BorderTop + overlay.top;
+      ULONG key = GetVLayerAttr(overlay.vlayer, VOA_ColorKey);
+
+      FillPixelArray(rp,
+                     (UWORD)key_left, (UWORD)key_top,
+                     (UWORD)overlay.width, (UWORD)overlay.height,
+                     key);
+   }
 
    overlay.backing_dirty = FALSE;
 }
@@ -306,14 +401,34 @@ BOOL MorphOverlay_Attach(Object *obj, struct Window *window,
    if (overlay.suspended || !CGXVideoBase || !window || !window->WScreen)
       return FALSE;
 
+   /* Do not create or keep a hardware plane on a screen that is behind
+    * another Intuition screen. */
+   if (IntuitionBase)
+   {
+      struct Screen *frontscreen;
+      ULONG ibaselock = LockIBase(0);
+      frontscreen = IntuitionBase->FirstScreen;
+      UnlockIBase(ibaselock);
+      if (frontscreen != screen)
+         return FALSE;
+   }
+
    if (!MorphOverlay_FullscreenScreenIsActive(fullscreen, screen, window))
       return FALSE;
 
    if (overlay.vlayer)
    {
-      MorphOverlay_UpdateGeometry(obj, window, fullscreen, src_width, src_height);
-      overlay.active = TRUE;
-      return TRUE;
+      /* A VLayer stays attached to the Window passed to AttachVLayerTags().
+       * Never reuse one across a Window, Screen or window/fullscreen change.
+       */
+      if (!MorphOverlay_BelongsTo(window, screen, fullscreen))
+         MorphOverlay_Destroy();
+      else
+      {
+         MorphOverlay_UpdateGeometry(obj, window, fullscreen, src_width, src_height);
+         overlay.active = TRUE;
+         return TRUE;
+      }
    }
 
 #if defined(SRCFMT_RGB16)
@@ -324,11 +439,19 @@ BOOL MorphOverlay_Attach(Object *obj, struct Window *window,
    return FALSE;
 #endif
 
+   /* Color key is only needed for fullscreen screen-cycling.  Keeping the
+    * windowed VLayer unkeyed preserves smooth live resizing: MUI may redraw
+    * the Area during every transient Hide/Show pair without punching holes
+    * in the hardware plane.
+    */
+   overlay.use_colorkey = fullscreen ? TRUE : FALSE;
    overlay.vlayer = CreateVLayerHandleTags(window->WScreen,
                                            VOA_SrcType,      srcfmt,
                                            VOA_SrcWidth,     src_width,
                                            VOA_SrcHeight,    src_height,
                                            VOA_DoubleBuffer, TRUE,
+                                           VOA_UseColorKey,  overlay.use_colorkey,
+                                           VOA_UseBackfill,  FALSE,
                                            VOA_UseFilter,    TRUE,
                                            VOA_Error,        (ULONG)&error,
                                            TAG_DONE);
@@ -348,6 +471,22 @@ BOOL MorphOverlay_Attach(Object *obj, struct Window *window,
       return FALSE;
    }
 
+   overlay.left = dst_left;
+   overlay.top = dst_top;
+   overlay.width = dst_width;
+   overlay.height = dst_height;
+   overlay.backing_dirty = TRUE;
+   overlay.owner_window = window;
+   overlay.owner_screen = window->WScreen;
+   overlay.owner_fullscreen = fullscreen;
+
+   /* Fullscreen needs the key in place before AttachVLayerTags(), otherwise
+    * stale hardware-buffer contents can flash during the initial attach.
+    * Windowed mode intentionally keeps the old unkeyed attach order.
+    */
+   if (overlay.use_colorkey)
+      MorphOverlay_ClearBacking(obj, window, fullscreen);
+
    if ((LONG)AttachVLayerTags(overlay.vlayer, window,
                               VOA_LeftIndent,   (ULONG)dst_left,
                               VOA_RightIndent,  (ULONG)right,
@@ -360,11 +499,6 @@ BOOL MorphOverlay_Attach(Object *obj, struct Window *window,
       return FALSE;
    }
 
-   overlay.left = dst_left;
-   overlay.top = dst_top;
-   overlay.width = dst_width;
-   overlay.height = dst_height;
-   overlay.backing_dirty = TRUE;
    overlay.active = TRUE;
    write_log("MUIGFX: CGXVideo overlay enabled (%lux%lu).\n", src_width, src_height);
    return TRUE;
@@ -547,6 +681,18 @@ BOOL MorphOverlay_Present(Object *obj, struct Window *window,
 
    if (!overlay.vlayer || !buffer)
       return FALSE;
+
+   if (!MorphOverlay_BelongsTo(window, screen, fullscreen))
+   {
+      MorphOverlay_Destroy();
+      return FALSE;
+   }
+
+   if (!MorphOverlay_OwnerScreenIsVisible())
+   {
+      MorphOverlay_Destroy();
+      return TRUE;
+   }
 
    if (!MorphOverlay_FullscreenScreenIsActive(fullscreen, screen, window))
    {
