@@ -2771,7 +2771,9 @@ struct MUI_CustomClass *Init_Render(void)
 
 void update_led_status(int led, int on)
 {
-   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? MUIV_LED_Colour_Green :  get_disk_state(led-1) ? ((uae_get_cfgtype() == UAE_CFGTYPE_OCS) ? MUIV_LED_Colour_Blue1x : MUIV_LED_Colour_Blue2x) : MUIV_LED_Colour_Off);
+   debug_print("%s (%d) - LED-Value = %d\n", __func__, __LINE__, on);
+
+   set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? (on==1 ? MUIV_LED_Colour_Green : MUIV_LED_Colour_Red) :  get_disk_state(led-1) ? ((uae_get_cfgtype() == UAE_CFGTYPE_OCS) ? MUIV_LED_Colour_Blue1x : MUIV_LED_Colour_Blue2x) : MUIV_LED_Colour_Off);
 
 }
 

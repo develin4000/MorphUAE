@@ -497,6 +497,7 @@ A - No, not at this point.
 
  · Overlay support. (Thanks to rzookol)
  · Added tooltype and CLI argument to start window without the toolbar on.
+ · Image LEDs show RED colour while writing is active. (Suggested by jPV)
 
 @ENDNODE
 

@@ -614,7 +614,7 @@ static void update_drive_gui (int num)
     gui_ledstate &= ~(2 << num);
     if (drv->state)
 	gui_ledstate |= 2 << num;
-    gui_led (num + 1, gui_data.drive_motor[num]);
+    gui_led (num + 1, gui_data.drive_motor[num]+gui_data.drive_writing[num]);
 }
 
 static void drive_fill_bigbuf (drive * drv,int);
