@@ -1705,12 +1705,10 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                if (data->FullScreen)
                {
+
                   old_fullscreen_screen = data->screen;
                   data->screen = data->ogscreen;
                   data->FullScreen = FALSE;
-
-                  if (uae_get_toolbar())
-                     set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
 
                   SetAttrs(win_main,
                            MUIA_Window_Screen,      data->ogscreen,
@@ -1728,6 +1726,10 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                    */
                   if (old_fullscreen_screen && old_fullscreen_screen != data->ogscreen)
                      CloseScreen(old_fullscreen_screen);
+
+               if (uae_get_toolbar())
+                  set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_On);
+
                }
                else
                {
@@ -1790,13 +1792,13 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                if (tag->ti_Data == MUIV_Toolbar_On)
                {
                   data->ToolBar = TRUE;
-                  uae_set_toolbar(UAE_TOOLBAR_ON);
+                  //uae_set_toolbar(UAE_TOOLBAR_ON);
                   set(grp_toolbar, MUIA_ShowMe, TRUE);
                }
                else if (tag->ti_Data == MUIV_Toolbar_Off)
                {
                   data->ToolBar = FALSE;
-                  uae_set_toolbar(UAE_TOOLBAR_OFF);
+                  //uae_set_toolbar(UAE_TOOLBAR_OFF);
                   set(grp_toolbar, MUIA_ShowMe, FALSE);
                }
                else // MUIV_Toolbar_Toggle
@@ -1807,6 +1809,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                      data->ToolBar = FALSE;
 
                   set(grp_toolbar, MUIA_ShowMe, data->ToolBar);
+                  uae_set_toolbar(data->ToolBar);
                }  break;
 #ifdef USE_SAVESTATE
             case MUIA_Savestate :
@@ -2771,7 +2774,7 @@ struct MUI_CustomClass *Init_Render(void)
 
 void update_led_status(int led, int on)
 {
-   debug_print("%s (%d) - LED-Value = %d\n", __func__, __LINE__, on);
+   //debug_print("%s (%d) - LED-Value = %d\n", __func__, __LINE__, on);
 
    set(obj_LEDmcc[led-1], MUIA_LED_Colour, (on) ? (on==1 ? MUIV_LED_Colour_Green : MUIV_LED_Colour_Red) :  get_disk_state(led-1) ? ((uae_get_cfgtype() == UAE_CFGTYPE_OCS) ? MUIV_LED_Colour_Blue1x : MUIV_LED_Colour_Blue2x) : MUIV_LED_Colour_Off);
 
