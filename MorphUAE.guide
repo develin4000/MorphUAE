@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.2 (12-09-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.2 (30-09-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -498,6 +498,7 @@ A - No, not at this point.
  · Overlay support. (Thanks to rzookol)
  · Added tooltype and CLI argument to start window without the toolbar on.
  · Image LEDs show RED colour while writing is active. (Suggested by jPV)
+ · Added option to adjust sounds latency and use system own frequency.
 
 @ENDNODE
 

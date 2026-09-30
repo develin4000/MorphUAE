@@ -645,16 +645,20 @@ void schedule_audio (void)
  */
 void update_sound (unsigned int freq)
 {
-    if (obtainedfreq) {
-	if (is_vsync ()) {
-	    if (currprefs.ntscmode)
-		scaled_sample_evtime = (unsigned long)(MAXHPOS_NTSC * MAXVPOS_NTSC * freq * CYCLE_UNIT + obtainedfreq - 1) / obtainedfreq;
-	    else
-		scaled_sample_evtime = (unsigned long)(MAXHPOS_PAL * MAXVPOS_PAL * freq * CYCLE_UNIT + obtainedfreq - 1) / obtainedfreq;
-	} else {
-	    scaled_sample_evtime = (unsigned long)(312.0 * 50 * CYCLE_UNIT / (obtainedfreq  / 227.0));
-	}
-    }
+   if (obtainedfreq)
+   {
+      if (is_vsync ())
+      {
+         if (currprefs.ntscmode)
+            scaled_sample_evtime = (unsigned long)(MAXHPOS_NTSC * MAXVPOS_NTSC * freq * CYCLE_UNIT + obtainedfreq - 1) / obtainedfreq;
+         else
+            scaled_sample_evtime = (unsigned long)(MAXHPOS_PAL * MAXVPOS_PAL * freq * CYCLE_UNIT + obtainedfreq - 1) / obtainedfreq;
+      }
+      else
+      {
+         scaled_sample_evtime = (unsigned long)(312.0 * 50 * CYCLE_UNIT / (obtainedfreq  / 227.0));
+      }
+   }
 }
 
 static int isirq (unsigned int nr)

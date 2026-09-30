@@ -776,7 +776,8 @@ void reset_tab(unsigned int tab)
          set(but_gen_machine, MUIA_Cycle_Active, 2);    // AGA
          set(but_gen_sound, MUIA_Cycle_Active, 2);      // Normal
          set(but_gen_channels, MUIA_Cycle_Active, 1);   // Stereo
-         set(but_gen_frequency, MUIA_Cycle_Active, 2);  // 44100Hz
+         set(but_gen_frequency, MUIA_Cycle_Active, 4);  // 2 = 44100Hz 4 = System Default
+         set(but_gen_latency, MUIA_Cycle_Active, 5);    // 100ms
          set(but_gen_joy0, MUIA_Cycle_Active, 0);       // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);       // Joy1
          set(but_gen_floppynum, MUIA_Cycle_Active, 1);  // 2 Floppys
@@ -1045,8 +1046,19 @@ void setup_generic(void)
       get(but_gen_channels, MUIA_Cycle_Active, &spos);
       changed_prefs.sound_stereo = spos;
       get(but_gen_frequency, MUIA_Cycle_Active, &spos);
-      changed_prefs.sound_freq = (spos == 0 ? 11025 : spos == 1 ? 22055 : spos == 2 ? 44100 : 48000);
+      changed_prefs.sound_freq = (spos == 0 ? 11025 : spos == 1 ? 22055 : spos == 2 ? 44100 : spos == 3 ? 48000 : get_soundfreq());
 
+      get(but_gen_latency, MUIA_Cycle_Active, &spos);
+      changed_prefs.sound_latency = (spos == 0 ? 50 :
+                                     spos == 1 ? 60 :
+                                     spos == 2 ? 70 :
+                                     spos == 3 ? 80 :
+                                     spos == 4 ? 90 :
+                                     spos == 5 ? 100 :
+                                     spos == 6 ? 110 :
+                                     spos == 7 ? 120 :
+                                     spos == 8 ? 130 :
+                                     spos == 9 ? 140 : 150);
       // IO Devices...
       get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
       set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
@@ -1340,9 +1352,9 @@ static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj)
       sy += ((int)data->ScrHeight - (int)data->WinHeight) / 2;
    }
 
-   WritePixelArray(data->Buffer, 0, 0, gfxvidinfo.rowbytes,
-                   _rp(obj), sx, sy, gfxvidinfo.width, gfxvidinfo.height,
-                   RECTFMT_ARGB);
+   WritePixelArray(data->Buffer, 0, 0, gfxvidinfo.rowbytes, _rp(obj), sx, sy, gfxvidinfo.width, gfxvidinfo.height, RECTFMT_ARGB);
+   //FillPixelArray(_rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), 0x00000000);
+   //ScalePixelArray(gfx_logo, 640, 512, 640 * 4, _rp(obj), sx, sy, _width(obj), _height(obj), RECTFMT_ARGB);
 }
 
 static void Render_SuspendOverlayForUI(struct RenderData *data, Object *obj)
@@ -1792,13 +1804,11 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                if (tag->ti_Data == MUIV_Toolbar_On)
                {
                   data->ToolBar = TRUE;
-                  //uae_set_toolbar(UAE_TOOLBAR_ON);
                   set(grp_toolbar, MUIA_ShowMe, TRUE);
                }
                else if (tag->ti_Data == MUIV_Toolbar_Off)
                {
                   data->ToolBar = FALSE;
-                  //uae_set_toolbar(UAE_TOOLBAR_OFF);
                   set(grp_toolbar, MUIA_ShowMe, FALSE);
                }
                else // MUIV_Toolbar_Toggle
@@ -2109,6 +2119,8 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                            lock = LockIBase(0);
                            ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
                            UnlockIBase (lock);
+                           //ScalePixelArray(gfx_logo, 640, 512, 640 * 4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
+                           //ScalePixelArray(tmpdata, _width(obj), _height(obj), _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
                      }
                      set(win_main, MUIA_Window_Title, Locale_GetString(MSG_EMULATION_PAUSED));
                   }
@@ -3055,6 +3067,7 @@ static int mui_setup_window(void)
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDOUTPUT)), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_list_sndout, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDCHANNELS)), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_list_sndchan, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDFREQ)), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
+                                           Child, Label1(Locale_GetString(MSG_SETTINGS_LATENCY)), Child, but_gen_latency = CycleObject, MUIA_Cycle_Entries, cyc_gen_latency, MUIA_ObjectID, ID_PRFS_GEN_LATENCY, MUIA_UserData, ID_PRFS_GEN_LATENCY, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
                                            Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_IOTITLE), MUIA_FixHeight, 8, End,
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,

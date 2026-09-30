@@ -572,3 +572,8 @@ Overlay
 Overlay
 
 ;
+MSG_SETTINGS_LATENCY (113//)
+Latency :
+Latens :
+
+;

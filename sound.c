@@ -1,3 +1,4 @@
+
  /*
   * UAE - The Un*x Amiga Emulator
   *
@@ -34,8 +35,7 @@ int bufidx, ahiopen = FALSE;
 int have_sound;
 int clockval;
 int period;
-
-
+unsigned long def_frequency = DEFAULT_SOUND_FREQ;
 
 int setup_sound (void)
 {
@@ -43,149 +43,176 @@ int setup_sound (void)
     return 1;
 }
 
+unsigned long get_soundfreq(void)
+{
+   return def_frequency;
+}
+
 static BOOL open_AHI (void)
 {
-    if ((AHImp = CreateMsgPort())) {
-	if ((AHIio[0] = (struct AHIRequest *)
-		CreateIORequest (AHImp, sizeof (struct AHIRequest)))) {
-	    AHIio[0]->ahir_Version = 4;
+   if ((AHImp = CreateMsgPort()))
+   {
+      if ((AHIio[0] = (struct AHIRequest *)
 
-	    if (!OpenDevice (AHINAME, 0, (struct IORequest *)AHIio[0], 0)) {
-		if ((AHIio[1] = malloc (sizeof(struct AHIRequest)))) {
-		    memcpy (AHIio[1], AHIio[0], sizeof(struct AHIRequest));
-		    ahiopen = TRUE;
-		    return TRUE;
-		}
-	    }
-	}
-    }
-    ahiopen = FALSE;
-    return FALSE;
+      CreateIORequest (AHImp, sizeof (struct AHIRequest))))
+      {
+         AHIio[0]->ahir_Version = 4;
+
+         if (!OpenDevice (AHINAME, 0, (struct IORequest *)AHIio[0], 0))
+         {
+            if ((AHIio[1] = malloc (sizeof(struct AHIRequest))))
+            {
+               memcpy (AHIio[1], AHIio[0], sizeof(struct AHIRequest));
+
+               AHI_GetAudioAttrs(AHI_DEFAULT_ID, NULL, AHIDB_Frequency, (ULONG) &def_frequency, TAG_DONE);
+
+               ahiopen = TRUE;
+               return TRUE;
+            }
+         }
+      }
+   }
+   ahiopen = FALSE;
+   return FALSE;
 }
 
 static void close_AHI (void)
 {
-    if (!CheckIO ((struct IORequest *)AHIio[0]))
-	WaitIO ((struct IORequest *)AHIio[0]);
+   if (!CheckIO ((struct IORequest *)AHIio[0]))
+      WaitIO ((struct IORequest *)AHIio[0]);
 
-    if (linkio) { /* Only if the second request was started */
-	if (!CheckIO ((struct IORequest *) AHIio[1]))
-	    WaitIO ((struct IORequest *) AHIio[1]);
-    }
-    CloseDevice ((struct IORequest *) AHIio[0]);
-    DeleteIORequest ((void*) AHIio[0]);
-    free (AHIio[1]);
-    DeleteMsgPort ((void*)AHImp);
-    AHIio[0] = NULL;
-    AHIio[1] = NULL;
-    linkio   = NULL;
-	ahiopen = FALSE;
+   if (linkio)
+   { /* Only if the second request was started */
+      if (!CheckIO ((struct IORequest *) AHIio[1]))
+         WaitIO ((struct IORequest *) AHIio[1]);
+   }
+   CloseDevice ((struct IORequest *) AHIio[0]);
+   DeleteIORequest ((void*) AHIio[0]);
+   free (AHIio[1]);
+   DeleteMsgPort ((void*)AHImp);
+   AHIio[0] = NULL;
+   AHIio[1] = NULL;
+   linkio   = NULL;
+   ahiopen = FALSE;
 }
 
 static int get_clockval (void)
 {
-    struct GfxBase *GB;
-    int clk = 0;
+   struct GfxBase *GB;
+   int clk = 0;
 
-    GB = (void*) OpenLibrary ("graphics.library", 0L);
+   GB = (void*) OpenLibrary ("graphics.library", 0L);
 
-    if (GB) {
-	if (GB->DisplayFlags & PAL)
-	    clk = 3546895;        /* PAL clock */
-	else
-	    clk = 3579545;        /* NTSC clock */
-	CloseLibrary ((void *) GB);
-    }
-    return clk;
+   if (GB)
+   {
+      if (GB->DisplayFlags & PAL)
+         clk = 3546895;        // PAL clock
+      else
+         clk = 3579545;        // NTSC clock
+
+      CloseLibrary ((void *) GB);
+   }
+   return clk;
 }
 
 int init_sound (void)
 {
-    /* too complex ? No it is only the allocation of a single channel ! */
-    /* it would have been far less painfull if AmigaOS provided a */
-    /* SOUND: device handler */
-    int rate;
+   /* too complex ? No it is only the allocation of a single channel ! */
+   /* it would have been far less painfull if AmigaOS provided a */
+   /* SOUND: device handler */
+   int rate;
 
-    if (ahiopen)
-       close_sound();
+   if (ahiopen)
+      close_sound();
 
-    atexit (close_sound); /* if only amiga os had resource tracking */
+   atexit (close_sound); /* if only amiga os had resource tracking */
 
-    /* determine the clock */
-    clockval = get_clockval ();
-    if (clockval == 0)
-	goto fail;
+   /* determine the clock */
+   clockval = get_clockval ();
+   if (clockval == 0)
+      goto fail;
 
-    /* check freq */
-    if (!currprefs.sound_freq)
-	currprefs.sound_freq = 22000;
-    if (clockval / currprefs.sound_freq < 80/*124*/ || clockval/currprefs.sound_freq > 65535) {
-	write_log ("Can't use sound with desired frequency %d Hz\n", currprefs.sound_freq);
-	changed_prefs.sound_freq = currprefs.sound_freq = 22000;
-    }
-    rate   = currprefs.sound_freq;
-    period = (uae_u16)(clockval / rate);
 
-    if (!open_AHI ())
-	goto fail;
+   if (!open_AHI ())
+      goto fail;
 
-    /* calculate buffer size */
-    sndbufsize = rate * currprefs.sound_latency * 2 * (currprefs.sound_stereo ? 2 : 1) / 1000;
-    sndbufsize = (sndbufsize + 1) & ~1;
+   /* check freq */
+   if (!currprefs.sound_freq)
+      currprefs.sound_freq = 22000;
+   if (clockval / currprefs.sound_freq < 80/*124*/ || clockval/currprefs.sound_freq > 65535)
+   {
+      write_log ("Can't use sound with desired frequency %d Hz\n", currprefs.sound_freq);
+      changed_prefs.sound_freq = currprefs.sound_freq = 22000;
+   }
+   rate   = currprefs.sound_freq;
+   period = (uae_u16)(clockval / rate);
 
-    /* get the buffers */
-    //buffers[0] = (void*) AllocMem (sndbufsize+2,MEMF_PUBLIC | MEMF_CLEAR);
-    //buffers[1] = (void*) AllocMem (sndbufsize+2,MEMF_PUBLIC | MEMF_CLEAR);
-    buffers[0] = AllocVec (sndbufsize, MEMF_CLEAR | MEMF_PUBLIC);
-    buffers[1] = AllocVec (sndbufsize, MEMF_CLEAR | MEMF_PUBLIC);
-    if (!buffers[0] || !buffers[1])
-	goto fail;
+//   if (!open_AHI ())
+//      goto fail;
 
-    bufidx    = 0;
-    sndbuffer = sndbufpt = (uae_u16*) buffers[bufidx];
+   /* calculate buffer size */
+   sndbufsize = rate * currprefs.sound_latency * 2 * (currprefs.sound_stereo ? 2 : 1) / 1000;
+   sndbufsize = (sndbufsize + 1) & ~1;
 
-    init_sound_table16 ();
-    sample_handler = currprefs.sound_stereo ? sample16s_handler : sample16_handler;
+   /* get the buffers */
+   //buffers[0] = (void*) AllocMem (sndbufsize+2,MEMF_PUBLIC | MEMF_CLEAR);
+   //buffers[1] = (void*) AllocMem (sndbufsize+2,MEMF_PUBLIC | MEMF_CLEAR);
+   buffers[0] = AllocVec (sndbufsize, MEMF_CLEAR | MEMF_PUBLIC);
+   buffers[1] = AllocVec (sndbufsize, MEMF_CLEAR | MEMF_PUBLIC);
+   if (!buffers[0] || !buffers[1])
+      goto fail;
 
-    have_sound = 1;
-    obtainedfreq = rate;
+   bufidx    = 0;
+   sndbuffer = sndbufpt = (uae_u16*) buffers[bufidx];
 
-    write_log ("Sound driver found and configured for %s "
-	       "at %d Hz, buffer is %d bytes.\n",
-	       currprefs.sound_stereo ? "stereo" : "mono",
-	       rate, sndbufsize);
+   init_sound_table16 ();
+   sample_handler = currprefs.sound_stereo ? sample16s_handler : sample16_handler;
 
-    sound_available = 1;
-    //driveclick_init();
-    return 1;
+   have_sound = 1;
+   obtainedfreq = rate;
+
+   write_log ("Sound driver found and configured for %s "
+              "at %d Hz, buffer is %d bytes.\n",
+              currprefs.sound_stereo ? "stereo" : "mono",
+              rate, sndbufsize);
+
+   sound_available = 1;
+   //driveclick_init();
+   return 1;
+
 fail:
-    sound_available = 0;
-    return 0;
+   sound_available = 0;
+   return 0;
 }
 
 void close_sound (void)
 {
 
-	if (ahiopen)
-	{
-		close_AHI ();
-	}
+   if (ahiopen)
+   {
+      close_AHI ();
+   }
 
-    if (buffers[0]) {
-	//FreeMem ((APTR) buffers[0], sndbufsize);
-   FreeVec((APTR) buffers[0]);
-	buffers[0] = 0;
-    }
-    if (buffers[1]) {
-	//FreeMem ((APTR) buffers[1], sndbufsize);
-   FreeVec((APTR) buffers[1]);
-	buffers[1] = 0;
-    }
-    if (sound_available) {
-	sound_available = 0;
-    }
+   if (buffers[0])
+   {
+      //FreeMem ((APTR) buffers[0], sndbufsize);
+      FreeVec((APTR) buffers[0]);
+      buffers[0] = 0;
+   }
 
-    ahiopen = FALSE;
+   if (buffers[1])
+   {
+      //FreeMem ((APTR) buffers[1], sndbufsize);
+      FreeVec((APTR) buffers[1]);
+      buffers[1] = 0;
+   }
+
+   if (sound_available)
+   {
+      sound_available = 0;
+   }
+
+   ahiopen = FALSE;
 }
 
 void pause_sound (void)
@@ -217,5 +244,5 @@ void audio_save_options (FILE *f, const struct uae_prefs *p)
 
 int audio_parse_option (struct uae_prefs *p, const char *option, const char *value)
 {
-    return 0;
+   return 0;
 }

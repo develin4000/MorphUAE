@@ -151,8 +151,9 @@
 #define MSG_SETTINGS_RENDER 110
 #define MSG_CYC_RENDER_0 111
 #define MSG_CYC_RENDER_1 112
+#define MSG_SETTINGS_LATENCY 113
 
-#define CATCOMP_LASTID 112
+#define CATCOMP_LASTID 113
 
 #endif /* CATCOMP_NUMBERS */
 
@@ -275,6 +276,7 @@
 #define MSG_SETTINGS_RENDER_STR "Render Type :"
 #define MSG_CYC_RENDER_0_STR "WritePixelArray"
 #define MSG_CYC_RENDER_1_STR "Overlay"
+#define MSG_SETTINGS_LATENCY_STR "Latency :"
 
 #endif /* CATCOMP_STRINGS */
 
@@ -405,6 +407,7 @@ static const struct CatCompArrayType CatCompArray[] =
     {MSG_SETTINGS_RENDER,(STRPTR)MSG_SETTINGS_RENDER_STR},
     {MSG_CYC_RENDER_0,(STRPTR)MSG_CYC_RENDER_0_STR},
     {MSG_CYC_RENDER_1,(STRPTR)MSG_CYC_RENDER_1_STR},
+    {MSG_SETTINGS_LATENCY,(STRPTR)MSG_SETTINGS_LATENCY_STR},
 };
 
 #endif /* CATCOMP_ARRAY */
@@ -643,6 +646,8 @@ static const char CatCompBlock[] =
     MSG_CYC_RENDER_0_STR "\x00"
     "\x00\x00\x00\x70\x00\x08"
     MSG_CYC_RENDER_1_STR "\x00"
+    "\x00\x00\x00\x71\x00\x0A"
+    MSG_SETTINGS_LATENCY_STR "\x00"
 };
 
 #endif /* CATCOMP_BLOCK */

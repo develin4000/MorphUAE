@@ -2,10 +2,10 @@
 ->========================================<-
 ->= MorphUAE - © Copyright 2026 OnyxSoft =<-
 ->========================================<-
-->= Version  : 1.1                       =<-
+->= Version  : 1.2                       =<-
 ->= File     : morphos-gui.h             =<-
 ->= Author   : Stefan Blixth             =<-
-->= Compiled : 2026-08-14                =<-
+->= Compiled : 2026-09-29                =<-
 ->========================================<-
 */
 
@@ -27,6 +27,7 @@ static Object *but_gen_machine = NULL;
 static Object *but_gen_sound = NULL;
 static Object *but_gen_channels = NULL;
 static Object *but_gen_frequency = NULL;
+static Object *but_gen_latency = NULL;
 static Object *but_gen_joy0 = NULL;
 static Object *but_gen_joy1 = NULL;
 static Object *but_gen_floppynum = NULL;
@@ -117,12 +118,14 @@ enum
    ID_PRFS_GEN_LANGUAGE,
    ID_PRFS_GEN_FLOPPYNUM,
    ID_PRFS_GEN_RESOLUTION,
-   ID_PRFS_GEN_RENDERER
+   ID_PRFS_GEN_RENDERER,
+   ID_PRFS_GEN_LATENCY
 };
 
 
 static char *cyc_gen_machine[]    = { "OCS", "ECS", "AGA", "Custom", NULL };
-static char *cyc_gen_frequency[]  = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", NULL };
+static char *cyc_gen_frequency[]  = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", "System Default", NULL };
+static char *cyc_gen_latency[]    = { "50ms","60ms","70ms","80ms","90ms","100ms","110ms","120ms","130ms","140ms","150ms", NULL};
 static char *cyc_list_floppynum[] = { "1", "2", "3", "4", NULL};
 
 APTR cyc_ocs_kickstart, cyc_ocs_kickstartkey;
