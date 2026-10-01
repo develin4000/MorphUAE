@@ -300,10 +300,15 @@ static STRPTR cyc_list_keys[8];
 static STRPTR cyc_list_renderer[3];
 
 
-#define DEFAULT_GFX_WIDTH 640
-#define DEFAULT_GFX_HEIGHT 512
-#define OVERSCAN_GFX_WIDTH 720
-#define OVERSCAN_GFX_HEIGHT 568
+#define DEFAULT_GFX_WIDTH    640
+#define DEFAULT_GFX_HEIGHT   512
+#define OVERSCAN_GFX_WIDTH   720
+#define OVERSCAN_GFX_HEIGHT  568
+
+#define DEFAULT_NTSC_WIDTH   640
+#define DEFAULT_NTSC_HEIGHT  400
+#define OVERSCAN_NTSC_WIDTH  720
+#define OVERSCAN_NTSC_HEIGHT 480
 
 struct RenderData
 {
@@ -1392,8 +1397,8 @@ static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, 
 
    if (!data->FullScreen && win_main)
    {
-      ULONG native_width  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-      ULONG native_height = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+      ULONG native_width  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH : OVERSCAN_GFX_WIDTH :  uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
+      ULONG native_height = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT :  uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
 
       get(win_main, MUIA_Window_Open, &was_open);
 
@@ -1482,10 +1487,10 @@ static ULONG Render_New(struct IClass *cl, Object *obj, struct opSet *msg)
    data->YOffset = 0;
    data->render_state = MUIV_FlushClearScreen;
 
-   data->WinWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->WinHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
-   data->ScrWidth  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-   data->ScrHeight = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->WinWidth  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH  : OVERSCAN_GFX_WIDTH : uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
+   data->WinHeight = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT : uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
+   data->ScrWidth  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH  : OVERSCAN_GFX_WIDTH : uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
+   data->ScrHeight = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT : uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
    data->Depth = 24;
    data->MouseX = 0;
    data->MouseY = 0;
@@ -2232,8 +2237,8 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
    }
    else
    {
-      ULONG native_width  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-      ULONG native_height = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+      ULONG native_width  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH : OVERSCAN_GFX_WIDTH : uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
+      ULONG native_height = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT : uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
 
       if (changed_prefs.amiga_use_overlay && CGXVideoBase)
       {
@@ -3427,6 +3432,9 @@ BOOL FetchType(struct WBArg *wbarg)
       if ((temp = FindToolType((STRPTR *)toolarray,"CUSTOM")))
          uae_set_cfgtype(UAE_CFGTYPE_CUS);
 
+      if ((temp = FindToolType((STRPTR *)toolarray,"NTSC")))
+         uae_set_ntsc(UAE_NTSC_ON);
+
       if ((temp = FindToolType((STRPTR *)toolarray,"OLDCONFIG")))
          uae_set_oldconfig(UAE_OLDCONFIG_ON);
 
@@ -3525,8 +3533,8 @@ int graphics_init(void)
 {
    if (!uae_restarted)
    {
-      gfxvidinfo.width  = uae_get_overscan() ? OVERSCAN_GFX_WIDTH : DEFAULT_GFX_WIDTH;
-      gfxvidinfo.height = uae_get_overscan() ? OVERSCAN_GFX_HEIGHT : DEFAULT_GFX_HEIGHT;
+      gfxvidinfo.width  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH : OVERSCAN_GFX_WIDTH : uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
+      gfxvidinfo.height = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT : uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
 
       gfxvidinfo.width += 7;
       gfxvidinfo.width &= ~7;

@@ -71,6 +71,7 @@ int useoverscan = UAE_OVERSCAN_OFF;
 int usedoublebuffer = 0;
 int useoldconfig = UAE_OLDCONFIG_OFF;
 int usetoolbar = UAE_TOOLBAR_ON;
+int usentsc = UAE_NTSC_OFF;
 
 int log_scsi;
 
@@ -145,6 +146,16 @@ void uae_set_toolbar(int value)
 int uae_get_toolbar(void)
 {
    return usetoolbar;
+}
+
+void uae_set_ntsc(int value)
+{
+   usentsc = value;
+}
+
+int uae_get_ntsc(void)
+{
+   return usentsc;
 }
 
 void uae_set_oldconfig(int value)
@@ -480,6 +491,8 @@ debug_print("%s (%d)\n", __func__, __LINE__);
        uae_set_overscan(UAE_OVERSCAN_ON);
    } else if (strcmp (argv[i], "-notoolbar") == 0) {
        uae_set_toolbar(UAE_TOOLBAR_OFF);
+   } else if (strcmp (argv[i], "-ntsc") == 0) {
+       uae_set_ntsc(UAE_NTSC_ON);
    } else if (strcmp (argv[i], "-oldconf") == 0) {
        uae_set_oldconfig(UAE_OLDCONFIG_ON);
 	} else {

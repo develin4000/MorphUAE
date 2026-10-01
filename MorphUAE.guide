@@ -334,6 +334,8 @@
 
     @{b}-overscan@{ub} : Uses overscan resolution for the display.
 
+    @{b}-ntsc@{ub} : Use the emulator in NTSC mode.
+
     @{b}-notoolbar@{ub} : Hides the toolbar from start.
 
 
@@ -367,6 +369,8 @@
     @{b}OVERSCAN@{ub} : Uses overscan resolution for the display.
 
     @{b}DOUBLEBUFFER@{ub} : Uses doublebuffer on the rendered display.
+
+    @{b}NTSC@{ub} : Use the emulator in NTSC mode.
 
     @{b}NOTOOLBAR@{ub} : Hides the toolbar from start.
 
@@ -497,6 +501,7 @@ A - No, not at this point.
 
  · Overlay support. (Thanks to rzookol)
  · Added tooltype and CLI argument to start window without the toolbar on.
+ · Added tooltype and CLI argument to start the emulator in NTSC mode.
  · Image LEDs show RED colour while writing is active. (Suggested by jPV)
  · Added option to adjust sounds latency and use system own frequency.
 

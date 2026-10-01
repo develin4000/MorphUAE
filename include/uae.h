@@ -48,6 +48,9 @@ extern int uae_get_oldconfig(void);
 extern void uae_set_toolbar(int);
 extern int uae_get_toolbar(void);
 
+extern void uae_set_ntsc(int);
+extern int uae_get_ntsc(void);
+
 #define UAE_CHKSUM_ON       0
 #define UAE_CHKSUM_OFF      1
 
@@ -73,6 +76,9 @@ extern int uae_get_toolbar(void);
 
 #define UAE_TOOLBAR_OFF     0
 #define UAE_TOOLBAR_ON      1
+
+#define UAE_NTSC_OFF        0
+#define UAE_NTSC_ON         1
 
 
 extern void setup_brkhandler (void);

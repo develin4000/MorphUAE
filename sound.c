@@ -65,7 +65,13 @@ static BOOL open_AHI (void)
                memcpy (AHIio[1], AHIio[0], sizeof(struct AHIRequest));
 
                AHI_GetAudioAttrs(AHI_DEFAULT_ID, NULL, AHIDB_Frequency, (ULONG) &def_frequency, TAG_DONE);
+               //AHI_ControlAudio(AHIio[1], AHIC_MixFreq_Query, (ULONG)&rate, TAG_END);
+/*
+					AHI_ControlAudio(p->audioctrl,
+						                 AHIC_MixFreq_Query, (ULONG)&rate,
+						                 TAG_END);
 
+ */
                ahiopen = TRUE;
                return TRUE;
             }
@@ -98,6 +104,7 @@ static void close_AHI (void)
 
 static int get_clockval (void)
 {
+/*
    struct GfxBase *GB;
    int clk = 0;
 
@@ -112,6 +119,15 @@ static int get_clockval (void)
 
       CloseLibrary ((void *) GB);
    }
+   return clk;
+*/
+   int clk = 0;
+
+   if (currprefs.ntscmode)
+      clk = 3579545;    // NTSC clock
+   else
+      clk = 3546895;    // PAL clock
+
    return clk;
 }
 
@@ -131,7 +147,6 @@ int init_sound (void)
    clockval = get_clockval ();
    if (clockval == 0)
       goto fail;
-
 
    if (!open_AHI ())
       goto fail;
