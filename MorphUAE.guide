@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.2 (30-09-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.2 (06-10-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -504,6 +504,9 @@ A - No, not at this point.
  · Added tooltype and CLI argument to start the emulator in NTSC mode.
  · Image LEDs show RED colour while writing is active. (Suggested by jPV)
  · Added option to adjust sounds latency and use system own frequency.
+ · Replaced the cycle gadgets on the toolbar for mouse/joystick selection.
+ · The amount of LEDs indicating floppy drives are now correct to the prefs.
+ · The default amount of floppy drives are now set to 4.
 
 @ENDNODE
 

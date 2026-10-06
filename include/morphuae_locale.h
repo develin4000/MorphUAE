@@ -152,8 +152,10 @@
 #define MSG_CYC_RENDER_0 111
 #define MSG_CYC_RENDER_1 112
 #define MSG_SETTINGS_LATENCY 113
+#define MSG_SHORTHELP_IOPORT0 114
+#define MSG_SHORTHELP_IOPORT1 115
 
-#define CATCOMP_LASTID 113
+#define CATCOMP_LASTID 115
 
 #endif /* CATCOMP_NUMBERS */
 
@@ -164,7 +166,7 @@
 #ifdef CATCOMP_STRINGS
 
 #define MSG_APPLICATION_DESCRIPTION_STR "MorphUAE - Amiga emulator for MorphOS"
-#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\nAdditional programming by Michal Zukowski\n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io"
+#define MSG_ABOUTSTR_STR "The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\nAdditional programming by Michal Zukowski\n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io \n Konstantin Filatov"
 #define MSG_INSERT_IMAGE_STR "Insert image on DF%d"
 #define MSG_EMULATION_PAUSED_STR "MorphUAE - Paused"
 #define MSG_REQUESTER_TITLE_STR "Error Message"
@@ -277,6 +279,8 @@
 #define MSG_CYC_RENDER_0_STR "WritePixelArray"
 #define MSG_CYC_RENDER_1_STR "Overlay"
 #define MSG_SETTINGS_LATENCY_STR "Latency :"
+#define MSG_SHORTHELP_IOPORT0_STR "Attached to I/O-Port 0"
+#define MSG_SHORTHELP_IOPORT1_STR "Attached to I/O-Port 1"
 
 #endif /* CATCOMP_STRINGS */
 
@@ -408,6 +412,8 @@ static const struct CatCompArrayType CatCompArray[] =
     {MSG_CYC_RENDER_0,(STRPTR)MSG_CYC_RENDER_0_STR},
     {MSG_CYC_RENDER_1,(STRPTR)MSG_CYC_RENDER_1_STR},
     {MSG_SETTINGS_LATENCY,(STRPTR)MSG_SETTINGS_LATENCY_STR},
+    {MSG_SHORTHELP_IOPORT0,(STRPTR)MSG_SHORTHELP_IOPORT0_STR},
+    {MSG_SHORTHELP_IOPORT1,(STRPTR)MSG_SHORTHELP_IOPORT1_STR},
 };
 
 #endif /* CATCOMP_ARRAY */
@@ -422,8 +428,8 @@ static const char CatCompBlock[] =
 {
     "\x00\x00\x00\x00\x00\x26"
     MSG_APPLICATION_DESCRIPTION_STR "\x00"
-    "\x00\x00\x00\x01\x01\x48"
-    MSG_ABOUTSTR_STR "\x00"
+    "\x00\x00\x00\x01\x01\x5E"
+    MSG_ABOUTSTR_STR "\x00\x00"
     "\x00\x00\x00\x02\x00\x16"
     MSG_INSERT_IMAGE_STR "\x00\x00"
     "\x00\x00\x00\x03\x00\x12"
@@ -648,6 +654,10 @@ static const char CatCompBlock[] =
     MSG_CYC_RENDER_1_STR "\x00"
     "\x00\x00\x00\x71\x00\x0A"
     MSG_SETTINGS_LATENCY_STR "\x00"
+    "\x00\x00\x00\x72\x00\x18"
+    MSG_SHORTHELP_IOPORT0_STR "\x00\x00"
+    "\x00\x00\x00\x73\x00\x18"
+    MSG_SHORTHELP_IOPORT1_STR "\x00\x00"
 };
 
 #endif /* CATCOMP_BLOCK */

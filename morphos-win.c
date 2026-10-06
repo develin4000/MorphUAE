@@ -37,6 +37,14 @@
   * (c) Sanity.io
   * https://www.svgrepo.com/svg/459104/restore
   *
+  * Joystick SVG Vector
+  * (c) Sanity.io
+  * https://www.svgrepo.com/svg/459075/joystick
+  *
+  * Mouse SVG Vector
+  * (c) Konstantin Filatov
+  * https://www.svgrepo.com/svg/521761/mouse
+  *
   */
 
 #define CATCOMP_ARRAY
@@ -270,6 +278,8 @@ static Object *obj_rendermcc   = NULL;  // Render object
 struct Object *btn_settings    = NULL;
 struct Object *btn_camera      = NULL;
 struct Object *btn_reset       = NULL;
+struct Object *btn_ioport0     = NULL;
+struct Object *btn_ioport1     = NULL;
 struct Object *btn_eject       = NULL;
 struct Object *btn_fullscreen  = NULL;
 struct Object *btn_pauseresume = NULL;
@@ -431,13 +441,20 @@ struct RenderData
 #define MUIV_Savestate_Save    2
 #endif
 
+#define MUIA_IOPort0           (TAGBASE_DEVELIN | 0x0040)
+#define MUIA_IOPort1           (TAGBASE_DEVELIN | 0x0041)
+#define MUIV_IOPorts_Menu      0
+#define MUIV_IOPorts_Mouse     1
+#define MUIV_IOPorts_Joy0      2
+#define MUIV_IOPorts_Joy1      3
+
 #define ASL_LOAD_IMAGEFILE     0
 #define ASL_SAVE_SAVESTATE     1
-#define ASL_LOAD_SAVESTATE     2
 
 
 #define MUIM_Mouse_Trigger    (TAGBASE_DEVELIN | 0x0042)
 
+#define ASL_LOAD_SAVESTATE     2
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
 
@@ -785,7 +802,7 @@ void reset_tab(unsigned int tab)
          set(but_gen_latency, MUIA_Cycle_Active, 5);    // 100ms
          set(but_gen_joy0, MUIA_Cycle_Active, 0);       // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);       // Joy1
-         set(but_gen_floppynum, MUIA_Cycle_Active, 1);  // 2 Floppys
+         set(but_gen_floppynum, MUIA_Cycle_Active, 3);  // 4 Floppys
          set(but_gen_floppyspd, MUIA_Cycle_Active, 0);  // Normal
          set(but_gen_language, MUIA_Cycle_Active, 0);   // US / UK (Default)
          set(but_gen_resolution, MUIA_Cycle_Active, 0); // Standard
@@ -1066,16 +1083,21 @@ void setup_generic(void)
                                      spos == 9 ? 140 : 150);
       // IO Devices...
       get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
-      set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
+      //set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
+      set(btn_ioport0, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse : jpos == 1 ? gfx_joystick0 : gfx_joystick1));
       changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
       get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
-      set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
+      //set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
+      set(btn_ioport1, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse : jpos == 1 ? gfx_joystick0 : gfx_joystick1));
       changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
       get(but_gen_floppynum, MUIA_Cycle_Active, &jpos);
       changed_prefs.nr_floppies = jpos+1;
 
       for (fcnt = 0; fcnt < 4; fcnt++)
+      {
          changed_prefs.dfxtype[fcnt] = (fcnt <= jpos) ? 0 : -1;
+         set(obj_LEDmcc[fcnt], MUIA_ShowMe, (fcnt <= jpos) ? TRUE : FALSE);
+      }
 
       get(but_gen_floppyspd, MUIA_Cycle_Active, &jpos);
       changed_prefs.floppy_speed = (jpos == 0 ? 100 : jpos == 1 ? 500 : 1000);
@@ -1779,7 +1801,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                                  MUIA_Window_DepthGadget, FALSE,
                                  MUIA_Window_SizeGadget,  FALSE,
                                  MUIA_Window_Frontdrop,   TRUE,
-                                 MUIA_Window_Title,       NULL,
+                                 MUIA_Window_Title,       NULL, //set(obj_rendermcc, MUIA_Reset_Type, MUIV_Reset_UserSelect);
                                  TAG_DONE);
                      }
                      else
@@ -1806,6 +1828,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
             }  break;
 
             case MUIA_Toolbar_Active :
+            {
                if (tag->ti_Data == MUIV_Toolbar_On)
                {
                   data->ToolBar = TRUE;
@@ -1825,7 +1848,78 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                   set(grp_toolbar, MUIA_ShowMe, data->ToolBar);
                   uae_set_toolbar(data->ToolBar);
-               }  break;
+               }
+            } break;
+
+            case MUIA_IOPort0 :
+            {
+               if (tag->ti_Data == MUIV_IOPorts_Menu)
+               {
+                  if ((mstrip = MenustripObject,
+                     Child, MenuObject,
+                        Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_0), End,
+                        Child, MenuitemObject, MUIA_UserData, 2,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_1), End,
+                        Child, MenuitemObject, MUIA_UserData, 3,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_2), End,
+                     End,
+                  End))
+                  {
+                     poprc = DoMethod(mstrip, MUIM_Menustrip_Popup,btn_ioport0,0,_left(btn_ioport0),_bottom(btn_ioport0)+1);
+                     MUI_DisposeObject(mstrip);
+                     if (poprc) set(obj_rendermcc, MUIA_IOPort0, poprc);
+                  }
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Mouse)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 0);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_mouse);
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Joy0)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 1);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_joystick0);
+               }
+               else // (tag->ti_Data == MUIV_IOPorts_Joy1)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 2);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_joystick1);
+               }
+
+            } break;
+
+            case MUIA_IOPort1 :
+            {
+               if (tag->ti_Data == MUIV_IOPorts_Menu)
+               {
+                  if ((mstrip = MenustripObject,
+                     Child, MenuObject,
+                        Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_0), End,
+                        Child, MenuitemObject, MUIA_UserData, 2,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_1), End,
+                        Child, MenuitemObject, MUIA_UserData, 3,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_2), End,
+                     End,
+                  End))
+                  {
+                     poprc = DoMethod(mstrip, MUIM_Menustrip_Popup,btn_ioport1,0,_left(btn_ioport1),_bottom(btn_ioport1)+1);
+                     MUI_DisposeObject(mstrip);
+                     if (poprc) set(obj_rendermcc, MUIA_IOPort1, poprc);
+                  }
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Mouse)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 0);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_mouse);
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Joy0)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 1);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_joystick0);
+               }
+               else // (tag->ti_Data == MUIV_IOPorts_Joy1)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 2);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_joystick1);
+               }
+            } break;
+
 #ifdef USE_SAVESTATE
             case MUIA_Savestate :
                if (tag->ti_Data == MUIV_Savestate_Menu)
@@ -2973,8 +3067,27 @@ static int mui_setup_window(void)
                                     End,
 
                                     Child, HVSpace,
-                                    Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                    Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                    //Child, Label1("0 "),
+                                    Child, btn_ioport0 = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_IOPORT0),
+                                       MUIA_Rawimage_Data, gfx_mouse,
+                                    End,
+                                    Child, btn_ioport1 = RawimageObject,
+                                       MUIA_DoubleBuffer, 0,
+                                       MUIA_InnerLeft, 0, MUIA_InnerRight, 0, MUIA_InnerTop, 0, MUIA_InnerBottom, 0,
+                                       MUIA_Frame, MUIV_Frame_Button,
+                                       MUIA_InputMode, MUIV_InputMode_RelVerify,
+                                       MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_IOPORT1),
+                                       MUIA_Rawimage_Data, gfx_joystick1,
+                                    End,
+                                    //Child, Label1(" 1"),
+
+                                    //Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                    //Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                     Child, HVSpace,
 #ifdef USE_SAVESTATE
                                     Child, btn_savestate = RawimageObject,
@@ -3289,8 +3402,8 @@ static int mui_setup_window(void)
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_UnIconified);
    DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, TRUE, app, 3, MUIM_Set, MUIA_Application_Iconified, FALSE);
 
-   DoMethod(but_tmp_joy0, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port0, MUIV_TriggerValue);
-   DoMethod(but_tmp_joy1, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port1, MUIV_TriggerValue);
+   //DoMethod(but_tmp_joy0, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port0, MUIV_TriggerValue);
+   //DoMethod(but_tmp_joy1, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port1, MUIV_TriggerValue);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
    DoMethod(win_main, MUIM_Notify, MUIA_AppMessage, MUIV_EveryTime, win_main, 3, MUIM_CallHook, &AppMsg_hook, MUIV_TriggerValue);
@@ -3313,6 +3426,10 @@ static int mui_setup_window(void)
    DoMethod(obj_LEDmcc[3], MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Floppy_Hotkey, MUIV_HKTriggerFloppy3);
 
    DoMethod(btn_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Reset_Type, MUIV_Reset_Menu);
+
+   DoMethod(btn_ioport0, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_IOPort0, MUIV_IOPorts_Menu);
+   DoMethod(btn_ioport1, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_IOPort1, MUIV_IOPorts_Menu);
+
 #ifdef USE_SAVESTATE
    DoMethod(btn_savestate, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Savestate, MUIV_Savestate_Menu);
 #endif

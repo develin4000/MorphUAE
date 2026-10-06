@@ -25,7 +25,6 @@ struct MsgPort    *AHImp    = NULL;
 struct AHIRequest *AHIio[2] = {NULL, NULL};
 struct AHIRequest *linkio   = NULL;
 
-
 unsigned char *buffers[2];
 uae_u16 *sndbuffer;
 uae_u16 *sndbufpt;
@@ -65,6 +64,7 @@ static BOOL open_AHI (void)
                memcpy (AHIio[1], AHIio[0], sizeof(struct AHIRequest));
 
                AHI_GetAudioAttrs(AHI_DEFAULT_ID, NULL, AHIDB_Frequency, (ULONG) &def_frequency, TAG_DONE);
+
                //AHI_ControlAudio(AHIio[1], AHIC_MixFreq_Query, (ULONG)&rate, TAG_END);
 /*
 					AHI_ControlAudio(p->audioctrl,

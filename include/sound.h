@@ -55,11 +55,12 @@ STATIC_INLINE void flush_sound_buffer (void)
 
 STATIC_INLINE void check_sound_buffers (void)
 {
-    if ((char *)sndbufpt - (char *)sndbuffer >= sndbufsize) {
-        driveclick_mix ((uae_s16*)sndbuffer, sndbufsize >> 1);
+   if ((char *)sndbufpt - (char *)sndbuffer >= sndbufsize)
+	{
+      //driveclick_mix ((uae_s16*)sndbuffer, sndbufsize >> 1);
 
-	flush_sound_buffer ();
-    }
+	   flush_sound_buffer ();
+   }
 }
 
 #define AUDIO_NAME "amiga"

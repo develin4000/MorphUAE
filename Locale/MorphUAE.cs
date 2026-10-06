@@ -12,9 +12,9 @@ MorphUAE - Amiga-emulator för MorphOS
 
 MSG_ABOUTSTR (1//)
 The Amiga emulator for MorphOS by Stefan Blixth, OnyxSoft \n\nAdditional programming by Michal Zukowski\n\n This software is based on work previous done by : \n\n Richard Drummond, E-UAE \n Bernd \
-Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
+Schmidt, original UAE \n Toni Wilen, WinUAE \n\n\n Toolbar icons (SVG Repo) by : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io \n Konstantin Filatov
 Amiga-emulator för MorphOS av Stefan Blixth, OnyxSoft \n\nBidragande programmering av Michal Zukowski\n\n Detta program är baserat på tidigare arbete gjort av : \n\n Richard Drummond, E-UAE \n Bernd \
-Schmidt, original-UAE \n Toni Wilen, WinUAE \n\n\n Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io
+Schmidt, original-UAE \n Toni Wilen, WinUAE \n\n\n Verktygsfältsikoner (SVG Repo) av : \n\n Diemen Design \n Bootstrap \n radix-ui \n Siemens \n Sanity.io \n Konstantin Filatov
 
 ;
 MSG_INSERT_IMAGE (2//)
@@ -575,5 +575,15 @@ Overlay
 MSG_SETTINGS_LATENCY (113//)
 Latency :
 Latens :
+
+;
+MSG_SHORTHELP_IOPORT0 (114//)
+Attached to I/O-Port 0
+Anslutet till I/O-port 0
+
+;
+MSG_SHORTHELP_IOPORT1 (115//)
+Attached to I/O-Port 1
+Anslutet till I/O-port 1
 
 ;
