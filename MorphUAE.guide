@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.2 (06-10-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.2 (07-10-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -507,6 +507,7 @@ A - No, not at this point.
  · Replaced the cycle gadgets on the toolbar for mouse/joystick selection.
  · The amount of LEDs indicating floppy drives are now correct to the prefs.
  · The default amount of floppy drives are now set to 4.
+ · A special build/binary for G5 machines is now included.
 
 @ENDNODE
 
@@ -515,6 +516,19 @@ A - No, not at this point.
 @NEXT "future"
 
  @{b}@{u}History@{uu}@{ub}
+
+
+ 07-Oct-2026 - Third public release (1.2)
+
+ * Overlay support. (Thanks to rzookol)
+ * Added tooltype and CLI argument to start window without the toolbar on.
+ * Added tooltype and CLI argument to start the emulator in NTSC mode.
+ * Image LEDs show RED colour while writing is active. (Suggested by jPV)
+ * Added option to adjust sounds latency and use system own frequency.
+ * Replaced the cycle gadgets on the toolbar for mouse/joystick selection.
+ * The amount of LEDs indicating floppy drives are now correct to the prefs.
+ * The default amount of floppy drives are now set to 4.
+ * A special build/binary for G5 machines is now included.
 
 
  19-Aug-2026 - Second public release (1.1)

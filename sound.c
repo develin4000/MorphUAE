@@ -64,14 +64,8 @@ static BOOL open_AHI (void)
                memcpy (AHIio[1], AHIio[0], sizeof(struct AHIRequest));
 
                AHI_GetAudioAttrs(AHI_DEFAULT_ID, NULL, AHIDB_Frequency, (ULONG) &def_frequency, TAG_DONE);
-
                //AHI_ControlAudio(AHIio[1], AHIC_MixFreq_Query, (ULONG)&rate, TAG_END);
-/*
-					AHI_ControlAudio(p->audioctrl,
-						                 AHIC_MixFreq_Query, (ULONG)&rate,
-						                 TAG_END);
 
- */
                ahiopen = TRUE;
                return TRUE;
             }

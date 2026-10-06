@@ -174,8 +174,6 @@ static char *floppy_dir[4];
 BOOL adfstate[4];
 static char last_adf[4][256];
 char titlestr[256];
-//char savestatedir[1024];
-//char savestatefile[256];
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -798,7 +796,7 @@ void reset_tab(unsigned int tab)
          set(but_gen_machine, MUIA_Cycle_Active, 2);    // AGA
          set(but_gen_sound, MUIA_Cycle_Active, 2);      // Normal
          set(but_gen_channels, MUIA_Cycle_Active, 1);   // Stereo
-         set(but_gen_frequency, MUIA_Cycle_Active, 4);  // 2 = 44100Hz 4 = System Default
+         set(but_gen_frequency, MUIA_Cycle_Active, 3);  // 3 = 48000Hz 4 = System Default
          set(but_gen_latency, MUIA_Cycle_Active, 5);    // 100ms
          set(but_gen_joy0, MUIA_Cycle_Active, 0);       // Mouse
          set(but_gen_joy1, MUIA_Cycle_Active, 2);       // Joy1
@@ -1801,7 +1799,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                                  MUIA_Window_DepthGadget, FALSE,
                                  MUIA_Window_SizeGadget,  FALSE,
                                  MUIA_Window_Frontdrop,   TRUE,
-                                 MUIA_Window_Title,       NULL, //set(obj_rendermcc, MUIA_Reset_Type, MUIV_Reset_UserSelect);
+                                 MUIA_Window_Title,       NULL,
                                  TAG_DONE);
                      }
                      else
