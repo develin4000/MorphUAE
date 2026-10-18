@@ -2,10 +2,10 @@
 ->==========================================<-
 ->= MorphUAE - (c) Copyright 2026 OnyxSoft =<-
 ->==========================================<-
-->= Version  : 1.2                         =<-
+->= Version  : 1.3                         =<-
 ->= File     : morphos-gui.h               =<-
 ->= Author   : Stefan Blixth               =<-
-->= Compiled : 2026-10-05                  =<-
+->= Compiled : 2026-10-15                  =<-
 ->==========================================<-
 */
 
@@ -61,6 +61,7 @@ static Object *but_cus_fastmem = NULL;
 static Object *but_cus_zorromem = NULL;
 
 static const char *Pages[]   = { "General", "OCS", "ECS", "AGA", "Custom", NULL };
+
 
 // Enumerated Objects...
 enum
@@ -119,7 +120,8 @@ enum
    ID_PRFS_GEN_FLOPPYNUM,
    ID_PRFS_GEN_RESOLUTION,
    ID_PRFS_GEN_RENDERER,
-   ID_PRFS_GEN_LATENCY
+   ID_PRFS_GEN_LATENCY,
+   ID_PRFS_GEN_SSHOTDIR
 };
 
 
@@ -127,6 +129,8 @@ static char *cyc_gen_machine[]    = { "OCS", "ECS", "AGA", "Custom", NULL };
 static char *cyc_gen_frequency[]  = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", "System Default", NULL };
 static char *cyc_gen_latency[]    = { "50ms","60ms","70ms","80ms","90ms","100ms","110ms","120ms","130ms","140ms","150ms", NULL};
 static char *cyc_list_floppynum[] = { "1", "2", "3", "4", NULL};
+static Object *gen_sshotdir_str = NULL; // (Path string)
+APTR gen_sshotdir;
 
 APTR cyc_ocs_kickstart, cyc_ocs_kickstartkey;
 static Object *ocs_kickstart_str = NULL;  // (Path string)

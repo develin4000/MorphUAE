@@ -1,11 +1,11 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.2 (07-10-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.3 (18-10-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
 
- @{b}MorphUAE 1.2@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
+ @{b}MorphUAE 1.3@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
 
  - User Documentation -
 
@@ -499,15 +499,8 @@ A - No, not at this point.
 
  @{b}@{u}What's new@{uu}@{ub}
 
- · Overlay support. (Thanks to rzookol)
- · Added tooltype and CLI argument to start window without the toolbar on.
- · Added tooltype and CLI argument to start the emulator in NTSC mode.
- · Image LEDs show RED colour while writing is active. (Suggested by jPV)
- · Added option to adjust sounds latency and use system own frequency.
- · Replaced the cycle gadgets on the toolbar for mouse/joystick selection.
- · The amount of LEDs indicating floppy drives are now correct to the prefs.
- · The default amount of floppy drives are now set to 4.
- · A special build/binary for G5 machines is now included.
+ · Redesigned the settings GUI.
+ · Selectable screenshot folder. (Suggested by jPV)
 
 @ENDNODE
 
@@ -521,13 +514,13 @@ A - No, not at this point.
  07-Oct-2026 - Third public release (1.2)
 
  * Overlay support. (Thanks to rzookol)
- * Added tooltype and CLI argument to start window without the toolbar on.
- * Added tooltype and CLI argument to start the emulator in NTSC mode.
- * Image LEDs show RED colour while writing is active. (Suggested by jPV)
- * Added option to adjust sounds latency and use system own frequency.
+ * Added a tooltype and CLI argument to start window without the toolbar on.
+ * Added a tooltype and CLI argument to start the emulator in NTSC mode.
+ * Image LEDs display in RED while writing is active. (Suggested by jPV)
+ * Added an option to adjust sound latency and to use a system's own frequency.
  * Replaced the cycle gadgets on the toolbar for mouse/joystick selection.
- * The amount of LEDs indicating floppy drives are now correct to the prefs.
- * The default amount of floppy drives are now set to 4.
+ * The number of LEDs for floppy drives now relates to what is shown in prefs.
+ * The default number of floppy drives is now set to 4.
  * A special build/binary for G5 machines is now included.
 
 

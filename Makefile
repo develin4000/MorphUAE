@@ -1,10 +1,10 @@
 #->=========================================<-
 #->= MorphUAE - MUI'fied E-UAE for MorphOS =<-
 #->=========================================<-
-#->= Version  : 1.0                        =<-
+#->= Version  : 1.3                        =<-
 #->= File     : Makefile                   =<-
 #->= Author   : Stefan Blixth              =<-
-#->= Compiled : 2026-04-23                 =<-
+#->= Compiled : 2026-10-15                 =<-
 #->=========================================<-
 
 #
@@ -70,8 +70,8 @@ INCDIR		= ./include
 #
 
 # For G5-CPUs, we need to use -D_ARCH_PWR4, all others shall have this removed...
-CFLG_MOS	= -DHAVE_CONFIG_H -DUSE_SAVESTATE -D_ARCH_PWR4 -O2 -noixemul -Wno-unused -Wimplicit-function-declaration
-#CFLG_MOS	= -DHAVE_CONFIG_H -DUSE_SAVESTATE -O2 -noixemul -Wno-unused -Wimplicit-function-declaration
+#CFLG_MOS	= -DHAVE_CONFIG_H -DUSE_SAVESTATE -D_ARCH_PWR4 -O2 -noixemul -Wno-unused -Wimplicit-function-declaration
+CFLG_MOS	= -DHAVE_CONFIG_H -DUSE_SAVESTATE -O2 -noixemul -Wno-unused -Wimplicit-function-declaration
 #CPPFLG_MOS	= -DUSEDEBUG -D__AMIGADATE__=\"$(shell date "+%d.%m.%y")\"
 #LFLG_MOS	= -lz -lm -ldebug
 CPPFLG_MOS	= -D__AMIGADATE__=\"$(shell date "+%d.%m.%y")\"

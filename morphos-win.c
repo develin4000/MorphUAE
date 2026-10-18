@@ -128,7 +128,7 @@
 
 #define STRNAME     "MorphUAE"
 #define STRVERSION  "1"
-#define STRREVISION "2"
+#define STRREVISION "3"
 
 #define DATE        __AMIGADATE__
 #define VSTRING     STRVERSION"."STRREVISION " ("DATE") "
@@ -174,6 +174,9 @@ static char *floppy_dir[4];
 BOOL adfstate[4];
 static char last_adf[4][256];
 char titlestr[256];
+STRPTR sshotval;
+char sshotstr[1024];
+int sshotcntr = 1;
 
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
@@ -307,6 +310,11 @@ static STRPTR cyc_list_jit[5];
 static STRPTR cyc_list_keys[8];
 static STRPTR cyc_list_renderer[3];
 
+static STRPTR SubPagesGen[5];
+static STRPTR SubPagesOCS[3];
+static STRPTR SubPagesECS[4];
+static STRPTR SubPagesAGA[3];
+static STRPTR SubPagesCUS[6];
 
 #define DEFAULT_GFX_WIDTH    640
 #define DEFAULT_GFX_HEIGHT   512
@@ -721,10 +729,10 @@ void set_window_title(void)
 }
 
 
-/*=----------------------------- Populate_CycleStrings()----------------------*
+/*=----------------------------- Populate_Strings() --------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
-void Populate_CycleStrings(void)
+void Populate_Strings(void)
 {
       cyc_list_jport[0] = Locale_GetString(MSG_CYC_JPORT_0);
       cyc_list_jport[1] = Locale_GetString(MSG_CYC_JPORT_1);
@@ -779,6 +787,27 @@ void Populate_CycleStrings(void)
 
       cyc_list_renderer[0] = Locale_GetString(MSG_CYC_RENDER_0);
       cyc_list_renderer[1] = Locale_GetString(MSG_CYC_RENDER_1);
+
+      SubPagesGen[0] = Locale_GetString(MSG_SETTINGS_SOUNDTITLE);
+      SubPagesGen[1] = Locale_GetString(MSG_SETTINGS_IOTITLE);
+      SubPagesGen[2] = Locale_GetString(MSG_SETTINGS_GFXTITLE);
+      SubPagesGen[3] = Locale_GetString(MSG_SETTINGS_MISC);
+
+      SubPagesOCS[0] = Locale_GetString(MSG_SETTINGS_KICKSTART_TITLE);
+      SubPagesOCS[1] = Locale_GetString(MSG_SETTINGS_MEMTITLE);
+
+      SubPagesECS[0] = Locale_GetString(MSG_SETTINGS_KICKSTART_TITLE);
+      SubPagesECS[1] = Locale_GetString(MSG_SETTINGS_MEMTITLE);
+      SubPagesECS[2] = Locale_GetString(MSG_SETTINGS_CHIPSET_TITLE);
+
+      SubPagesAGA[0] = Locale_GetString(MSG_SETTINGS_KICKSTART_TITLE);
+      SubPagesAGA[1] = Locale_GetString(MSG_SETTINGS_MEMTITLE);
+
+      SubPagesCUS[0] = Locale_GetString(MSG_SETTINGS_KICKSTART_TITLE);
+      SubPagesCUS[1] = Locale_GetString(MSG_SETTINGS_MEMTITLE);
+      SubPagesCUS[2] = Locale_GetString(MSG_SETTINGS_CHIPSET_TITLE);
+      SubPagesCUS[3] = Locale_GetString(MSG_SETTINGS_CPU_TITLE);
+      SubPagesCUS[4] = Locale_GetString(MSG_SETTINGS_HARDDISK_TITLE);
 }
 /*=*/
 
@@ -793,22 +822,23 @@ void reset_tab(unsigned int tab)
    {
       case ID_BUT_GEN_RESET :
       {
-         set(but_gen_machine, MUIA_Cycle_Active, 2);    // AGA
-         set(but_gen_sound, MUIA_Cycle_Active, 2);      // Normal
-         set(but_gen_channels, MUIA_Cycle_Active, 1);   // Stereo
-         set(but_gen_frequency, MUIA_Cycle_Active, 3);  // 3 = 48000Hz 4 = System Default
-         set(but_gen_latency, MUIA_Cycle_Active, 5);    // 100ms
-         set(but_gen_joy0, MUIA_Cycle_Active, 0);       // Mouse
-         set(but_gen_joy1, MUIA_Cycle_Active, 2);       // Joy1
-         set(but_gen_floppynum, MUIA_Cycle_Active, 3);  // 4 Floppys
-         set(but_gen_floppyspd, MUIA_Cycle_Active, 0);  // Normal
-         set(but_gen_language, MUIA_Cycle_Active, 0);   // US / UK (Default)
-         set(but_gen_resolution, MUIA_Cycle_Active, 0); // Standard
-         set(but_gen_blitter, MUIA_Cycle_Active, 0);    // Off - Check this!
-         set(but_gen_sprite, MUIA_Cycle_Active, 3);     // Full - Check this!
-         set(but_gen_framerate, MUIA_Cycle_Active, 0);  // Every one
-         set(but_gen_renderer, MUIA_Cycle_Active, 0);   // 0 = WPA, 1 = Overlay
-         set(but_gen_resetmode, MUIA_Cycle_Active, 0);  // Soft!
+         set(but_gen_machine, MUIA_Cycle_Active, 2);          // AGA
+         set(but_gen_sound, MUIA_Cycle_Active, 2);            // Normal
+         set(but_gen_channels, MUIA_Cycle_Active, 1);         // Stereo
+         set(but_gen_frequency, MUIA_Cycle_Active, 3);        // 3 = 48000Hz 4 = System Default
+         set(but_gen_latency, MUIA_Cycle_Active, 5);          // 100ms
+         set(but_gen_joy0, MUIA_Cycle_Active, 0);             // Mouse
+         set(but_gen_joy1, MUIA_Cycle_Active, 2);             // Joy1
+         set(but_gen_floppynum, MUIA_Cycle_Active, 3);        // 4 Floppys
+         set(but_gen_floppyspd, MUIA_Cycle_Active, 0);        // Normal
+         set(but_gen_language, MUIA_Cycle_Active, 0);         // US / UK (Default)
+         set(but_gen_resolution, MUIA_Cycle_Active, 0);       // Standard
+         set(but_gen_blitter, MUIA_Cycle_Active, 0);          // Off - Check this!
+         set(but_gen_sprite, MUIA_Cycle_Active, 3);           // Full - Check this!
+         set(but_gen_framerate, MUIA_Cycle_Active, 0);        // Every one
+         set(but_gen_renderer, MUIA_Cycle_Active, 0);         // 0 = WPA, 1 = Overlay
+         set(but_gen_resetmode, MUIA_Cycle_Active, 0);        // Soft!
+         set(gen_sshotdir_str, MUIA_String_Contents, "Ram:"); // Default Screenshot folder - Ram:
       }  break;
 
       case ID_BUT_OCS_RESET :
@@ -1036,6 +1066,8 @@ void setup_specific(int conf)
       strcpy(changed_prefs.romfile,"PROGDIR:Kickstarts/aros/aros-rom.bin");
       strcpy(changed_prefs.romextfile,"PROGDIR:Kickstarts/aros/aros-ext.bin");
    }
+
+   //strcpy(changed_prefs.cartfile, "PROGDIR:Cartridge/ar.rom");
 }
 /*=*/
 
@@ -1111,6 +1143,10 @@ void setup_generic(void)
       changed_prefs.gfx_framerate = val+1;
       get(but_gen_renderer, MUIA_Cycle_Active, &val);
       changed_prefs.amiga_use_overlay = val ? 1 : 0;
+
+      // Misc...
+      //gen_sshotdir_str
+
    }
 }
 /*=*/
@@ -2463,6 +2499,13 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
          {
             ULONG slock;
             UBYTE *sdata = NULL;
+            BPTR dlock = NULL;
+            UBYTE sfnme[512];
+            char sftmp[64];
+            char tdir[512];
+            int tlen = 0;
+
+            sfnme[0] = '\0';
 
             /* ReadPixelArray cannot see pixels produced by a hardware VLayer. */
             if (MorphOverlay_HasLayer())
@@ -2478,7 +2521,30 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             {
                slock = LockIBase(0);
                ReadPixelArray(sdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
-               Save_Reggae("RAM:MorphUAE-Screenshoot.png", sdata, _width(obj), _height(obj), 4);
+               GetAttr(MUIA_String_Contents, gen_sshotdir_str, (ULONG *)&sshotval);
+
+               strcpy(tdir, sshotval);
+               tlen = strlen(tdir);
+               if (tlen > 0)
+               {
+                  if (tdir[tlen-1] == '/')
+                     tdir[tlen-1] = '\0';
+               }
+
+               dlock = Lock(tdir, SHARED_LOCK);
+
+               if (!dlock)
+                  dlock = CreateDir(tdir);
+
+               if (dlock)
+               {
+                  UnLock(dlock);
+                  sprintf(sftmp, "MorphUAE-Screenshoot_%03d.png", sshotcntr++);
+                  AddPart(sfnme, sshotval, 80);
+                  AddPart(sfnme, sftmp, 80);
+                  Save_Reggae(sfnme, sdata, _width(obj), _height(obj), 4);
+               }
+
                UnlockIBase (slock);
                FreeVec(sdata);
                sdata = NULL;
@@ -3165,7 +3231,7 @@ static int mui_setup_window(void)
                                   Child, RegisterGroup(Pages),
                                      MUIA_Register_Frame, TRUE,
 
-                                     Child, HGroup,  // General Tab
+                                     Child, VGroup,  // General Tab
                                         Child, ColGroup(2),
                                            Child, but_gen_reset = TextObject, ButtonFrame,
                                               MUIA_Background, MUII_ButtonBack,
@@ -3175,37 +3241,66 @@ static int mui_setup_window(void)
                                               MUIA_InputMode, MUIV_InputMode_RelVerify,
                                            End,
                                            Child, HSpace(0),
-                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
                                            Child, Label1(Locale_GetString(MSG_SETTINGS_MACHINETYPE)), Child, but_gen_machine = CycleObject, MUIA_Cycle_Entries, cyc_gen_machine, MUIA_ObjectID, ID_PRFS_GEN_MACHINE, MUIA_UserData, ID_PRFS_GEN_MACHINE, End,
-                                           Child, VSpace(0), Child, VSpace(0),
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_SOUNDTITLE), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDOUTPUT)), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_list_sndout, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDCHANNELS)), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_list_sndchan, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDFREQ)), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_LATENCY)), Child, but_gen_latency = CycleObject, MUIA_Cycle_Entries, cyc_gen_latency, MUIA_ObjectID, ID_PRFS_GEN_LATENCY, MUIA_UserData, ID_PRFS_GEN_LATENCY, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_IOTITLE), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY1)), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPYNUM)), Child, but_gen_floppynum = CycleObject, MUIA_Cycle_Entries, cyc_list_floppynum, MUIA_ObjectID, ID_PRFS_GEN_FLOPPYNUM, MUIA_UserData, ID_PRFS_GEN_FLOPPYNUM, End,
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
+                                        End,
 
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppyspd = CycleObject, MUIA_Cycle_Entries, cyc_list_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_list_keys, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_GFXTITLE), MUIA_FixHeight, 8, End,
-                                           //Child, Label1(Locale_GetString(MSG_SETTINGS_RESOLUTION)), Child, but_gen_resolution = CycleObject, MUIA_Cycle_Entries, cyc_list_resolution, MUIA_ObjectID, ID_PRFS_GEN_RESOLUTION, MUIA_UserData, ID_PRFS_GEN_RESOLUTION, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_list_blits, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_list_sprites, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_list_frames, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_RENDER)), Child, but_gen_renderer = CycleObject, MUIA_Cycle_Entries, cyc_list_renderer, MUIA_ObjectID, ID_PRFS_GEN_RENDERER, MUIA_UserData, ID_PRFS_GEN_RENDERER, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_FixHeight, 8, End,
-                                           Child, RectangleObject, MUIA_Rectangle_HBar, TRUE, MUIA_Rectangle_BarTitle, Locale_GetString(MSG_SETTINGS_MISC), MUIA_FixHeight, 8, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_RESETTYPE)), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_list_reset, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
-                                           Child, VSpace(0), Child, VSpace(0),
+                                        Child, RegisterGroup(SubPagesGen),
+                                           MUIA_Register_Frame, TRUE,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Sound Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDOUTPUT)), Child, but_gen_sound = CycleObject, MUIA_Cycle_Entries, cyc_list_sndout, MUIA_ObjectID, ID_PRFS_GEN_SOUND, MUIA_UserData, ID_PRFS_GEN_SOUND, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDCHANNELS)), Child, but_gen_channels = CycleObject, MUIA_Cycle_Entries, cyc_list_sndchan, MUIA_ObjectID, ID_PRFS_GEN_CHANNELS, MUIA_UserData, ID_PRFS_GEN_CHANNELS, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_SOUNDFREQ)), Child, but_gen_frequency = CycleObject, MUIA_Cycle_Entries, cyc_gen_frequency, MUIA_ObjectID, ID_PRFS_GEN_FREQUENCY, MUIA_UserData, ID_PRFS_GEN_FREQUENCY, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_LATENCY)), Child, but_gen_latency = CycleObject, MUIA_Cycle_Entries, cyc_gen_latency, MUIA_ObjectID, ID_PRFS_GEN_LATENCY, MUIA_UserData, ID_PRFS_GEN_LATENCY, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // I/O Devices Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY0)), Child, but_gen_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_IOJOY1)), Child, but_gen_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPYNUM)), Child, but_gen_floppynum = CycleObject, MUIA_Cycle_Entries, cyc_list_floppynum, MUIA_ObjectID, ID_PRFS_GEN_FLOPPYNUM, MUIA_UserData, ID_PRFS_GEN_FLOPPYNUM, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_IOFLOPPY)), Child, but_gen_floppyspd = CycleObject, MUIA_Cycle_Entries, cyc_list_floppy, MUIA_ObjectID, ID_PRFS_GEN_FLOPPY, MUIA_UserData, ID_PRFS_GEN_FLOPPY, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_IOKEYBOARD)), Child, but_gen_language = CycleObject, MUIA_Cycle_Entries, cyc_list_keys, MUIA_ObjectID, ID_PRFS_GEN_LANGUAGE, MUIA_UserData, ID_PRFS_GEN_LANGUAGE, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Graphics Page...
+                                                 //Child, Label1(Locale_GetString(MSG_SETTINGS_RESOLUTION)), Child, but_gen_resolution = CycleObject, MUIA_Cycle_Entries, cyc_list_resolution, MUIA_ObjectID, ID_PRFS_GEN_RESOLUTION, MUIA_UserData, ID_PRFS_GEN_RESOLUTION, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_list_blits, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_list_sprites, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_list_frames, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_RENDER)), Child, but_gen_renderer = CycleObject, MUIA_Cycle_Entries, cyc_list_renderer, MUIA_ObjectID, ID_PRFS_GEN_RENDERER, MUIA_UserData, ID_PRFS_GEN_RENDERER, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Misc Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_RESETTYPE)), Child, but_gen_resetmode = CycleObject, MUIA_Cycle_Entries, cyc_list_reset, MUIA_ObjectID, ID_PRFS_GEN_RESETMODE, MUIA_UserData, ID_PRFS_GEN_RESETMODE, End,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_SSHOT),'v'),
+                                                 Child, HGroup,
+                                                    Child, gen_sshotdir = PopaslObject,
+                                                       MUIA_Popstring_String, gen_sshotdir_str = MyKeyString("Ram:", 1023, NULL, ID_PRFS_GEN_SSHOTDIR, 100),
+                                                       MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
+                                                       MUIA_Disabled, FALSE,
+                                                       ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_SSHOTPATH),
+                                                    End,
+                                                 End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
                                         End,
                                      End,
-                                     Child, HGroup,  // OCS Tab
+                                     Child, VGroup,  // OCS Tab
                                         Child, ColGroup(2),
                                            Child, but_ocs_reset = TextObject, ButtonFrame,
                                               MUIA_Background, MUII_ButtonBack,
@@ -3215,25 +3310,40 @@ static int mui_setup_window(void)
                                               MUIA_InputMode, MUIV_InputMode_RelVerify,
                                            End,
                                            Child, HSpace(0),
-                                           Child, VSpace(0), Child, VSpace(0),
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
-                                           Child, cyc_ocs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
+                                        End,
+                                        Child, RegisterGroup(SubPagesOCS),
+                                           MUIA_Register_Frame, TRUE,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Kickstarts Page...
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
+                                                 Child, cyc_ocs_kickstart = PopaslObject,
+                                                    MUIA_Popstring_String, ocs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick1.rom", 1023, NULL, ID_PRFS_OCS_KICKSTART, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                                 End,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
+                                                 Child, cyc_ocs_kickstartkey = PopaslObject,
+                                                    MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                                 End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
-                                           Child, cyc_ocs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ocs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_OCS_KICKSTARTKEY, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Memory Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_ocs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_chipmem, MUIA_ObjectID, ID_PRFS_OCS_CHIPMEM, MUIA_UserData, ID_PRFS_OCS_CHIPMEM, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_ocs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_fastmem, MUIA_ObjectID, ID_PRFS_OCS_FASTMEM, MUIA_UserData, ID_PRFS_OCS_FASTMEM,  End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_ocs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_chipmem, MUIA_ObjectID, ID_PRFS_OCS_CHIPMEM, MUIA_UserData, ID_PRFS_OCS_CHIPMEM, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_ocs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ocs_fastmem, MUIA_ObjectID, ID_PRFS_OCS_FASTMEM, MUIA_UserData, ID_PRFS_OCS_FASTMEM,  End,
-                                           Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
-                                     Child, HGroup,  // ECS Tab
+                                     Child, VGroup,  // ECS Tab
                                         Child, ColGroup(2),
                                            Child, but_ecs_reset = TextObject, ButtonFrame,
                                               MUIA_Background, MUII_ButtonBack,
@@ -3243,26 +3353,47 @@ static int mui_setup_window(void)
                                               MUIA_InputMode, MUIV_InputMode_RelVerify,
                                            End,
                                            Child, HSpace(0),
-                                           Child, VSpace(0), Child, VSpace(0),
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
-                                           Child, cyc_ecs_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
+                                        End,
+                                        Child, RegisterGroup(SubPagesECS),
+                                           MUIA_Register_Frame, TRUE,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Kickstart Page...
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
+                                                 Child, cyc_ecs_kickstart = PopaslObject,
+                                                    MUIA_Popstring_String, ecs_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick2.rom", 1023, NULL, ID_PRFS_ECS_KICKSTART, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                                 End,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
+                                                 Child, cyc_ecs_kickstartkey = PopaslObject,
+                                                    MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                                 End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
-                                           Child, cyc_ecs_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, ecs_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_ECS_KICKSTARTKEY, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Memory Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_ecs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_chipmem, MUIA_ObjectID, ID_PRFS_ECS_CHIPMEM, MUIA_UserData, ID_PRFS_ECS_CHIPMEM, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_ecs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_fastmem, MUIA_ObjectID, ID_PRFS_ECS_FASTMEM, MUIA_UserData, ID_PRFS_ECS_FASTMEM, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_ECSMODE)), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_ecs_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_chipmem, MUIA_ObjectID, ID_PRFS_ECS_CHIPMEM, MUIA_UserData, ID_PRFS_ECS_CHIPMEM, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_ecs_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_ecs_fastmem, MUIA_ObjectID, ID_PRFS_ECS_FASTMEM, MUIA_UserData, ID_PRFS_ECS_FASTMEM, End,
-                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Chipset Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_ECSMODE)), Child, but_ecs_mode = CycleObject, MUIA_Cycle_Entries, cyc_ecs_mode, MUIA_ObjectID, ID_PRFS_ECS_MODE, MUIA_UserData, ID_PRFS_ECS_MODE, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
                                         End,
                                      End,
-                                     Child, HGroup,  // AGA Tab
+                                     Child, VGroup,  // AGA Tab
                                         Child, ColGroup(2),
                                            Child, but_aga_reset = TextObject, ButtonFrame,
                                               MUIA_Background, MUII_ButtonBack,
@@ -3272,24 +3403,39 @@ static int mui_setup_window(void)
                                               MUIA_InputMode, MUIV_InputMode_RelVerify,
                                            End,
                                            Child, HSpace(0),
-                                           Child, VSpace(0), Child, VSpace(0),
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
-                                           Child, cyc_aga_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
+                                        End,
+                                        Child, RegisterGroup(SubPagesAGA),
+                                           MUIA_Register_Frame, TRUE,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Kickstart Page...
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
+                                                 Child, cyc_aga_kickstart = PopaslObject,
+                                                    MUIA_Popstring_String, aga_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_AGA_KICKSTART, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                                 End,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
+                                                 Child, cyc_aga_kickstartkey = PopaslObject,
+                                                    MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                                 End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
-                                           Child, cyc_aga_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, aga_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_AGA_KICKSTARTKEY, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Memory Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_aga_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_aga_fastmem, MUIA_ObjectID, ID_PRFS_AGA_FASTMEM, MUIA_UserData, ID_PRFS_AGA_FASTMEM, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_aga_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_aga_fastmem, MUIA_ObjectID, ID_PRFS_AGA_FASTMEM, MUIA_UserData, ID_PRFS_AGA_FASTMEM, End,
-                                           Child, VSpace(0), Child, VSpace(0),
                                         End,
                                      End,
-                                     Child, HGroup,  // Custom Tab
+                                     Child, VGroup,
                                         Child, ColGroup(2),
                                            Child, but_cus_reset = TextObject, ButtonFrame,
                                               MUIA_Background, MUII_ButtonBack,
@@ -3299,63 +3445,101 @@ static int mui_setup_window(void)
                                               MUIA_InputMode, MUIV_InputMode_RelVerify,
                                            End,
                                            Child, HSpace(0),
-                                           Child, VSpace(0), Child, VSpace(0),
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
-                                           Child, cyc_cus_kickstart = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
-                                           End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
-                                           Child, cyc_cus_kickstartkey = PopaslObject,
-                                              MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY, 100),
-                                              MUIA_Popstring_Button, PopButton(MUII_PopFile),
-                                              ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
-                                           End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VHD1),'v'),
+                                           Child, Label1(" "),
+                                           Child, Label1(" "),
+                                        End,
+                                        Child, RegisterGroup(SubPagesCUS),
+                                           MUIA_Register_Frame, TRUE,
                                            Child, HGroup,
-                                              Child, chk_harddisk1 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD1),
-                                              Child, cyc_cus_harddisk1 = PopaslObject,
-                                                 MUIA_Popstring_String, cus_harddisk1_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK1, 100),
-                                                 MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-                                                 MUIA_Disabled, TRUE,
-                                                 ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_VHDPATH),
+                                              Child, ColGroup(2),
+                                                 // Kickstart Page...
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKFILE),'f'),
+                                                 Child, cyc_cus_kickstart = PopaslObject,
+                                                    MUIA_Popstring_String, cus_kickstart_str = MyKeyString("PROGDIR:Kickstarts/Kick3.rom", 1023, NULL, ID_PRFS_CUS_KICKSTART, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKFILEASL),
+                                                 End,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_KICKKEYFILE),'k'),
+                                                 Child, cyc_cus_kickstartkey = PopaslObject,
+                                                    MUIA_Popstring_String, cus_kickstartkey_str = MyKeyString("PROGDIR:Kickstarts/rom.key", 1023, NULL, ID_PRFS_CUS_KICKSTARTKEY, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopFile),
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_KICKKEYFILEASL),
+                                                 End,
+                                                 Child, VSpace(0), Child, VSpace(0),
                                               End,
                                            End,
-                                           Child, KeyLabel2(" ",'q'), //HSpace(0),
-                                           Child, grp_cus_harddisk1 = HGroup,
-                                              Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_DEVICENAME),'d'),
-                                              Child, cus_devname1_str = MyKeyString("DH0", 32, NULL, ID_PRFS_CUS_DEVNAME1, 20),
-                                              Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VOLUMENAME),'v'),
-                                              Child, cus_volname1_str = MyKeyString("System", 32, NULL, ID_PRFS_CUS_VOLNAME1, 80),
-                                              MUIA_Disabled, TRUE,
-                                           End,
-                                           Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VHD2),'v'),
                                            Child, HGroup,
-                                              Child, chk_harddisk2 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD2),
-                                              Child, cyc_cus_harddisk2 = PopaslObject,
-                                                 MUIA_Popstring_String, cus_harddisk2_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK2, 100),
-                                                 MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
-                                                 MUIA_Disabled, TRUE,
-                                                 ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_VHDPATH),
+                                              Child, ColGroup(2),
+                                                 // Memory Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_cus_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipmem, MUIA_ObjectID, ID_PRFS_CUS_CHIPMEM, MUIA_UserData, ID_PRFS_CUS_CHIPMEM, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_cus_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_fastmem, MUIA_ObjectID, ID_PRFS_CUS_FASTMEM, MUIA_UserData, ID_PRFS_CUS_FASTMEM, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_ZORROMEM)), Child, but_cus_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_cus_zorromem, MUIA_ObjectID, ID_PRFS_CUS_ZORROMEM, MUIA_UserData, ID_PRFS_CUS_ZORROMEM, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
                                               End,
                                            End,
-                                           Child, KeyLabel2(" ",'q'), //HSpace(0),
-                                           Child, grp_cus_harddisk2 = HGroup,
-                                              Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_DEVICENAME),'d'),
-                                              Child, cus_devname2_str = MyKeyString("DH1", 32, NULL, ID_PRFS_CUS_DEVNAME2, 20),
-                                              Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VOLUMENAME),'v'),
-                                              Child, cus_volname2_str = MyKeyString("Work", 32, NULL, ID_PRFS_CUS_VOLNAME2, 80),
-                                              MUIA_Disabled, TRUE,
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // Chipset Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPSET)), Child, but_cus_chipset = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipset, MUIA_ObjectID, ID_PRFS_CUS_CHIPSET, MUIA_UserData, ID_PRFS_CUS_CHIPSET, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
                                            End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CPU)), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CPUSPEED)), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_list_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_JIT)), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_list_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPSET)), Child, but_cus_chipset = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipset, MUIA_ObjectID, ID_PRFS_CUS_CHIPSET, MUIA_UserData, ID_PRFS_CUS_CHIPSET, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_CHIPMEM)), Child, but_cus_chipmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_chipmem, MUIA_ObjectID, ID_PRFS_CUS_CHIPMEM, MUIA_UserData, ID_PRFS_CUS_CHIPMEM, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_FASTMEM)), Child, but_cus_fastmem = CycleObject, MUIA_Cycle_Entries, cyc_cus_fastmem, MUIA_ObjectID, ID_PRFS_CUS_FASTMEM, MUIA_UserData, ID_PRFS_CUS_FASTMEM, End,
-                                           Child, Label1(Locale_GetString(MSG_SETTINGS_ZORROMEM)), Child, but_cus_zorromem = CycleObject, MUIA_Cycle_Entries, cyc_cus_zorromem, MUIA_ObjectID, ID_PRFS_CUS_ZORROMEM, MUIA_UserData, ID_PRFS_CUS_ZORROMEM, End,
-                                           Child, VSpace(0), Child, VSpace(0),
+                                           Child, HGroup,
+                                              Child, ColGroup(2),
+                                                 // CPU Page...
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CPU)), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CPUSPEED)), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_list_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_JIT)), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_list_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
+                                                 Child, VSpace(0), Child, VSpace(0),
+                                              End,
+                                           End,
+                                           Child, VGroup,
+                                              // Harddisks Page...
+                                              Child, HGroup,
+                                                Child, Label1(Locale_GetString(MSG_SETTINGS_VHD1)),
+                                                Child, HSpace(0),
+                                              End,
+                                              Child, HGroup,
+                                                 Child, chk_harddisk1 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD1),
+                                                 Child, cyc_cus_harddisk1 = PopaslObject,
+                                                    MUIA_Popstring_String, cus_harddisk1_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK1, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
+                                                    MUIA_Disabled, TRUE,
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_VHDPATH),
+                                                 End,
+                                              End,
+
+                                              Child, grp_cus_harddisk1 = HGroup,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_DEVICENAME),'d'),
+                                                 Child, cus_devname1_str = MyKeyString("DH0", 32, NULL, ID_PRFS_CUS_DEVNAME1, 20),
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VOLUMENAME),'v'),
+                                                 Child, cus_volname1_str = MyKeyString("System", 32, NULL, ID_PRFS_CUS_VOLNAME1, 80),
+                                                 MUIA_Disabled, TRUE,
+                                              End,
+
+                                              Child, HGroup,
+                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_VHD2)),
+                                                 Child, HSpace(0),
+                                              End,
+                                              Child, HGroup,
+                                                 Child, chk_harddisk2 = MUICreateCheckbox(FALSE, ID_PRFS_CUS_USEVHD2),
+                                                 Child, cyc_cus_harddisk2 = PopaslObject,
+                                                    MUIA_Popstring_String, cus_harddisk2_str = MyKeyString("PROGDIR:Harddisks/", 1023, NULL, ID_PRFS_CUS_HARDDISK2, 100),
+                                                    MUIA_Popstring_Button, PopButton(MUII_PopDrawer),
+                                                    MUIA_Disabled, TRUE,
+                                                    ASLFR_TitleText, Locale_GetString(MSG_SETTINGS_VHDPATH),
+                                                 End,
+                                              End,
+
+                                              Child, grp_cus_harddisk2 = HGroup,
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_DEVICENAME),'d'),
+                                                 Child, cus_devname2_str = MyKeyString("DH1", 32, NULL, ID_PRFS_CUS_DEVNAME2, 20),
+                                                 Child, KeyLabel2(Locale_GetString(MSG_SETTINGS_VOLUMENAME),'v'),
+                                                 Child, cus_volname2_str = MyKeyString("Work", 32, NULL, ID_PRFS_CUS_VOLNAME2, 80),
+                                                 MUIA_Disabled, TRUE,
+                                              End,
+                                              Child, VSpace(0), Child, VSpace(0),
+                                           End,
                                         End,
                                      End,
                                   End,
@@ -3399,9 +3583,6 @@ static int mui_setup_window(void)
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, TRUE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_Iconified);
    DoMethod(app, MUIM_Notify, MUIA_Application_Iconified, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Cleanup_Gfx, MUIV_UnIconified);
    DoMethod(app, MUIM_Notify, MUIA_Application_DoubleStart, TRUE, app, 3, MUIM_Set, MUIA_Application_Iconified, FALSE);
-
-   //DoMethod(but_tmp_joy0, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port0, MUIV_TriggerValue);
-   //DoMethod(but_tmp_joy1, MUIM_Notify, MUIA_Cycle_Active, MUIV_EveryTime, obj_rendermcc, 3, MUIM_Set, MUIA_Runtime_Port1, MUIV_TriggerValue);
 
    DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, app, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
    DoMethod(win_main, MUIM_Notify, MUIA_AppMessage, MUIV_EveryTime, win_main, 3, MUIM_CallHook, &AppMsg_hook, MUIV_TriggerValue);
@@ -3621,8 +3802,8 @@ int graphics_setup (int argc, char **argv)
    if (argc == 0)
       FetchTools(argc, argv);
 
-   Locale_Open("MorphUAE.catalog", 1, 2);
-   Populate_CycleStrings();
+   Locale_Open("MorphUAE.catalog", 1, 3);
+   Populate_Strings();
    morphuae_icon = GetDiskObject("PROGDIR:MorphUAE");
 
    initpseudodevices ();

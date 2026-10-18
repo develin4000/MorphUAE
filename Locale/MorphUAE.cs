@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.2 (09.09.2026)
+## Version $VER: MorphUAE.catalog 1.3 (15.10.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0
@@ -585,5 +585,40 @@ Anslutet till I/O-port 0
 MSG_SHORTHELP_IOPORT1 (115//)
 Attached to I/O-Port 1
 Anslutet till I/O-port 1
+
+;
+MSG_SETTINGS_SSHOT (116//)
+Screenshot Directory :
+Skärmdumpslåda :
+
+;
+MSG_SETTINGS_SSHOTPATH (117//)
+Please select a directory for your screenshots...
+Välj en låda för din skärmdumpar...
+
+;
+MSG_SETTINGS_MEMTITLE (118//)
+Memory
+Minne
+
+;
+MSG_SETTINGS_CHIPSET_TITLE (119//)
+Chipset
+Chipset
+
+;
+MSG_SETTINGS_CPU_TITLE (120//)
+CPU
+Processor
+
+;
+MSG_SETTINGS_KICKSTART_TITLE (121//)
+Kickstart
+Kickstart
+
+;
+MSG_SETTINGS_HARDDISK_TITLE (122//)
+Harddisks
+Hårddiskar
 
 ;
