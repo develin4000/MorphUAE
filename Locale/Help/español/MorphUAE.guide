@@ -1,0 +1,756 @@
+@DATABASE "MorphUAE.guide"
+@(c) "2025-2026 Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.3 (18-10-26) por Stefan Blixth, OnyxSoft"
+@INDEX "Index"
+@NODE "Main" "Documentación - MorphUAE"
+@NEXT "intro"
+
+ @{b}MorphUAE 1.3@{ub} - © 2025-2026 Stefan Blixth, OnyxSoft
+
+ - Documentación de Usuario -
+
+ @{" Introducción   " LINK "intro"   } - ¿ Qués es MorphUAE ?
+ @{" Requerimientos " LINK "req"     } - ¿ Qué se necesita para utilizarlo ?
+ @{" Instalación    " LINK "install" } - Cómo se instala.
+ 
+ @{" Utilización    " LINK "usage"   } - Cómo se utiliza MorphUAE.
+       |
+       +-------- - @{" Ventana Principal " LINK "usage-main"     }
+       +-------- - @{" Ajustes           " LINK "usage-settings" }
+       +-------- - @{" CLI / Shell       " LINK "usage-shell"    }
+       +-------- - @{" Tooltypes         " LINK "usage-tooltype" }
+       +-------- - @{" Ambient           " LINK "usage-ambient"  }
+       +-------- - @{" Atajos            " LINK "usage-hotkeys"  }
+       +-------- - @{" ARexx             " LINK "usage-arexx"    }
+
+ @{" FAQ             " LINK "faq"     } - Preguntas Más Habituales.
+
+ @{" ¿Novedades?     " LINK "news"    } - ¿Qué novedades incorpora esta versión?
+ @{" Historia        " LINK "history" } - Historia de este programa.
+ @{" Futuro          " LINK "future"  } - ¿Qué vemos en la bola de cristal?
+ @{" Copyrights      " LINK "copy"    } - Asuntos legales..
+
+ @{" Autor           " LINK "author"  } - La persona detrás del programa.
+ @{" Agradecimientos " LINK "thanks"  } - Mis mayores respetos a..
+
+ @{" Donaciones      " LINK "donate"  } - Muestra tu apoyo a OnyxSoft
+
+@ENDNODE
+
+@NODE "intro" "MorphUAE - Introducción"
+@PREV "main"
+@NEXT "req"
+
+ @{b}@{u}Introducción@{uu}@{ub}
+ 
+ MorphUAE es una variante mejorada del emulador E-UAE creada exclusivamente para
+ MorphOS.
+
+ Podrías pensar, ¿pero no había ya una versión E-UAE para MorphOS?...y la
+ respuesta es desde luego, ¡Si!. Sin embargo, la versión portada, creada por
+ Fabien Coeurjoly, fue actualizada por última vez hace más de 10 años.
+
+ E-UAE sigue el estilo Un*x en el manejo de su configuración, consistiendo
+ actualmente en ficheros de texto. También carece de soporte MUI, por lo que
+ es básicamente una ventana Intuition.
+
+ Así, que esa fue la idea clave para el nacimiento de MorphUAE. 
+ Súmale una experiencia de usuario mejorada y más sencilla junto a algunas
+ características nuevas.
+
+@ENDNODE
+
+@NODE "req" "MorphUAE - Requerimientos"
+@PREV "intro"
+@NEXT "install"
+
+ @{b}@{u}Requerimientos@{uu}@{ub}
+
+ El programa necesita para funcionar :
+
+ · MorphOS 3.x o superior
+ · Gráficos TrueColour / 24Bit
+ · ROMs Kickstart Amiga (para una mejor compatibilidad)
+
+@ENDNODE
+
+@NODE "install" "MorphUAE - Instalación"
+@PREV "req"
+@NEXT "usage"
+
+ @{b}@{u}Instalación@{uu}@{ub}
+
+ El programa no requiere instalación, por tanto no viene con ningún guion de
+ instalación. Sólo debes ubicarlo donde desees y ejecutarlo desde ahí =)
+
+ Coloca tus ficheros Kickstart Amiga en el cajón @{b}Kickstarts@{ub}
+ Los nombre(s) por defecto que utiliza el emulador son los siguientes:-
+
+ @{b}Kick1.rom@{ub} : hardware OCS
+ @{b}Kick2.rom@{ub} : hardware ECS
+ @{b}Kick3.rom@{ub} : hardware AGA
+ @{b}rom.key@{ub}   : Tu keyfile de AmigaForever/Cloanto
+ . . . . . . . . . . . (por si tienes ficheros rom encriptados)
+
+ Sin embargo, el nombre puede ser cualquier otro puesto que puedes modificarlo
+ en la ventana de ajustes para cada tipo de equipo. En caso de adoptar los nombres
+ de los ficheros tal y como aparecen en la lista anterior el emulador funcionará
+ directamente, sin necesidad de cambiar nada.
+
+ MorphUAE incorpora imágenes ROM AROS m68k que puedes utilizar en caso de
+ que el programa no encuentre Kickstarts de Amiga reales. Estas son
+ reimplementaciones de los Kickstarts oficiales para Amigas m68k. No son
+ perfectos, pero deberían funcionar "razonablemente bien" en la mayoría de
+ los casos. Para conseguir la mejor compatibilidad siempre será mejor
+ tratar de utilizar un fichero Kickstart ROM real de Amiga.
+
+@ENDNODE
+
+@NODE "usage" "MorphUAE - Utilización"
+@PREV "install"
+@NEXT "faq"
+
+ @{b}@{u}Utilización@{uu}@{ub}
+
+ La interfaz de usuario del programa consiste en un par de campos/elementos que
+ se describen brevemente a continuación...
+
+  @{" Ventana Principal  " LINK "usage-main"     }
+  @{" Ajustes            " LINK "usage-settings" }
+  @{" CLI / Shell        " LINK "usage-shell"    }
+  @{" Tooltypes          " LINK "usage-tooltype" }
+  @{" Ambient            " LINK "usage-ambient"  }
+  @{" Atajos             " LINK "usage-hotkeys"  }
+  @{" ARexx              " LINK "usage-arexx"    }
+
+@ENDNODE
+
+@NODE "usage-main" "MorphUAE - Ventana Principal"
+@PREV "usage"
+@NEXT "usage-settings"
+
+ @{b}· Ventana Principal :@{ub}
+
+   Lo primero que verás al iniciar el emulador es la ventana principal.
+   La ventana consiste básicamente en un área de vídeo para el sistema
+   emulado y debajo una barra de tareas.
+
+
+ @{b}· Barra de Herramientas :@{ub}
+   
+   Desde esta barra puedes modificar los ajustes del emulador y controlar
+   su funcionamiento. La barra incluye una serie de botones que se explican
+   a continuación.
+
+
+    @{b}· Ajustes :@{ub}
+
+      Abre la ventana de ajustes para gestionar los diferentes ajustes.
+
+
+    @{b}· Reset :@{ub}
+
+      Este botón resetea el emulador en modo Hard o Soft (dependiendo de lo que
+      selecciones en la ventana de ajustes o en la pestaña General).
+      Al pulsar el botón aparece un menú desde el que seleccionar el reseteo
+      normal o resetear para cambiar a otro tipo de máquina.
+
+
+    @{b}· Pantalla Completa :@{ub}
+
+      Mediante este botón el emulador abre una ventana a pantalla completa
+      redimensionado los gráficos para que se ajusten a la misma. Oculta la
+      barra de herramienta para mostrar únicamente los datos de vídeo en la
+      ventana. Si quieres volver al modo ventana utiliza el atajo
+      (on/off) : @{b}altizq+enter@{ub}
+
+
+    @{b}· Captura :@{ub}
+
+      Con este botón se realiza una captura de la imagen visualizada en la
+      ventana principal. Guardará la imagen en @{b}RAM:@{ub} con el nombre
+      @{b}MorphUAE-Screenshot.png@{ub}, por defecto.
+
+
+    @{b}· Pausar/Resumir :@{ub}
+
+      El botón Pausa o Resume la emulación en función del estado actual.
+      Al pausar la emulación el título de la ventana cambia a: 
+      @{b}MorphUAE - Pausado@{ub}
+
+
+    @{b}· Acerca :@{ub}
+
+      Muestra la ventana Acerca de...
+
+
+    @{b}· Selector de Mando puerto 0 o 1 :@{ub}
+
+      Te permite cambiar el puerto emulado durante la ejecución de la
+      emulación. Viene a ser como si cambiases virtualmente el ratón
+      con un mando y viceversa.
+
+
+    @{b}· Guardar/Cargar Savestate :@{ub}
+
+      Al pulsar este botón verás un menú emergente que permite cargar o
+      guardar el estado actual de la máquina. Es muy útil en caso de que
+      tengas que cerrar el juego en el momento que quieras para continuar
+      con él más adelante.
+
+
+    @{b}· Expulsar Disquetes :@{ub}
+
+      Este botón expulsa todas las imágenes de disco anteriormente añadidas
+      o montadas en DF0-DF3
+
+
+    @{b}· Disquetes / Indicadores LED :@{ub}
+    
+      Estos botones representan las imágenes de disco e indican las operaciones
+      de lectura/escritura mientras están en funcionamiento.
+      Se etiquetan de izquierda a derecha : DF0, DF1, DF2, DF3.
+      Pulsando sobre cualquiera de ellas aparece una petición ASL que te
+      permite seleccionar el fichero .ADF deseado que quieras montar/utilizar
+      en el emulador.
+
+      Puedes arrastrar ficheros ADF en la ventana principal, y el emulador los
+      montará en sus ranuras de disco contenedoras (máximo 4).  
+      Es una forma rápida de cambiar de discos.
+
+@ENDNODE
+
+@NODE "usage-settings" "MorphUAE - Ajustes"
+@PREV "usage-main"
+@NEXT "usage-shell"
+
+ @{b}Ajustes :@{ub}
+
+   Esta ventana incluye una serie de pestañas destinadas a configurar los
+   ajustes Generales del emulador, o ajustes específicos de cada tipo de
+   máquina.
+   
+   Todas las pestañas configurables tienen un botón de opción "Resetear a
+   por defecto" - en caso de que quieras resetear al estado original de los
+   ajustes.
+
+    @{b}· Pestaña General :@{ub}
+
+      El botón @{b}Tipo de Máquina@{ub} te permite seleccionar cuál de las
+      pestañas quieres utilizar como máquina emulada por defecto cuando se
+      inicia el emulador. Cada una de las pestañas seleccionadas presenta
+      opciones para seleccionar ROMs Kickstarts específicos y otros
+      parámetros específicos de cada máquina.
+      Esta selección puede ser sobrescrita mediante los flags CLI/Shell
+      en caso necesario.
+
+     @{b} Sección Sonido@{ub} permite configurar la calidad de salida del
+      sonido emulado e incluso desactivarlo por completo.
+
+     @{b} Dispositivos I/O@{ub} permite elegir el tipo de dispositivo emulado
+      que pretendas conectar al puerto del ratón/mando. También podrás ajustar
+      la velocidad de emulación de la disquetera. Algunos juegos/demos tienen
+      problemas con velocidades superior a la normal, por lo tanto es buena
+      idea verificarlo en caso de que se produzcan incidencias.
+
+     @{b} Sección Gráficos@{ub} Aquí puedes modificar la precisión de los
+      gráficos emulados. Si tu equipo se fuerza demasiado con gráficos
+      intensos suele producirse sonido entrecortado o una lentitud general
+      por tanto puede ser útil como banco de pruebas para ajustarlo, y
+      obtener los mejores resultados.
+
+      En esta sección puedes ajustar el tipo de imagen en el área de vídeo.
+      Hay dos opciones WritePixelArray (por defecto) y Overlay.
+      Si utilizas Overlay podrás redimensionar libremente la ventana del
+      programa.
+
+
+    @{b}· Pestaña OCS :@{ub}
+
+      Este tipo de máquina emula las primeras generaciones de Amiga con chips
+      OCS, menor consumo de memoria y ROM Kickstart 1.x.
+      Los sistemas clásicos son A500/A1000/A2000 (MC68000)
+
+
+    @{b}· Pestaña ECS :@{ub}
+
+      Es una máquina muy similar a las de los ajustes OCS pero la configuración
+      utiliza el chipset ECS (pudiendo elegir si quieres emular ECS Agnus,
+      Denise o ambos). ROM Kickstart 2.x.
+      Equipos típicos A500+/A600 (MC68000).
+
+
+    @{b}· Pestaña AGA :@{ub}
+
+      Es la última generación de Amigas la que utiliza el juego de chips AGA
+      y cuenta por defecto con 2Mb de memoria CHIP pudiendo ampliarse con hasta
+      1-8 Mb de memoria FAST. ROM Kickstart 3.x.
+      Equipo típico A1200. (MC68020)
+
+
+    @{b}· Pestaña Custom :@{ub}
+
+      En este tipo de máquina podrás personalizar el equipo emulado a tu gusto.
+      Puedes añadir hasta 2 discos duros virtuales (ruta a tu SO anfitrión desde
+      donde copiar ficheros de forma bi-direccional con facilidad ). Los nombres
+      de Dispositivo y Volumen se emplean en el entorno emulado. Podrás
+      seleccionar el tipo de procesador a emular (68020, 68040 o 68060).
+      También hay una opción para activar o desactivar el Compilador JIT PPC con
+      una variedad de tamaños de caché, aunque esta opción puede causar
+      problemas durante la emulación a la vez que acelera la emulación de forma
+      notable. Depende en gran medida del tipo de binarios/programas que
+      se ejecuten durante la emulación.
+    
+
+   @{b}· Pestaña Acerca :@{ub}
+
+     Te muestra la versión/revisión del programa y los créditos.
+
+
+   @{b}· Botones Utilizar, Guardar y Cancelar :@{ub}
+
+     El botón @{b}Utilizar@{ub} guarda todos los ajustes en ENV:
+			(No se guardan con CERRAR/SALIR) y reinicia el emulador UTILIZANDO los
+			ajustes nuevos.
+
+     El botón @{b}Guardar y Utilizar@{ub} GUARDA todos los ajustes tanto en ENV
+            como en ENVARC y reinicia el emulador utilizando los ajustes nuevos..
+
+     El botón @{b}Guardar@{ub} GUARDA los ajustes en ENVARC: (Continúa como START-UP)
+            Los ajustes GUARDADOS se utilizan con el siguiente reinicio del
+            sistema.
+
+     El botón @{b}Cancelar@{ub} simplemente cierra la ventana de ajustes.
+
+
+@ENDNODE
+
+@NODE "usage-shell" "MorphUAE - CLI / Shell"
+@PREV "usage-settings"
+@NEXT "usage-ambient"
+
+ @{b}CLI/Shell :@{ub}
+
+    @{b}-ocs@{ub} : Sobrescribe los ajustes por defecto y los utiliza con la
+		   @{b}pestaña OCS@{ub} de la GUI de ajustes.
+
+    @{b}-ecs@{ub} : Sobrescribe los ajustes por defecto y los utiliza con la
+           @{b}pestaña ECS@{ub} en la GUI de ajustes.
+
+    @{b}-aga@{ub} : Sobrescribe los ajustes por defecto y los utiliza con la
+           @{b}pestaña AGA@{ub} en la GUI de ajustes.
+
+    @{b}-custom@{ub} : Sobrescribe los ajustes por defecto y los utiliza con la
+              @{b}pestaña Custom@{ub} en la GUI de ajustes.
+
+    @{b}-nochecksum@{ub} : Ignora la comprobación checksum del fichero Kickstart/ROM
+                  pues algunas ROMSs modificadas no funcionan, viniendo a ser como
+                  un diagnóstico de ROM.
+
+    @{b}-fullscreen@{ub} : Arranca el emulador en modo pantalla completa.
+
+    @{b}-overscan@{ub} : Utiliza resolución overscan para la imagen.
+
+    @{b}-ntsc@{ub} : Ejecuta el emulador en modo NTSC.
+
+    @{b}-notoolbar@{ub} : Oculta la barra de herramientas desde el inicio.
+
+
+    @{b}-0 <fichero ADF>@{ub} : Inserta un disco ADF en DF0: al inicio.
+    @{b}-1 <fichero ADF>@{ub} : Inserta un disco ADF en DF1: al inicio.
+    @{b}-2 <fichero ADF>@{ub} : Inserta un disco ADF en DF2: al inicio.
+    @{b}-3 <fichero ADF>@{ub} : Inserta un disco ADF en DF3: al inicio.
+
+@ENDNODE
+
+@NODE "usage-tooltype" "MorphUAE - Tooltypes"
+@PREV "usage-shell"
+@NEXT "usage-ambient"
+
+ @{b}Tooltypes (Tipos de Herramientas):@{ub}
+
+    @{b}OCS@{ub} : Sobrescribe los ajustes por defecto y utiliza los parámetros
+          indicados en la @{b}pestaña OCS@{ub} de la ventana de ajustes.
+
+    @{b}ECS@{ub} : Sobrescribe los ajustes por defecto y utiliza los parámetros
+          indicados en la @{b}pestaña ECS@{ub} de la ventana de ajustes.
+
+    @{b}AGA@{ub} : Sobrescribe los ajustes por defecto y utiliza los parámetros
+          indicados en la @{b}pestaña AGA@{ub} de la ventana de ajustes.
+
+    @{b}CUSTOM@{ub} : Sobrescribe los ajustes por defecto y utiliza los parámetros
+          indicados en la @{b}pestaña Custom@{ub} de la ventana de ajustes.
+
+    @{b}FULLSCREEN@{ub} : Inicia el emulador en modo pantalla completa.
+
+    @{b}OVERSCAN@{ub} : Utiliza resolución overscan para la imagen.
+
+    @{b}DOUBLEBUFFER@{ub} : Utiliza doble búfer en la imagen generada.
+
+    @{b}NTSC@{ub} : Ejecuta el emulador en modo NTSC.
+
+    @{b}NOTOOLBAR@{ub} : Oculta la barra de herramientas desde el inicio.
+
+@ENDNODE
+
+@NODE "usage-ambient" "MorphUAE - Ambient"
+@PREV "usage-tooltype"
+@NEXT "usage-hotkeys"
+
+ @{b}Ambient :@{ub}
+
+   Si quieres arrancar automáticamente desde Ambient al cargar una imagen de
+   disco ADF en MorphOS, puedes ir al menú de Ajustes en Ambient.
+
+   Ajustes
+      |
+      +- Ambient...
+
+   En la GUI de Ajustes Ambient, busca la opción "Mime" en el panel izquierdo.
+   Utiliza la opción Buscar para 'adf' en la GUI par buscar el tipo "x-adf",
+   y pulsa dos veces sobre el mismo.
+
+   · Añade un tipo de evento nuevo, y asígnale un nombre apropiado.
+   · Cambia el tipo a @{b}AmigaDOS@{ub}
+   · Ajusta el tipo de evento a : Doble Clic
+   · Comprueba la opción "Cambiar directorio de uso a destino"
+   
+   · Añade la línea siguiente al campo asociado : 
+   
+   @{b}run >NIL: Work:Emulators/MorphUAE/MorphUAE -0 %sp@{ub}
+   
+   Quizá tengas que modificar la línea anterior para ajustarla al cajón donde
+   tengas MorphUAE guardado.
+   ( esto es sólo un ejemplo )
+
+@ENDNODE
+
+@NODE "usage-hotkeys" "MorphUAE - Atajos"
+@PREV "usage-ambient"
+@NEXT "usage-arexx"
+
+ @{b}· Atajos Barra de Herramientas :@{ub}
+
+    · Resetear . . . . . . . . . . . : @{b}ctrl+altizq+r@{ub}
+    · Pantalla Completa/Ventana  . . : @{b}altizq+enter@{ub} ( activa )
+    · Captura . . .  . . . . . . . . : @{b}ctrl+altizq+s@{ub}
+    · Pausa/Resumen . . . . . .  . . : @{b}ctrl+altizq+p@{ub}
+    · Expulsar Imágenes de Disco . . : @{b}ctrl+altizq+e@{ub}
+    · Insertar Imagen en DF0 : @{b}ctrl+altizq+1@{ub}
+    · Insertar Imagen en DF1 : @{b}ctrl+altizq+2@{ub}
+    · Insertar Imagen en DF2 : @{b}ctrl+altizq+3@{ub}
+    · Insertar Imagen en DF3 : @{b}ctrl+altizq+4@{ub}
+
+ @{b}· Otros Atajos :@{ub}
+
+    · Barra de Herramientas (Activar/Desactivar) : @{b}ctrl+altizq+t@{ub}
+    · Salir del emulador . . . . . . . . . . . . : @{b}ctrl+altizq+q@{ub}
+
+@ENDNODE
+
+@NODE "usage-arexx" "MorphUAE - ARexx"
+@PREV "usage-hotkeys"
+@NEXT "faq"
+
+ @{b}ARexx :@{ub}
+
+   · Aún no se está implementado...
+
+@ENDNODE
+
+
+@NODE "faq" "MorphUAE - FAQ"
+@PREV "usageprefs"
+@NEXT "news"
+
+@{b}@{u}FAQ - Preguntas Más Habituales@{uu}@{ub}
+
+* @{b}P = Pregunta@{ub}
+* @{b}R = Respuesta@{ub}
+
+-------------------------------------------------------------------------------
+P - ¿Dónde consigo ficheros ROM Amiga?
+
+R - La forma más fácil es comprar una licencia en www.amigaforever.com
+    Y la forma más económica es obtenerlas es desde Android (vía Google Play) :
+    https://play.google.com/store/apps/details?id=com.cloanto.amigaforever.essentials
+
+    Si tienes un Amiga físico puedes volcar el contenido del kickstart directamente
+    a un fichero para poder utilizarlo en el emulador. Tienes varias herramientas
+    en Aminet para este propósito.
+
+
+P - La GUI de vídeo no muestra los colores correctos y los gráficos se ven extraños.
+
+R - Este emulador NECESITA resoluciones 24 bits para funcionar como está previsto.
+
+
+P - La posición del ratón en el Amiga (emulación), no está sincronizada con las
+    coordenadas del ratón del SO anfitrión.
+
+R - Es un problema que vamos a solucionar en próximas versiones de MorphUAE y
+    es un problema ya diagnosticado.
+
+
+P - Al utilizar el modo de pantalla completa los gráficos no son tan "grandes"
+    como sería de esperar.
+
+R - Añade un modo de pantalla 24/32 bits con la resolución 640 x 512 píxeles en
+    los ajustes de monitor y la pantalla quedará ajustada mejor.
+
+
+P - ¿Puedo utilizar el controlador P96 para programas RTG con MorphUAE?
+
+R - No, no por el momento.
+    La idea fundamental tras este emulador es ser compatible con juegos y
+    demos de tiempos pasados del Amiga. Aparte de esto, los programas
+    compatibles RTG funcionan directamente en MorphOS. Por lo tanto, no se
+    ganaría nada añadiendo este soporte al emulador.
+    Quizá en un futuro, pero no está en modo alguno en la lista de prioridades.
+-------------------------------------------------------------------------------
+
+
+@ENDNODE
+
+@NODE "news" "MorphUAE - ¿Novedades?"
+@PREV "usage"
+@NEXT "history"
+
+ @{b}@{u}Novedades@{uu}@{ub}
+
+ · Nuevo diseño de la GUI de ajustes.
+ · Selección del cajón de capturas. (Sugerencia de jPV)
+
+@ENDNODE
+
+@NODE "history" "MorphUAE - Historia"
+@PREV "news"
+@NEXT "future"
+
+ @{b}@{u}Historia@{uu}@{ub}
+
+
+ 07-Oct-2026 - Tercera versión pública (1.2)
+
+ * Soporte Overlay. (Gracias rzookol)
+ * Se añade tooltype y argumento CLI para iniciar ventana sin la barra de herramientas.
+ * Se añade tooltype y argumento CLI para iniciar el emulador en modo NTSC.
+ * Las imágenes LED se tornan rojas durante la escritura. (Sugerencia de jPV)
+ * Se añade opción para ajustar la latencia de sonido y utilizar la frecuencia
+   propia del sistema.
+ * Se sustituyen los botones de ciclo de la barra de herramientas para selección
+   mediante ratón/mando.
+ * El número de LEDs de las unidades de disco indica ahora lo especificado en los
+   ajustes.
+ * El número por defecto de unidades de disquete ahora es de 4.
+ * Se incluye una versión compilada especialmente para equipos con procesador G5.
+
+
+ 19-Ago-2026 - Segunda versión pública (1.1)
+
+
+ * Las peticiones guardan la ruta y qué fichero ADF se ha seleccionado en cada
+   dispositivo de imagen. (Sugerencia de jPV)
+
+ * Al arrastrar y soltar distintos ficheros imagen ADF se distribuyen entre los
+   diferentes dispositivos. (Sugerencia de jPV)
+
+ * El LED de Imagen ADF ahora se vuelve azul si hay alguna imagen montada
+   (Sugerencia de jPV)
+
+ * Se añade una opción CLI/Shell para activar la resolución overscan (-overscan).
+
+ * Ahora el botón reseteo puede cambiar el estado de la máquina, a través de un
+   menú emergente.
+   (Sugerencia de bitRocky)
+
+ * La imagen ADF activa aparece en el título de ventana.
+   (Sugerencia de bitRocky)
+
+ * Los dispositivos virtuales montados no se liberaban por completo al cambiar
+   entre los tipos de máquina.
+
+ * Se pueden utilizar los Tooltypes para cambiar el funcionamiento del emulador.
+
+ * Ahora se pueden guardar y cargar Savestates (Estados) desde la GUI.
+
+
+ · 23-Jul-2026
+
+   * Primera versión pública de MorphUAE (1.0)
+
+
+@ENDNODE
+
+@NODE "future" "MorphUAE - Futuro"
+@PREV "history"
+@NEXT "copy"
+
+ @{b}@{u}Futuro@{uu}@{ub}
+
+ · Soporte ARexx
+ · Soporte TinyGL
+ · Integrar un núcleo nuevo de emulación de WinUAE y o Amiberry
+
+ · ... Se aceptan sugerencias =)
+
+@ENDNODE
+
+@NODE "copy" "MorphUAE - Copyright y Descargo de Responsabilidad"
+@PREV "future"
+@NEXT "author"
+
+ @{b}@{u}Copyright y Descargo de Responsabilidad@{uu}@{ub}
+
+ MorphUAE es totalmente gratuito (FreeWare) pero las @{"donaciones" LINK "donate"}
+ siempre serán bien recibidas. Si te gusta el programa, al @{"autor" LINK "author"}
+ le encantaría que le escribieses un correo electrónico o una postal para
+ comunicárselo... ;-)
+
+ Se otorga permiso para distribuir copias literales del programa siempre que
+ la nota de copyright y la nota de permiso queden preservadas en todas las
+ copias.
+
+ No se ofrece garantía de ningún tipo sobre la fiabilidad 100% del programa.
+ Utilizas este programa bajo tu propia responsabilidad. El autor no se hace
+ responsable de cualquier daño que pueda acarrear el uso de este programa.
+
+ Este paquete es de libre distribución, pero los copyrights siguen aplicando.
+ Eso significa que puedes copiarlo libremente siempre que no cobres nada más
+ que una tarifa nominal de copiado.
+
+ Se garantiza el permiso a incluir el paquete en colecciones de Dominio
+ Público, CDs de Aminet, etc., etc.. Se puede subir el paquete a
+ Sistemas BBS y servidores FTP.
+ 
+@ENDNODE
+
+@NODE "author" "MorphUAE - Acerca del autor"
+@PREV "copy"
+@NEXT "thanks"
+
+ @{b}@{u}Acerca del autor@{uu}@{ub}
+
+ Me llamo Stefan Blixth, y soy programador/ingeniero eléctrico en Karlstad,
+ Suecia.
+
+ Si quieres contactar conmigo por este programa (o cualquier otro de mis programas),
+ la mejor forma es mediante correo electrónico. Por tanto, si tienes algún comentario,
+ encuentras errores, o tienes alguna queja, no dudes en utilizar una de estas
+ direcciones de contacto :
+
+ Correo personal : @{b}stefan@onyxsoft.se@{ub}
+
+ También puedes contactar conmigo en el servidor MorphOS-Discord : 
+ @{b}https://discord.com/invite/B8dT7z8JJD@{ub}
+ Me encontrarás por el apodo: "Develin4k"
+
+ Si quieres enviarme una postal, mi dirección es :
+
+ @{b}Stefan Blixth
+ Spånga 433
+ 655 94 Karlstad
+ Suecia@{ub}
+
+ Si te interesan más programas míos y/o del resto del equipo.
+ Tienes a tu disposición la biblioteca completa de software de OnyxSo en la
+ URL siguiente :
+
+ @{b}www.onyxsoft.se@{ub}
+ 
+ ...Y mis proyectos de código abierto están en la página : 
+ @{b}github.com/develin4000@{ub}
+
+@ENDNODE
+
+@NODE "thanks" "MorphUAE - Agradecimientos a.."
+@PREV "author"
+@NEXT "donate"
+
+ @{b}@{u}Agradecimientos@{uu}@{ub}
+
+ Quisiera agradecer a las siguientes personas/grupos por hacer posible
+ la creación de este programa.
+
+ @{b}Equipo MorphOS@{ub}
+ Por crear el mejor sistema existente, ¡Me encanta!
+
+ @{b}Equipo de desarrollo de AROS@{ub}
+ Por su genial SO, ¡y por el sustituto de Kickstart de libre distribución!
+
+ @{b}Frank 'cyfm' Mariak@{ub}
+ Por la ayuda con las cuestiones de CyberGraphX modo pantalla completa
+ ¡y muchas cosas más!
+
+ @{b}Dave 'skateman' Koelman@{ub}
+ Por permitirme ser parte de la "Familia Mirari" =)
+
+ @{b}Grzegorz Kraszewski@{ub}
+ Por el sistema Reggae empleado para la captura de imágenes.
+
+ @{b}Stefan Stuntz@{ub}
+ Por el increíble Magic User Interface (MUI).
+
+ @{b}Guido 'Geit' Mersmann@{ub}
+ Por su magnífico SimpleCat.
+
+ @{b}Neil Pearson@{ub}
+ Por la lectura de prueba y corrección de este manual.
+
+ @{b}Michal 'rzookol' Zukowski@{ub}
+ Por el código para el soporte Overlay.
+
+@ENDNODE
+
+@NODE "donate" "MorphUAE - Donaciones"
+@PREV "thanks"
+
+ @{b}@{u}Agradecemos cualquier Donación@{uu}@{ub}
+
+ En OnyxSoft llevamos publicando programas gratuitos desde 1995 y seguimos
+ con fuerza y entusiasmo, y ambición para el futuro de las plataformas Amiga.
+
+ Por descontado es algo que nos gustaría seguir haciendo en el futuro.
+ Todos nuestros programas son totalmente libres de cargos y sin ningún tipo
+ de limitaciones, etc..
+
+ Hemos creado una cuenta PayPal, ya que muchos usuarios nos preguntaban cómo
+ podían donar dinero (para motivarnos incluso más, y mantener el "flujo"
+ de lanzamiento de software).
+
+ Para enviar donaciones, utiliza la siguiente cuenta de correo:
+
+ @{b}donate@onyxsoft.se@{ub}
+
+
+ ¡Gracias por tu apoyo!
+
+
+@ENDNODE
+
+@NODE "Index" "Índice de la documentación"
+
+ @{b}@{u}Índice (A-Z)@{uu}@{ub}
+
+ @{" Autor                   " LINK "author"         }
+ @{" Copyright               " LINK "copy"           }
+ @{" Donaciones              " LINK "donate"         }
+ @{" FAQ                     " LINK "faq"            }
+ @{" Características         " LINK "intro"          }
+ @{" Futuro                  " LINK "future"         }
+ @{" Historia                " LINK "history"        }
+ @{" Instalación             " LINK "install"        }
+ @{" Introducción            " LINK "intro"          }
+ @{" Página Principal        " LINK "main"           }
+ @{" Requerimientos          " LINK "req"            }
+ @{" Agradecimientos a       " LINK "thanks"         }
+ @{" Utilización             " LINK "usage"          }
+ @{" Uso - Ventana Principal " LINK "usage-main"     }
+ @{" Uso - Ajustes           " LINK "usage-settings" } 
+ @{" Uso - CLI / Shell       " LINK "usage-shell"    }
+ @{" Uso - Tooltypes         " LINK "usage-tooltype" }
+ @{" Uso - Ambient           " LINK "usage-ambient"  }
+ @{" Uso - Atajos            " LINK "usage-hotkeys"  }
+ @{" Uso - ARexx             " LINK "usage-arexx"    }
+ @{" ¿Novedades ?            " LINK "news"           }
+@ENDNODE

@@ -501,6 +501,7 @@ A - No, not at this point.
 
  · Redesigned the settings GUI.
  · Selectable screenshot folder. (Suggested by jPV)
+ · Spanish translation included (by Lizard Gut)
 
 @ENDNODE
 
@@ -673,6 +674,9 @@ A - No, not at this point.
 
  @{b}Michal 'rzookol' Zukowski@{ub}
  For the Overlay code support.
+
+ @{b}Victor 'Lizard Gut' Gutierrez@{ub}
+ For the Spanish translation for both manual and program.
 
 @ENDNODE
 
