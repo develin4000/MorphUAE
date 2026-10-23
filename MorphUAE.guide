@@ -502,6 +502,7 @@ A - No, not at this point.
  · Redesigned the settings GUI.
  · Selectable screenshot folder. (Suggested by jPV)
  · Spanish translation included (by Lizard Gut)
+ · Drag and drop a savestate file (.uss) to the window loads it directly.
 
 @ENDNODE
 

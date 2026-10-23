@@ -178,6 +178,8 @@ STRPTR sshotval;
 char sshotstr[1024];
 int sshotcntr = 1;
 
+#define ASF_HEADER  0x41534620     // ASF
+
 int xdiff, ydiff, xstart, ystart;
 BOOL fscheck = FALSE;
 
@@ -464,6 +466,24 @@ struct RenderData
 // Global variable...
 static struct MUI_CustomClass *render_mcc = NULL; // Our Render MCC
 
+BOOL check_asf_header(char *filename)
+{
+   FILE *fp;
+   unsigned long fsize, identity;
+
+   //Check if the file dropped to the window is a savestate file (.uss)
+   if (fp = fopen(filename, "rb"))
+   {
+      fsize = fread(&identity, 4, 1, fp);
+      fclose(fp);
+      debug_print("%s (%d) ASF Header - %s (%x)\n", __func__, __LINE__, (identity == ASF_HEADER) ? "Found" : " NOT Found", identity);
+      if (identity == ASF_HEADER)
+         return TRUE;
+   }
+   return FALSE;
+}
+
+
 MUI_HOOK(AppMsg, APTR obj, struct AppMessage **x)
 {
    struct WBArg *ap;
@@ -472,11 +492,20 @@ MUI_HOOK(AppMsg, APTR obj, struct AppMessage **x)
    static char buf[256];
    char *b=buf;
 
+
    for (ap=amsg->am_ArgList,i=0;i<amsg->am_NumArgs;i++,ap++)
    {
       NameFromLock(ap->wa_Lock,buf,sizeof(buf));
       set_floppy_dir((i < 4) ? i : 0, buf);
       AddPart(buf,ap->wa_Name,sizeof(buf));
+
+      if (check_asf_header(b)) // Found a valid ASF Savestate file...
+      {
+         savestate_initsave(b, 1);
+         savestate_state = STATE_DORESTORE;
+         break;
+      }
+
       set_last_adf((i < 4) ? i : 0, ap->wa_Name, TRUE);
 
       debug_print("%s (%d) - Attched file %s to DF%d\n", __func__, __LINE__, b, i);
