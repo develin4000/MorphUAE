@@ -1,6 +1,6 @@
 @DATABASE "MorphUAE.guide"
 @(c) "2025-2026 Stefan Blixth, OnyxSoft"
-@$VER: "MorphUAE 1.3 (18-10-26) by Stefan Blixth, OnyxSoft"
+@$VER: "MorphUAE 1.3 (22-11-26) by Stefan Blixth, OnyxSoft"
 @INDEX "Index"
 @NODE "Main" "MorphUAE - Documentation"
 @NEXT "intro"
@@ -503,6 +503,10 @@ A - No, not at this point.
  · Selectable screenshot folder. (Suggested by jPV)
  · Spanish translation included (by Lizard Gut)
  · Drag and drop a savestate file (.uss) to the window loads it directly.
+ · Keyboard can now be used as a emulated joystick (I/O Devices).
+ · Window title now indicates which machine type is used.
+ · Pressing "Use" in settings only resets the emulator if needed.
+ · TinyGL support.
 
 @ENDNODE
 
@@ -568,7 +572,6 @@ A - No, not at this point.
  @{b}@{u}Future@{uu}@{ub}
 
  · ARexx support
- · TinyGL support
  · Integrate newer emulation core from WinUAE and or Amiberry
 
  · ... Suggestions are welcome =)

@@ -1703,20 +1703,22 @@ static void set_kbr_default (struct uae_prefs *p, int index, int num)
 
 void inputdevice_default_prefs (struct uae_prefs *p)
 {
-    int i;
+  int i;
 
-    inputdevice_init ();
-    p->input_joymouse_multiplier = 20;
-    p->input_joymouse_deadzone = 33;
-    p->input_joystick_deadzone = 33;
-    p->input_joymouse_speed = 10;
-    p->input_mouse_speed = 100;
-    p->input_autofire_framecnt = 10;
-    for (i = 0; i <= MAX_INPUT_SETTINGS; i++) {
-	set_kbr_default (p, i, 0);
-	input_get_default_mouse (p->mouse_settings[i]);
-	input_get_default_joystick (p->joystick_settings[i]);
-    }
+   inputdevice_init ();
+   p->input_joymouse_multiplier = 20;
+   p->input_joymouse_deadzone = 33;
+   p->input_joystick_deadzone = 33;
+   p->input_joymouse_speed = 10;
+   p->input_mouse_speed = 100;
+   p->input_autofire_framecnt = 10;
+
+   for (i = 0; i <= MAX_INPUT_SETTINGS; i++)
+   {
+      set_kbr_default (p, i, 0);
+      input_get_default_mouse (p->mouse_settings[i]);
+      input_get_default_joystick (p->joystick_settings[i]);
+   }
 }
 
 void inputdevice_setkeytranslation (struct uae_input_device_kbr_default *trans)
@@ -2272,6 +2274,12 @@ void setmousestate_new (unsigned int datax, unsigned int datay)
    *oldm_px = datax;
    *mouse_px += dx;
 
+   // BEGIN test
+   // *oldm_px = *mouse_px;
+   // *mouse_px += datax;
+   // dx = (*mouse_px - *oldm_px) * currprefs.input_mouse_speed / 100.0;
+   // END test
+
    dy = 0;
    mouse_py = &mouse_axis[0][1];
    oldm_py = &oldm_axis[0][1];
@@ -2279,6 +2287,12 @@ void setmousestate_new (unsigned int datax, unsigned int datay)
    dy = datay - (int)(*oldm_py);
    *oldm_py = datay;
    *mouse_py += dy;
+
+   // BEGIN test
+   // *oldm_py = *mouse_py;
+   // *mouse_py += datay;
+   // dy = (*mouse_py - *oldm_py) * currprefs.input_mouse_speed / 100.0;
+   // END test
 
    lastmx = datax;
    lastmy = datay;

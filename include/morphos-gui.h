@@ -128,6 +128,7 @@ enum
 static char *cyc_gen_machine[]    = { "OCS", "ECS", "AGA", "Custom", NULL };
 static char *cyc_gen_frequency[]  = { "11025 Hz", "22050 Hz", "44100 Hz", "48000 Hz", "System Default", NULL };
 static char *cyc_gen_latency[]    = { "50ms","60ms","70ms","80ms","90ms","100ms","110ms","120ms","130ms","140ms","150ms", NULL};
+static char *cyc_list_renderer[]  = { "WritePixelArray", "Overlay", "TinyGL", NULL};
 static char *cyc_list_floppynum[] = { "1", "2", "3", "4", NULL};
 static Object *gen_sshotdir_str = NULL; // (Path string)
 APTR gen_sshotdir;

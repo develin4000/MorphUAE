@@ -1933,8 +1933,8 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
       savestate_capture (0);
 
       count_frame ();
-/*
-      check_picasso ();
+//
+      //check_picasso ();
 
       if (check_prefs_changed_gfx ())
       {
@@ -1951,7 +1951,7 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 
       check_prefs_changed_custom ();
       check_prefs_changed_cpu ();
-*/
+//
       if (inhibit_frame != 0)
          framecnt = 1;
 

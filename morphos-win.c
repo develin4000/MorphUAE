@@ -94,6 +94,7 @@
 #include <proto/multimedia.h>
 #include <classes/multimedia/video.h>
 #include <classes/multimedia/metadata.h>
+//#include <proto/auxcore.h>
 
 /****************************************************************************/
 
@@ -121,6 +122,11 @@
 #include <morphos-gui.h>
 #include <morphuae_locale.h>
 #include "morphos-overlay.h"
+#include "morphos-tinygl.h"
+
+#define RENDER_MODE_SURFACE 0
+#define RENDER_MODE_OVERLAY 1
+#define RENDER_MODE_TINYGL  2
 
 // MCC Classes
 #include <mui/Rawimage_mcc.h>
@@ -156,7 +162,7 @@ struct Library       *RawFilterBase = NULL;
 struct Library       *MemoryStreamBase = NULL;
 struct Library       *FileOutputBase = NULL;
 struct Library       *LocaleBase = NULL;
-
+//struct Library       *AuxCoreBase = NULL;
 
 struct vidbuf_description *tmp_gfxinfo;
 int tmp_line_no;
@@ -169,6 +175,7 @@ UBYTE *tmpdata = NULL;
 
 APTR buffer;
 BOOL UseOverscan = FALSE;
+BOOL FirstConfig = TRUE;
 
 static char *floppy_dir[4];
 BOOL adfstate[4];
@@ -177,6 +184,12 @@ char titlestr[256];
 STRPTR sshotval;
 char sshotstr[1024];
 int sshotcntr = 1;
+
+#define ISETTINGSNUM 13
+#define SSETTINGSNUM 14
+
+long set_ints[ISETTINGSNUM];
+char set_strs[SSETTINGSNUM][128];
 
 #define ASF_HEADER  0x41534620     // ASF
 
@@ -298,7 +311,7 @@ struct Locale *MorphUAE_Locale;
 static struct Catalog *MorphUAE_Catalog;
 struct Window *twnd = NULL;
 
-static STRPTR cyc_list_jport[4];
+static STRPTR cyc_list_jport[7];
 static STRPTR cyc_list_sndout[5];
 static STRPTR cyc_list_sndchan[4];
 static STRPTR cyc_list_floppy[4];
@@ -307,10 +320,8 @@ static STRPTR cyc_list_blits[3];
 static STRPTR cyc_list_sprites[5];
 static STRPTR cyc_list_frames[4];
 static STRPTR cyc_list_reset[3];
-static STRPTR cyc_list_speed[3];
 static STRPTR cyc_list_jit[5];
 static STRPTR cyc_list_keys[8];
-static STRPTR cyc_list_renderer[3];
 
 static STRPTR SubPagesGen[5];
 static STRPTR SubPagesOCS[3];
@@ -438,6 +449,7 @@ struct RenderData
 #define MUIV_Settings_SaveUse   7
 #define MUIV_Settings_Save      8
 #define MUIV_Settings_Cancel    9
+#define MUIV_Settings_Window    10
 
 #define MUIA_Runtime_Port0     (TAGBASE_DEVELIN | 0x0035)
 #define MUIA_Runtime_Port1     (TAGBASE_DEVELIN | 0x0036)
@@ -455,6 +467,9 @@ struct RenderData
 #define MUIV_IOPorts_Mouse     1
 #define MUIV_IOPorts_Joy0      2
 #define MUIV_IOPorts_Joy1      3
+#define MUIV_IOPorts_Key1      4
+#define MUIV_IOPorts_Key2      5
+#define MUIV_IOPorts_Key3      6
 
 #define ASL_LOAD_IMAGEFILE     0
 #define ASL_SAVE_SAVESTATE     1
@@ -675,6 +690,156 @@ void manage_disk_state(int devnum, char *imgstr)
    set_disk_state(devnum, TRUE);
 }
 
+void fetch_current_settings(void)
+{
+   LONG ival = 0;
+   STRPTR sval;
+   unsigned int scntr = 0;
+   unsigned int strcntr = 0;
+
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   // General Tab
+   get(but_gen_machine, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+
+   // OCS Tab
+   GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, ocs_kickstartkey_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   get(but_ocs_chipmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_ocs_fastmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+
+   // ECS Tab
+   GetAttr(MUIA_String_Contents, ecs_kickstart_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, ecs_kickstartkey_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   get(but_ecs_chipmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_ecs_fastmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+
+   // AGA Tab
+   GetAttr(MUIA_String_Contents, aga_kickstart_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, aga_kickstartkey_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   get(but_aga_fastmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+
+   // Custom Tab
+   GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   get(but_cus_chipmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_cus_fastmem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_cus_zorromem, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_cus_cpu, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(but_cus_jit, MUIA_Cycle_Active, &ival);
+   set_ints[scntr++] = ival;
+   get(chk_harddisk1, MUIA_Selected, &ival);
+   set_ints[scntr++] = ival;
+   get(chk_harddisk2, MUIA_Selected, &ival);
+   set_ints[scntr++] = ival;
+   GetAttr(MUIA_String_Contents, cus_harddisk1_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_devname1_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_volname1_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_harddisk2_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_devname2_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+   GetAttr(MUIA_String_Contents, cus_volname2_str, (ULONG *)&sval);
+   strcpy (set_strs[strcntr++], sval);
+}
+
+BOOL compare_settings(void)
+{
+   LONG ival = 0;
+   STRPTR sval;
+   unsigned int scntr = 0;
+   unsigned int strcntr = 0;
+
+   debug_print("%s (%d)\n", __func__, __LINE__);
+
+   // General Tab
+   get(but_gen_machine, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+
+   // OCS Tab
+   GetAttr(MUIA_String_Contents, ocs_kickstart_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+
+   GetAttr(MUIA_String_Contents, ocs_kickstartkey_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   get(but_ocs_chipmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_ocs_fastmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+
+   // ECS Tab
+   GetAttr(MUIA_String_Contents, ecs_kickstart_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, ecs_kickstartkey_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   get(but_ecs_chipmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_ecs_fastmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+
+   // AGA Tab
+   GetAttr(MUIA_String_Contents, aga_kickstart_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, aga_kickstartkey_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   get(but_aga_fastmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+
+   // Custom Tab
+   GetAttr(MUIA_String_Contents, cus_kickstart_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_kickstartkey_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   get(but_cus_chipmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_cus_fastmem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_cus_zorromem, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_cus_cpu, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(but_cus_jit, MUIA_Cycle_Active, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(chk_harddisk1, MUIA_Selected, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   get(chk_harddisk2, MUIA_Selected, &ival);
+   if (set_ints[scntr++] != ival) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_harddisk1_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_devname1_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_volname1_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_harddisk2_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_devname2_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+   GetAttr(MUIA_String_Contents, cus_volname2_str, (ULONG *)&sval);
+   if (strcmp(set_strs[strcntr++], sval) != 0) return TRUE;
+
+   return FALSE;
+}
 
 /*=----------------------------- Locale_Open()--------------------------------*
  *                                                                            *
@@ -753,7 +918,14 @@ STRPTR Locale_GetString( long id )
 
 void set_window_title(void)
 {
-   NewRawDoFmt("MorphUAE%s%s", NULL, titlestr, get_disk_state(0) ? " - " : "", get_disk_state(0) ? get_last_adf(0) : "");
+   long mpos;
+
+   NewRawDoFmt("MorphUAE [%s] %s%s", NULL, titlestr, (uae_get_cfgtype() == UAE_CFGTYPE_OCS ? "OCS" :
+                                                      uae_get_cfgtype() == UAE_CFGTYPE_ECS ? "ECS" :
+                                                      uae_get_cfgtype() == UAE_CFGTYPE_AGA ? "AGA" :
+                                                      uae_get_cfgtype() == UAE_CFGTYPE_CUS ? "Custom" : ""),
+                                                      get_disk_state(0) ? " - " : "",
+                                                      get_disk_state(0) ? get_last_adf(0) : "");
    set(win_main, MUIA_Window_Title, titlestr);
 }
 
@@ -766,6 +938,9 @@ void Populate_Strings(void)
       cyc_list_jport[0] = Locale_GetString(MSG_CYC_JPORT_0);
       cyc_list_jport[1] = Locale_GetString(MSG_CYC_JPORT_1);
       cyc_list_jport[2] = Locale_GetString(MSG_CYC_JPORT_2);
+      cyc_list_jport[3] = Locale_GetString(MSG_CYC_KEYB_1);
+      cyc_list_jport[4] = Locale_GetString(MSG_CYC_KEYB_2);
+      cyc_list_jport[5] = Locale_GetString(MSG_CYC_KEYB_3);
 
       cyc_list_sndout[0] = Locale_GetString(MSG_CYC_SOUNDOUT_0);
       cyc_list_sndout[1] = Locale_GetString(MSG_CYC_SOUNDOUT_1);
@@ -798,9 +973,6 @@ void Populate_Strings(void)
       cyc_list_reset[0] = Locale_GetString(MSG_CYC_RESET_0);
       cyc_list_reset[1] = Locale_GetString(MSG_CYC_RESET_1);
 
-      cyc_list_speed[0] = Locale_GetString(MSG_CYC_SPEED_0);
-      cyc_list_speed[1] = Locale_GetString(MSG_CYC_SPEED_1);
-
       cyc_list_jit[0] = Locale_GetString(MSG_CYC_JIT_0);
       cyc_list_jit[1] = Locale_GetString(MSG_CYC_JIT_1);
       cyc_list_jit[2] = Locale_GetString(MSG_CYC_JIT_2);
@@ -813,9 +985,6 @@ void Populate_Strings(void)
       cyc_list_keys[4] = Locale_GetString(MSG_CYC_KEYS_4);
       cyc_list_keys[5] = Locale_GetString(MSG_CYC_KEYS_5);
       cyc_list_keys[6] = Locale_GetString(MSG_CYC_KEYS_6);
-
-      cyc_list_renderer[0] = Locale_GetString(MSG_CYC_RENDER_0);
-      cyc_list_renderer[1] = Locale_GetString(MSG_CYC_RENDER_1);
 
       SubPagesGen[0] = Locale_GetString(MSG_SETTINGS_SOUNDTITLE);
       SubPagesGen[1] = Locale_GetString(MSG_SETTINGS_IOTITLE);
@@ -865,7 +1034,7 @@ void reset_tab(unsigned int tab)
          set(but_gen_blitter, MUIA_Cycle_Active, 0);          // Off - Check this!
          set(but_gen_sprite, MUIA_Cycle_Active, 3);           // Full - Check this!
          set(but_gen_framerate, MUIA_Cycle_Active, 0);        // Every one
-         set(but_gen_renderer, MUIA_Cycle_Active, 0);         // 0 = WPA, 1 = Overlay
+         set(but_gen_renderer, MUIA_Cycle_Active, 0);         // 0 = WPA, 1 = Overlay, 2 = TinyGL
          set(but_gen_resetmode, MUIA_Cycle_Active, 0);        // Soft!
          set(gen_sshotdir_str, MUIA_String_Contents, "Ram:"); // Default Screenshot folder - Ram:
       }  break;
@@ -907,7 +1076,6 @@ void reset_tab(unsigned int tab)
          set(cus_devname2_str, MUIA_String_Contents, "DH1");
          set(cus_volname2_str, MUIA_String_Contents, "Work");
          set(but_cus_cpu, MUIA_Cycle_Active, 0);      // 68020
-         set(but_cus_speed, MUIA_Cycle_Active, 1);    // Max
          set(but_cus_jit, MUIA_Cycle_Active, 0);      // Off
          set(but_cus_chipset, MUIA_Cycle_Active, 2);  // AGA
          set(but_cus_chipmem, MUIA_Cycle_Active, 2);  // 2 Mb
@@ -942,7 +1110,7 @@ void setup_specific(int conf)
    LONG val;
    BPTR fh = 0;
 
-   debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d) - Setup_specific - Value = %d\n", __func__, __LINE__, conf);
 
    if (conf == UAE_CFGTYPE_OCS) // OCS
    {
@@ -979,7 +1147,7 @@ void setup_specific(int conf)
                                     val == 3 ? 0x400000 : 0x800000);
 
       changed_prefs.cpu_level = 0;   // 68000
-      changed_prefs.m68k_speed = 0;  // Real
+      changed_prefs.m68k_speed = -1;  // Max
    }
    else if (conf == UAE_CFGTYPE_AGA) // AGA
    {
@@ -996,7 +1164,7 @@ void setup_specific(int conf)
                                     val == 3 ? 0x400000 : 0x800000);
 
       changed_prefs.cpu_level = 2;  // 68020
-      changed_prefs.m68k_speed = 0; // Real
+      changed_prefs.m68k_speed = -1; // Max
    }
    else // Custom
    {
@@ -1040,8 +1208,7 @@ void setup_specific(int conf)
       changed_prefs.cpu_level = (val == 0 ? 2 :
                                  val == 1 ? 4 : 6);
 
-      get(but_cus_speed, MUIA_Cycle_Active, &val);
-      changed_prefs.m68k_speed = (val == 0 ? 0 : -1);
+      changed_prefs.m68k_speed = -1;
 
       get(but_cus_jit, MUIA_Cycle_Active, &val);
       if (val > 0)
@@ -1058,28 +1225,28 @@ void setup_specific(int conf)
          changed_prefs.comptrustlong = 1;
          changed_prefs.compoptim = 1;
       }
-   }
 
-   get(but_cus_chipmem, MUIA_Cycle_Active, &val);
-   changed_prefs.chipmem_size = (val == 0 ? 0x80000 :
+      get(but_cus_chipmem, MUIA_Cycle_Active, &val);
+      changed_prefs.chipmem_size = (val == 0 ? 0x80000 :
                                  val == 1 ? 0x100000 : 0x200000);
 
-   get(but_cus_fastmem, MUIA_Cycle_Active, &val);
-   changed_prefs.fastmem_size = (val == 0 ? 0 :
-                                 val == 1 ? 0x100000 :
-                                 val == 2 ? 0x200000 :
-                                 val == 3 ? 0x400000 : 0x800000);
+      get(but_cus_fastmem, MUIA_Cycle_Active, &val);
+      changed_prefs.fastmem_size = (val == 0 ? 0 :
+                                    val == 1 ? 0x100000 :
+                                    val == 2 ? 0x200000 :
+                                    val == 3 ? 0x400000 : 0x800000);
 
-   get(but_cus_zorromem, MUIA_Cycle_Active, &val);
-   changed_prefs.z3fastmem_size = (val == 0 ? 0 :
-                                   val == 1 ? 0x100000 :
-                                   val == 2 ? 0x200000 :
-                                   val == 3 ? 0x400000 :
-                                   val == 4 ? 0x800000 :
-                                   val == 5 ? 0x1000000 :
-                                   val == 6 ? 0x2000000 :
-                                   val == 7 ? 0x4000000 :
-                                   val == 8 ? 0x8000000 : 0x10000000);
+      get(but_cus_zorromem, MUIA_Cycle_Active, &val);
+      changed_prefs.z3fastmem_size = (val == 0 ? 0 :
+                                      val == 1 ? 0x100000 :
+                                      val == 2 ? 0x200000 :
+                                      val == 3 ? 0x400000 :
+                                      val == 4 ? 0x800000 :
+                                      val == 5 ? 0x1000000 :
+                                      val == 6 ? 0x2000000 :
+                                      val == 7 ? 0x4000000 :
+                                      val == 8 ? 0x8000000 : 0x10000000);
+   }
 
    // Check if the selected Kickstart is really present, otherwise use AROS ROM replacement...
    if( fh = Open(ks, MODE_OLDFILE) )
@@ -1096,13 +1263,14 @@ void setup_specific(int conf)
       strcpy(changed_prefs.romextfile,"PROGDIR:Kickstarts/aros/aros-ext.bin");
    }
 
-   //strcpy(changed_prefs.cartfile, "PROGDIR:Cartridge/ar.rom");
+   uae_set_cfgtype(conf);
 }
 /*=*/
 
 /*=----------------------------- setup_generic() -----------------------------*
  *                                                                            *
  *----------------------------------------------------------------------------*/
+
 void setup_generic(void)
 {
    LONG mpos, spos, jpos, val;
@@ -1110,16 +1278,26 @@ void setup_generic(void)
    int clicfg = UAE_CFGTYPE_DEFAULT;
 
    debug_print("%s (%d)\n", __func__, __LINE__);
+
    if (!uae_get_oldconfig())
    {
       get(but_gen_machine, MUIA_Cycle_Active, &mpos);
 
-      clicfg = uae_get_cfgtype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
+      if (FirstConfig)
+      {
+         clicfg = uae_get_cfgtype();    // Incase we have got a cfg parameter from commandline, we should override the GUI-settings with it...
 
-      if (clicfg == UAE_CFGTYPE_DEFAULT)
-         setup_specific(mpos);
+         if (clicfg == UAE_CFGTYPE_DEFAULT)
+         {
+            setup_specific(mpos);
+         }
+         else
+            setup_specific(clicfg);
+
+         FirstConfig = FALSE;
+      }
       else
-         setup_specific(clicfg);
+         setup_specific(mpos);
 
       // Sound
       get(but_gen_sound, MUIA_Cycle_Active, &spos);
@@ -1142,12 +1320,20 @@ void setup_generic(void)
                                      spos == 9 ? 140 : 150);
       // IO Devices...
       get(but_gen_joy0, MUIA_Cycle_Active, &jpos);
-      //set(but_tmp_joy0, MUIA_Cycle_Active, jpos);
-      set(btn_ioport0, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse : jpos == 1 ? gfx_joystick0 : gfx_joystick1));
+      set(btn_ioport0, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse :
+                                            jpos == 1 ? gfx_joystick0 :
+                                            jpos == 2 ? gfx_joystick1 :
+                                            jpos == 3 ? gfx_keyboard1 :
+                                            jpos == 4 ? gfx_keyboard2 : gfx_keyboard3));
+
       changed_prefs.jport0 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
       get(but_gen_joy1, MUIA_Cycle_Active, &jpos);
-      //set(but_tmp_joy1, MUIA_Cycle_Active, jpos);
-      set(btn_ioport1, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse : jpos == 1 ? gfx_joystick0 : gfx_joystick1));
+      set(btn_ioport1, MUIA_Rawimage_Data, (jpos == 0 ? gfx_mouse :
+                                            jpos == 1 ? gfx_joystick0 :
+                                            jpos == 2 ? gfx_joystick1 :
+                                            jpos == 3 ? gfx_keyboard1 :
+                                            jpos == 4 ? gfx_keyboard2 : gfx_keyboard3));
+
       changed_prefs.jport1 = (jpos == 0 ? 200 : jpos == 1 ? 100 : 101);
       get(but_gen_floppynum, MUIA_Cycle_Active, &jpos);
       changed_prefs.nr_floppies = jpos+1;
@@ -1171,11 +1357,10 @@ void setup_generic(void)
       get(but_gen_framerate, MUIA_Cycle_Active, &val);
       changed_prefs.gfx_framerate = val+1;
       get(but_gen_renderer, MUIA_Cycle_Active, &val);
-      changed_prefs.amiga_use_overlay = val ? 1 : 0;
+      changed_prefs.amiga_use_overlay = (val > RENDER_MODE_TINYGL) ? RENDER_MODE_SURFACE : (int)val;
 
       // Misc...
       //gen_sshotdir_str
-
    }
 }
 /*=*/
@@ -1305,10 +1490,45 @@ BOOL Save_Reggae(char *fname, UBYTE *imgdata, WORD width, WORD height, WORD dept
  * The hardware backend itself lives in morphos-overlay.c.  These wrappers keep the Render MCC       *
  * call sites small and pass the current MUI/window/frame state to that module.                       *
  *---------------------------------------------------------------------------------------------------*/
+/* Renderer selection is stored in currprefs.amiga_use_overlay:
+ *   0 = surface (WritePixelArray), 1 = CGXVideo overlay, 2 = TinyGL.
+ * Any non-zero value is an "accelerated" mode, so the existing boolean checks
+ * keep working; TinyGL falls back to the overlay and then to the surface. */
+
+static BOOL Render_AccelAttached(void)
+{
+   return MorphOverlay_HasLayer() || MorphTinyGL_IsAttached();
+}
+
+static void Render_SetAccelFailed(BOOL failed)
+{
+   MorphOverlay_SetFailed(failed);
+   MorphTinyGL_SetFailed(failed);
+}
+
+static void Render_ResetAccelState(void)
+{
+   MorphOverlay_ResetRuntimeState();
+   MorphTinyGL_SetFailed(FALSE);
+}
+
+static BOOL Render_AccelWanted(void)
+{
+   if (!currprefs.amiga_use_overlay || MorphOverlay_IsSuspended())
+      return FALSE;
+
+   if (currprefs.amiga_use_overlay == RENDER_MODE_TINYGL &&
+       MorphTinyGL_IsAvailable() && !MorphTinyGL_IsFailed())
+      return TRUE;
+
+   return CGXVideoBase && !MorphOverlay_IsFailed();
+}
+
 static void Render_DestroyOverlay(struct RenderData *data)
 {
    (void)data;
    MorphOverlay_Destroy();
+   MorphTinyGL_Destroy();
 }
 
 static BOOL Render_FullscreenScreenIsActive(const struct RenderData *data)
@@ -1333,22 +1553,22 @@ static void Render_PollOverlayVisibility(void)
    if (!MorphOverlay_OwnerScreenIsVisible())
    {
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
       return;
    }
 
    if (data->FullScreen && !Render_FullscreenScreenIsActive(data))
    {
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
    }
 }
 
 static void Render_UpdateOverlayGeometry(struct RenderData *data, Object *obj)
 {
    MorphOverlay_UpdateGeometry(obj, data->window, data->FullScreen,
-                               (ULONG)((gfxvidinfo.width > 0) ? gfxvidinfo.width : 1),
-                               (ULONG)((gfxvidinfo.height > 0) ? gfxvidinfo.height : 1));
+                              (ULONG)((gfxvidinfo.width > 0) ? gfxvidinfo.width : 1),
+                              (ULONG)((gfxvidinfo.height > 0) ? gfxvidinfo.height : 1));
 }
 
 static void Render_ClearOverlayBacking(struct RenderData *data, Object *obj)
@@ -1378,6 +1598,16 @@ static BOOL Render_PresentOverlay(struct RenderData *data, Object *obj)
 
 static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj);
 
+static BOOL Render_PresentTinyGL(struct RenderData *data, Object *obj)
+{
+   return MorphTinyGL_Present(obj, data->window, data->screen, data->FullScreen,
+                              data->LiveResize,
+                              data->Buffer, data->PixelFormat,
+                              gfxvidinfo.width, gfxvidinfo.height,
+                              gfxvidinfo.rowbytes, gfxvidinfo.pixbytes,
+                              currprefs.gfx_vsync ? TRUE : FALSE);
+}
+
 static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
 {
    /* Never touch an attached Window/RastPort while the application is
@@ -1386,8 +1616,34 @@ static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
     * notifications.
     */
    if (data->Iconified || !data->Active || !currprefs.amiga_use_overlay ||
-       MorphOverlay_IsSuspended() || !CGXVideoBase)
+       MorphOverlay_IsSuspended() || (!CGXVideoBase && !MorphTinyGL_IsAvailable()))
       return;
+
+   /* TinyGL has priority when selected.  If it cannot create a context or a
+    * frame fails, remember that and continue with the CGXVideo overlay (or the
+    * plain surface) below, exactly as if TinyGL had not been requested.
+    */
+   if (currprefs.amiga_use_overlay == RENDER_MODE_TINYGL &&
+       MorphTinyGL_IsAvailable() && !MorphTinyGL_IsFailed())
+   {
+      /* A VLayer left over from a previous overlay session would stay above
+       * the TinyGL output, so make sure it is gone. */
+      if (MorphOverlay_HasLayer())
+         MorphOverlay_Destroy();
+
+      if (Render_PresentTinyGL(data, obj))
+         return;
+
+      write_log("MUIGFX: TinyGL presentation failed, falling back.\n");
+      MorphTinyGL_Destroy();
+      MorphTinyGL_SetFailed(TRUE);
+   }
+
+   if (!CGXVideoBase)
+   {
+      Render_DrawSurfaceFrame(data, obj);
+      return;
+   }
 
    /* Reject a layer that belongs to an old Window/Screen.  In particular, a
     * persistent windowed layer must never be accepted as the fullscreen one.
@@ -1396,7 +1652,7 @@ static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
        !MorphOverlay_BelongsTo(data->window, data->screen, data->FullScreen))
    {
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
    }
 
    /* A fullscreen VLayer must not remain above another public screen. */
@@ -1404,7 +1660,7 @@ static void Render_FlushOverlayFrame(struct RenderData *data, Object *obj)
    {
       if (MorphOverlay_HasLayer())
          Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
       return;
    }
 
@@ -1443,14 +1699,12 @@ static void Render_DrawSurfaceFrame(struct RenderData *data, Object *obj)
    }
 
    WritePixelArray(data->Buffer, 0, 0, gfxvidinfo.rowbytes, _rp(obj), sx, sy, gfxvidinfo.width, gfxvidinfo.height, RECTFMT_ARGB);
-   //FillPixelArray(_rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), 0x00000000);
-   //ScalePixelArray(gfx_logo, 640, 512, 640 * 4, _rp(obj), sx, sy, _width(obj), _height(obj), RECTFMT_ARGB);
 }
 
 static void Render_SuspendOverlayForUI(struct RenderData *data, Object *obj)
 {
    MorphOverlay_Suspend();
-   if (MorphOverlay_HasLayer())
+   if (Render_AccelAttached())
    {
       Render_DestroyOverlay(data);
       Render_DrawSurfaceFrame(data, obj);
@@ -1460,6 +1714,7 @@ static void Render_SuspendOverlayForUI(struct RenderData *data, Object *obj)
 static void Render_ResumeOverlayAfterUI(void)
 {
    MorphOverlay_Resume();
+   MorphTinyGL_SetFailed(FALSE);
 }
 
 /* Apply an overlay preference change immediately to the already-created MUI
@@ -1468,16 +1723,26 @@ static void Render_ResumeOverlayAfterUI(void)
  * controlled by Render_Askminmax(): reopening the window makes MUI query the
  * new min/max values and update the Intuition window limits.
  */
-static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, BOOL enable)
+static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, LONG mode)
 {
    ULONG was_open = FALSE;
+   BOOL enable = mode ? TRUE : FALSE;
+   LONG old_mode = currprefs.amiga_use_overlay;
 
-   changed_prefs.amiga_use_overlay = enable ? 1 : 0;
-   currprefs.amiga_use_overlay = enable ? 1 : 0;
+   if (mode < RENDER_MODE_SURFACE || mode > RENDER_MODE_TINYGL)
+      mode = RENDER_MODE_SURFACE;
 
-   MorphOverlay_ResetRuntimeState();
+   changed_prefs.amiga_use_overlay = mode;
+   currprefs.amiga_use_overlay = mode;
 
-   if (!enable && MorphOverlay_HasLayer())
+   /* Switching between surface/overlay/TinyGL: drop whatever presenter was
+    * attached so the next frame builds the right one. */
+   if (old_mode != mode)
+      Render_DestroyOverlay(data);
+
+   Render_ResetAccelState();
+
+   if (!enable && Render_AccelAttached())
       Render_DestroyOverlay(data);
 
    if (!data->FullScreen && win_main)
@@ -1520,7 +1785,7 @@ static void Render_ApplyOverlayPreference(struct RenderData *data, Object *obj, 
    }
 
    /* Fullscreen is never user-resizable.  Only update the VLayer state. */
-   if (enable && data->Active && !MorphOverlay_HasLayer())
+   if (mode == RENDER_MODE_OVERLAY && data->Active && !MorphOverlay_HasLayer())
    {
       if (!Render_AttachOverlay(data, obj))
          MorphOverlay_SetFailed(TRUE);
@@ -1782,10 +2047,10 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                 * Window/Screen.  Do not rely on MUIM_Hide here because the
                 * resize workaround deliberately preserves windowed VLayers.
                 */
-               if (MorphOverlay_HasLayer())
+               if (Render_AccelAttached())
                {
                   Render_DestroyOverlay(data);
-                  MorphOverlay_SetFailed(FALSE);
+                  Render_SetAccelFailed(FALSE);
                }
 
                /* Save window position while the Intuition Window is still
@@ -1923,6 +2188,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                         Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_0), End,
                         Child, MenuitemObject, MUIA_UserData, 2,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_1), End,
                         Child, MenuitemObject, MUIA_UserData, 3,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_2), End,
+                        Child, MenuitemObject, MUIA_UserData, 4,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_1), End,
+                        Child, MenuitemObject, MUIA_UserData, 5,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_2), End,
+                        Child, MenuitemObject, MUIA_UserData, 6,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_3), End,
                      End,
                   End))
                   {
@@ -1941,12 +2209,26 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   set(obj_rendermcc, MUIA_Runtime_Port0, 1);
                   set(btn_ioport0, MUIA_Rawimage_Data, gfx_joystick0);
                }
-               else // (tag->ti_Data == MUIV_IOPorts_Joy1)
+               else if (tag->ti_Data == MUIV_IOPorts_Joy1)
                {
                   set(obj_rendermcc, MUIA_Runtime_Port0, 2);
                   set(btn_ioport0, MUIA_Rawimage_Data, gfx_joystick1);
                }
-
+               else if (tag->ti_Data == MUIV_IOPorts_Key1)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 3);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_keyboard1);
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Key2)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 4);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_keyboard2);
+               }
+               else //(tag->ti_Data == MUIV_IOPorts_Key3)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port0, 5);
+                  set(btn_ioport0, MUIA_Rawimage_Data, gfx_keyboard3);
+               }
             } break;
 
             case MUIA_IOPort1 :
@@ -1958,6 +2240,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                         Child, MenuitemObject, MUIA_UserData, 1, MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_0), End,
                         Child, MenuitemObject, MUIA_UserData, 2,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_1), End,
                         Child, MenuitemObject, MUIA_UserData, 3,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_JPORT_2), End,
+                        Child, MenuitemObject, MUIA_UserData, 4,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_1), End,
+                        Child, MenuitemObject, MUIA_UserData, 5,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_2), End,
+                        Child, MenuitemObject, MUIA_UserData, 6,  MUIA_Menuitem_Title, Locale_GetString(MSG_CYC_KEYB_3), End,
                      End,
                   End))
                   {
@@ -1976,10 +2261,25 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                   set(obj_rendermcc, MUIA_Runtime_Port1, 1);
                   set(btn_ioport1, MUIA_Rawimage_Data, gfx_joystick0);
                }
-               else // (tag->ti_Data == MUIV_IOPorts_Joy1)
+               else if (tag->ti_Data == MUIV_IOPorts_Joy1)
                {
                   set(obj_rendermcc, MUIA_Runtime_Port1, 2);
                   set(btn_ioport1, MUIA_Rawimage_Data, gfx_joystick1);
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Key1)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 3);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_keyboard1);
+               }
+               else if (tag->ti_Data == MUIV_IOPorts_Key2)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 4);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_keyboard2);
+               }
+               else // (tag->ti_Data == MUIV_IOPorts_Key2)
+               {
+                  set(obj_rendermcc, MUIA_Runtime_Port1, 5);
+                  set(btn_ioport1, MUIA_Rawimage_Data, gfx_keyboard3);
                }
             } break;
 
@@ -2165,9 +2465,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                    */
                   data->Iconified = TRUE;
                   data->Active = FALSE;
-                  if (MorphOverlay_HasLayer())
+                  if (Render_AccelAttached())
                      Render_DestroyOverlay(data);
-                  MorphOverlay_SetFailed(FALSE);
+                  Render_SetAccelFailed(FALSE);
                }
                else if (tag->ti_Data == MUIV_UnIconified)
                {
@@ -2176,7 +2476,7 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                     MUI_Redraw(obj_rendermcc, MADF_DRAWUPDATE);
                  }
                  data->Iconified = FALSE;
-                 MorphOverlay_SetFailed(FALSE);
+                 Render_SetAccelFailed(FALSE);
                } break;
             case MUIA_Settings_Adjust :
                if (tag->ti_Data == MUIV_Reset_General)
@@ -2194,31 +2494,43 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                else if (tag->ti_Data == MUIV_Settings_Use)
                {
                   int numunits = 0;
-                  BOOL use_overlay;
+                  LONG use_overlay;
+                  BOOL needs_restart = compare_settings();
 
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
                   setup_generic();
-                  use_overlay = changed_prefs.amiga_use_overlay ? TRUE : FALSE;
-                  uae_restarted = TRUE;
+                  use_overlay = changed_prefs.amiga_use_overlay;
+                  if (needs_restart)
+                     uae_restarted = TRUE;
 
                   set(win_settings, MUIA_Window_Open, FALSE);
                   Render_ApplyOverlayPreference(data, obj, use_overlay);
-                  uae_restart (-1, NULL);
+                  if (needs_restart)
+                     uae_restart (-1, NULL);
+
+                  set_window_title();
                }
                else if (tag->ti_Data == MUIV_Settings_SaveUse)
                {
                   int numunits = 0;
-                  BOOL use_overlay;
+                  LONG use_overlay;
+                  BOOL needs_restart = compare_settings();
 
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENVARC);
                   setup_generic();
-                  use_overlay = changed_prefs.amiga_use_overlay ? TRUE : FALSE;
-                  uae_restarted = TRUE;
+                  use_overlay = changed_prefs.amiga_use_overlay;
+
+                  if (needs_restart)
+                     uae_restarted = TRUE;
 
                   set(win_settings, MUIA_Window_Open, FALSE);
                   Render_ApplyOverlayPreference(data, obj, use_overlay);
-                  uae_restart (-1, NULL);
+
+                  if (needs_restart)
+                     uae_restart (-1, NULL);
+
+                  set_window_title();
                }
                else if (tag->ti_Data == MUIV_Settings_Save)
                {
@@ -2229,12 +2541,19 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
                    * Read and apply this one setting immediately as requested.
                    */
                   get(but_gen_renderer, MUIA_Cycle_Active, &overlay_value);
-                  changed_prefs.amiga_use_overlay = overlay_value ? 1 : 0;
+                  if (overlay_value < RENDER_MODE_SURFACE || overlay_value > RENDER_MODE_TINYGL)
+                     overlay_value = RENDER_MODE_SURFACE;
+                  changed_prefs.amiga_use_overlay = overlay_value;
 
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENV);
                   DoMethod(app, MUIM_Application_Save, MUIV_Application_Save_ENVARC);
                   set(win_settings, MUIA_Window_Open, FALSE);
-                  Render_ApplyOverlayPreference(data, obj, overlay_value ? TRUE : FALSE);
+                  Render_ApplyOverlayPreference(data, obj, overlay_value);
+               }
+               else if (tag->ti_Data == MUIV_Settings_Window)
+               {
+                  fetch_current_settings();
+                  set(win_settings, MUIA_Window_Open, TRUE);
                }
                else // MUIV_Settings_Cancel
                   set(win_settings, MUIA_Window_Open, FALSE);
@@ -2243,14 +2562,26 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
             case MUIA_Runtime_Port0 :
             {
                LONG tmpp = tag->ti_Data;
-               changed_prefs.jport0 = (tmpp == 0 ? 200 : tmpp == 1 ? 100 : 101);
+               changed_prefs.jport0 = (tmpp == 0 ? JSEM_MICE :
+                                       tmpp == 1 ? JSEM_JOYS :
+                                       tmpp == 2 ? JSEM_JOYS+1 :
+                                       tmpp == 3 ? JSEM_KBDLAYOUT :
+                                       tmpp == 4 ? JSEM_KBDLAYOUT+1 :
+                                       tmpp == 5 ? JSEM_KBDLAYOUT+2 : JSEM_NONE);
+
                inputdevice_updateconfig (&changed_prefs);
             } break;
 
             case MUIA_Runtime_Port1 :
             {
                LONG tmpp = tag->ti_Data;
-               changed_prefs.jport1 = (tmpp == 0 ? 200 : tmpp == 1 ? 100 : 101);
+               changed_prefs.jport1 = (tmpp == 0 ? JSEM_MICE :
+                                       tmpp == 1 ? JSEM_JOYS :
+                                       tmpp == 2 ? JSEM_JOYS+1 :
+                                       tmpp == 3 ? JSEM_KBDLAYOUT :
+                                       tmpp == 4 ? JSEM_KBDLAYOUT+1 :
+                                       tmpp == 5 ? JSEM_KBDLAYOUT+2 : JSEM_NONE);
+
                inputdevice_updateconfig (&changed_prefs);
             } break;
 
@@ -2278,11 +2609,9 @@ static ULONG Render_Set(struct IClass *cl, Object *obj, struct opSet *msg)
 
                      if (tmpdata)
                      {
-                           lock = LockIBase(0);
-                           ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
-                           UnlockIBase (lock);
-                           //ScalePixelArray(gfx_logo, 640, 512, 640 * 4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
-                           //ScalePixelArray(tmpdata, _width(obj), _height(obj), _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
+                        lock = LockIBase(0);
+                        ReadPixelArray(tmpdata, 0, 0, _width(obj)*4, _rp(obj), _left(obj), _top(obj), _width(obj), _height(obj), RECTFMT_ARGB);
+                        UnlockIBase (lock);
                      }
                      set(win_main, MUIA_Window_Title, Locale_GetString(MSG_EMULATION_PAUSED));
                   }
@@ -2325,8 +2654,6 @@ static ULONG Render_Setup(struct IClass *cl, Object *obj, Msg msg)
 
    data->screen = _screen(obj);
    data->window = _window(obj);
-
-   //twnd = _win(obj);
 
    data->ScrWidth  = data->screen->Width;
    data->ScrHeight = data->screen->Height;
@@ -2397,7 +2724,7 @@ static ULONG Render_Askminmax(struct IClass *cl, Object *obj, struct MUIP_AskMin
       ULONG native_width  = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_WIDTH : OVERSCAN_GFX_WIDTH : uae_get_ntsc() ? DEFAULT_NTSC_WIDTH : DEFAULT_GFX_WIDTH;
       ULONG native_height = uae_get_overscan() ? uae_get_ntsc() ? OVERSCAN_NTSC_HEIGHT : OVERSCAN_GFX_HEIGHT : uae_get_ntsc() ? DEFAULT_NTSC_HEIGHT : DEFAULT_GFX_HEIGHT;
 
-      if (changed_prefs.amiga_use_overlay && CGXVideoBase)
+      if (changed_prefs.amiga_use_overlay && (CGXVideoBase || MorphTinyGL_IsAvailable()))
       {
          /* Keep the UAE framebuffer at native size. CGXVideo scales the VLayer
           * to the current MUI Area. The size gadget exists for the window from
@@ -2446,7 +2773,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
        !Render_FullscreenScreenIsActive(data))
    {
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
       return(0);
    }
 
@@ -2483,7 +2810,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             if (MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               MorphOverlay_SetFailed(FALSE);
+               Render_SetAccelFailed(FALSE);
             }
 
             /* Keep the 640:512 logo aspect ratio and center it in the render area. */
@@ -2540,7 +2867,7 @@ static ULONG Render_Draw(struct IClass *cl, Object *obj, struct MUIP_Draw *msg)
             if (MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               MorphOverlay_SetFailed(FALSE);
+               Render_SetAccelFailed(FALSE);
                Render_DrawSurfaceFrame(data, obj);
             }
 
@@ -2664,7 +2991,7 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
       data->Iconified = TRUE;
       data->Active = FALSE;
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
 
       result = DoSuperMethodA(cl, obj, (Msg)msg);
 
@@ -2687,7 +3014,7 @@ static ULONG Render_Hide(struct IClass *cl, Object *obj, Msg msg)
     * behaviour because a fullscreen layer must never survive a screen/window
     * transition.
     */
-   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay &&
+   if (Render_AccelAttached() && currprefs.amiga_use_overlay &&
        !data->FullScreen && !data->DisplayTransition)
    {
       MorphOverlay_MarkBackingDirty();
@@ -2735,14 +3062,14 @@ static ULONG Render_Show(struct IClass *cl, Object *obj, Msg msg)
       data->ScrHeight = data->screen->Height;
    }
 
-   MorphOverlay_ResetRuntimeState();
+   Render_ResetAccelState();
 
    /* A temporary resize Hide/Show keeps the same Intuition Window.  In that
     * case preserve the existing attached VLayer and only let the normal frame
     * path update its indents.  If MUI really recreated the Window, the old
     * attachment is no longer valid and must be rebuilt.
     */
-   if (MorphOverlay_HasLayer() && currprefs.amiga_use_overlay && !data->FullScreen)
+   if (Render_AccelAttached() && currprefs.amiga_use_overlay && !data->FullScreen)
    {
       if (old_window && new_window && old_window == new_window)
       {
@@ -2782,7 +3109,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
        !Render_FullscreenScreenIsActive(data))
    {
       Render_DestroyOverlay(data);
-      MorphOverlay_SetFailed(FALSE);
+      Render_SetAccelFailed(FALSE);
    }
 
    if (msg->imsg)
@@ -2806,7 +3133,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
                 MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               MorphOverlay_SetFailed(FALSE);
+               Render_SetAccelFailed(FALSE);
             }
 
             if ((qualifier & IEQUALIFIER_REPEAT) == 0)
@@ -2891,7 +3218,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
              * Fullscreen is special: after returning from Ambient/another
              * screen, allow the next frame to recreate the detached VLayer.
              */
-            MorphOverlay_SetFailed(FALSE);
+            Render_SetAccelFailed(FALSE);
             inputdevice_acquire ();
             inputdevice_release_all_keys ();
             break;
@@ -2904,7 +3231,7 @@ static ULONG Render_EventHandler(struct IClass *cl, Object *obj, struct MUIP_Han
             if (data->FullScreen && MorphOverlay_HasLayer())
             {
                Render_DestroyOverlay(data);
-               MorphOverlay_SetFailed(FALSE);
+               Render_SetAccelFailed(FALSE);
             }
             inputdevice_unacquire ();
             break;
@@ -3008,7 +3335,7 @@ static void dummy_flush_screen (struct vidbuf_description *gfxinfo, int first_li
    /* flush_screen() is called once after all changed blocks of a frame.
     * This is the correct place to swap the double-buffered hardware overlay.
     */
-   if (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed())
+   if (Render_AccelWanted())
    {
       tmp_gfxinfo = gfxinfo;
       set(obj_rendermcc, MUIA_Render_State, MUIV_FlushScreenOverlay);
@@ -3024,8 +3351,7 @@ static void flush_line_cgx (struct vidbuf_description *gfxinfo, int line_no)
     * attaching/presenting it fails, MorphOverlay_IsFailed() is set and subsequent
     * flushes fall back to the surface path.
     */
-   if (MorphOverlay_IsActive() ||
-       (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed()))
+   if (MorphOverlay_IsActive() || MorphTinyGL_IsAttached() || Render_AccelWanted())
       return;
 
    tmp_gfxinfo = gfxinfo;
@@ -3038,8 +3364,7 @@ static void flush_block_cgx (struct vidbuf_description *gfxinfo, int first_line,
 {
    //debug_print("%s (%d)\n", __func__, __LINE__);
 
-   if (MorphOverlay_IsActive() ||
-       (currprefs.amiga_use_overlay && !MorphOverlay_IsSuspended() && CGXVideoBase && !MorphOverlay_IsFailed()))
+   if (MorphOverlay_IsActive() || MorphTinyGL_IsAttached() || Render_AccelWanted())
       return;
 
    tmp_gfxinfo = gfxinfo;
@@ -3177,10 +3502,7 @@ static int mui_setup_window(void)
                                        MUIA_ShortHelp, Locale_GetString(MSG_SHORTHELP_IOPORT1),
                                        MUIA_Rawimage_Data, gfx_joystick1,
                                     End,
-                                    //Child, Label1(" 1"),
 
-                                    //Child, Label1("0 :"), Child, but_tmp_joy0 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY0, MUIA_UserData, ID_PRFS_GEN_JOY0, End,
-                                    //Child, Label1("1 :"), Child, but_tmp_joy1 = CycleObject, MUIA_Cycle_Entries, cyc_list_jport, MUIA_ObjectID, ID_PRFS_GEN_JOY1, MUIA_UserData, ID_PRFS_GEN_JOY1, End,
                                     Child, HVSpace,
 #ifdef USE_SAVESTATE
                                     Child, btn_savestate = RawimageObject,
@@ -3303,7 +3625,6 @@ static int mui_setup_window(void)
                                            Child, HGroup,
                                               Child, ColGroup(2),
                                                  // Graphics Page...
-                                                 //Child, Label1(Locale_GetString(MSG_SETTINGS_RESOLUTION)), Child, but_gen_resolution = CycleObject, MUIA_Cycle_Entries, cyc_list_resolution, MUIA_ObjectID, ID_PRFS_GEN_RESOLUTION, MUIA_UserData, ID_PRFS_GEN_RESOLUTION, End,
                                                  Child, Label1(Locale_GetString(MSG_SETTINGS_GFXBLITS)), Child, but_gen_blitter = CycleObject, MUIA_Cycle_Entries, cyc_list_blits, MUIA_ObjectID, ID_PRFS_GEN_BLITTER, MUIA_UserData, ID_PRFS_GEN_BLITTER, End,
                                                  Child, Label1(Locale_GetString(MSG_SETTINGS_GFXSPRITE)), Child, but_gen_sprite = CycleObject, MUIA_Cycle_Entries, cyc_list_sprites, MUIA_ObjectID, ID_PRFS_GEN_SPRITE, MUIA_UserData, ID_PRFS_GEN_SPRITE, End,
                                                  Child, Label1(Locale_GetString(MSG_SETTINGS_GFXFRAMES)), Child, but_gen_framerate = CycleObject, MUIA_Cycle_Entries, cyc_list_frames, MUIA_ObjectID, ID_PRFS_GEN_FRAMERATE, MUIA_UserData, ID_PRFS_GEN_FRAMERATE, End,
@@ -3517,7 +3838,6 @@ static int mui_setup_window(void)
                                               Child, ColGroup(2),
                                                  // CPU Page...
                                                  Child, Label1(Locale_GetString(MSG_SETTINGS_CPU)), Child, but_cus_cpu = CycleObject, MUIA_Cycle_Entries, cyc_cus_cpu, MUIA_ObjectID, ID_PRFS_CUS_CPU, MUIA_UserData, ID_PRFS_CUS_CPU, End,
-                                                 Child, Label1(Locale_GetString(MSG_SETTINGS_CPUSPEED)), Child, but_cus_speed = CycleObject, MUIA_Cycle_Entries, cyc_list_speed, MUIA_ObjectID, ID_PRFS_CUS_SPEED, MUIA_UserData, ID_PRFS_CUS_SPEED, End,
                                                  Child, Label1(Locale_GetString(MSG_SETTINGS_JIT)), Child, but_cus_jit = CycleObject, MUIA_Cycle_Entries, cyc_list_jit, MUIA_ObjectID, ID_PRFS_CUS_JIT, MUIA_UserData, ID_PRFS_CUS_JIT, End,
                                                  Child, VSpace(0), Child, VSpace(0),
                                               End,
@@ -3658,7 +3978,7 @@ static int mui_setup_window(void)
    DoMethod(btn_about, MUIM_Notify, MUIA_Pressed, FALSE, win_about, 3, MUIM_Set, MUIA_Window_Open, TRUE);
    DoMethod(win_about, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_about, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
-   DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, win_settings, 3, MUIM_Set, MUIA_Window_Open, TRUE);
+   DoMethod(btn_settings, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Settings_Window);
    DoMethod(win_settings, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, win_settings, 3, MUIM_Set, MUIA_Window_Open, FALSE);
    DoMethod(but_gen_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_General);
    DoMethod(but_ocs_reset, MUIM_Notify, MUIA_Pressed, FALSE, obj_rendermcc, 3, MUIM_Set, MUIA_Settings_Adjust, MUIV_Reset_OCS);
@@ -3686,7 +4006,7 @@ static int mui_setup_window(void)
 
    /* Old-style UAE config is authoritative for amiga.use_overlay. */
    if (uae_get_oldconfig())
-      set(but_gen_renderer, MUIA_Cycle_Active, currprefs.amiga_use_overlay ? 1 : 0);
+      set(but_gen_renderer, MUIA_Cycle_Active, currprefs.amiga_use_overlay);
 
    if(!uae_get_toolbar())
       set(obj_rendermcc, MUIA_Toolbar_Active, MUIV_Toolbar_Off);
@@ -3816,11 +4136,15 @@ int graphics_setup (int argc, char **argv)
     */
    CGXVideoBase = OpenLibrary ("cgxvideo.library", 0);
 
+   MorphTinyGL_Init();
+
    if (!(UtilityBase = OpenLibrary ("utility.library", 39))) return 0;
    if (!(render_mcc = Init_Render())) return 0;
    if (!(RawFilterBase = OpenLibrary("multimedia/rawvideo.filter", 51))) return 0;
    if (!(MemoryStreamBase = OpenLibrary("multimedia/memory.stream", 51))) return 0;
    if (!(FileOutputBase = OpenLibrary("multimedia/file.output", 51))) return 0;
+   
+   //AuxCoreBase = OpenLibrary(AUXCORENAME, 0);
 
    for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
    {
@@ -3924,6 +4248,8 @@ void graphics_leave (void)
       if (render_mcc) Cleanup_Render(render_mcc);
       if (tmpdata) FreeVec(tmpdata);
 
+      MorphTinyGL_Shutdown();
+
       for (int cntr=0; cntr <NUM_OF_LEDS; cntr++)
             if (LED_mcc[cntr]) Cleanup_LED(LED_mcc[cntr]);
 
@@ -3940,6 +4266,8 @@ void graphics_leave (void)
       if (CGXVideoBase) CloseLibrary((void*)CGXVideoBase);
       CGXVideoBase = NULL;
       if (CyberGfxBase) CloseLibrary((void*)CyberGfxBase);
+      //if (AuxCoreBase) CloseLibrary((void *)AuxCoreBase);
+
       Locale_Close();
    }
 }
@@ -4137,8 +4465,8 @@ struct inputdevice_functions inputdevicefunc_mouse = {
    close_mouse,
    acquire_mouse,
    unacquire_mouse,
-   //read_mouse,
-   //get_mouse_num,
+   read_mouse,    //
+   get_mouse_num, //
    get_mouse_name,
    get_mouse_widget_num,
    get_mouse_widget_type,
@@ -4167,31 +4495,31 @@ void input_get_default_mouse (struct uae_input_device *uid)
  */
 static unsigned int get_kb_num (void)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static const char *get_kb_name (unsigned int kb)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return "Default keyboard";
 }
 
 static unsigned int get_kb_widget_num (unsigned int kb)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return 128;
 }
 
 static int get_kb_widget_first (unsigned int kb, int type)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return 0;
 }
 
 static int get_kb_widget_type (unsigned int kb, unsigned int num, char *name, uae_u32 *code)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    // fix me
    *code = num;
    return IDEV_WIDGET_KEY;
@@ -4199,30 +4527,35 @@ static int get_kb_widget_type (unsigned int kb, unsigned int num, char *name, ua
 
 static int keyhack (int scancode, int pressed, int num)
 {
-   //debug_print("%s (%d)\n", __func__, __LINE__);
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return scancode;
 }
 
 static void read_kb (void)
 {
+   //debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 static int init_kb (void)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static void close_kb (void)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 static int acquire_kb (unsigned int num, int flags)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
    return 1;
 }
 
 static void unacquire_kb (unsigned int num)
 {
+   debug_print("%s (%d)\n", __func__, __LINE__);
 }
 
 struct inputdevice_functions inputdevicefunc_keyboard =
@@ -4256,6 +4589,7 @@ void setcapslockstate (int state)
  */
 
 //static const char *screen_type[] = { "custom", "public", "ask", 0 };
+static const char *renderer_types[] = { "surface", "overlay", "tinygl", 0 };
 
 void gfx_default_options (struct uae_prefs *p)
 {
@@ -4268,11 +4602,16 @@ void gfx_save_options (FILE *f, const struct uae_prefs *p)
    //debug_print("%s (%d)\n", __func__, __LINE__);
    cfgfile_write (f, "# overlay display\n");
    cfgfile_write (f, "amiga.use_overlay=%s\n", p->amiga_use_overlay ? "yes" : "no");
+   cfgfile_write (f, "amiga.renderer=%s\n", renderer_types[(p->amiga_use_overlay >= 0 && p->amiga_use_overlay <= 2) ? p->amiga_use_overlay : 0]);
 }
 
 int gfx_parse_option (struct uae_prefs *p, const char *option, const char *value)
 {
    //debug_print("%s (%d)\n", __func__, __LINE__);
+
+   if (cfgfile_strval (option, value, "renderer", &p->amiga_use_overlay, renderer_types, 0))
+      return 1;
+
    return cfgfile_yesno (option, value, "use_overlay", &p->amiga_use_overlay);
 }
 

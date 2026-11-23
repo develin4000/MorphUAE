@@ -4,7 +4,7 @@
 #->= Version  : 1.3                        =<-
 #->= File     : Makefile                   =<-
 #->= Author   : Stefan Blixth              =<-
-#->= Compiled : 2026-10-15                 =<-
+#->= Compiled : 2026-11-19                 =<-
 #->=========================================<-
 
 #
@@ -33,7 +33,7 @@ LIB_MACHDEP	= libmachdep.a
 OBJ_THREADDEP	= thread.o
 LIB_THREADDEP	= libthreaddep.a
 
-OBJ_GFXDEP	= morphos-win.o morphos-overlay.o LEDmcc.o
+OBJ_GFXDEP	= morphos-win.o morphos-overlay.o morphos-tinygl.o LEDmcc.o
 LIB_GFXDEP	= libgfxdep.a
 
 OBJ_SOUNDDEP	= sound.o
@@ -342,10 +342,13 @@ $(LIB_GFXDEP): $(OBJ_GFXDEP)
 
 
 #$OBJ_GFXDEP
-morphos-win.o: morphos-win.c $(INCDIR)/morphos-overlay.h
+morphos-win.o: morphos-win.c $(INCDIR)/morphos-overlay.h $(INCDIR)/morphos-tinygl.h
 	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $< -o $@
 
 morphos-overlay.o: morphos-overlay.c $(INCDIR)/morphos-overlay.h
+	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $< -o $@
+
+morphos-tinygl.o: morphos-tinygl.c $(INCDIR)/morphos-tinygl.h
 	$(CC_MORPHOS) -I$(INCDIR) $(CPPFLG_MOS) $(CFLG_MOS) -c $< -o $@
 
 LEDmcc.o: LEDmcc.c

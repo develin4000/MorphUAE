@@ -1,4 +1,4 @@
-## Version $VER: MorphUAE.catalog 1.3 (15.10.2026)
+## Version $VER: MorphUAE.catalog 1.3 (19.11.2026)
 ## Languages english svenska español
 ## Codeset english 0
 ## Codeset svenska 0
@@ -106,7 +106,7 @@ Acerca de MorphUAE
 MSG_ABOUT_COPYRIGHT (19//)
 Amiga are trademark of Amiga Corporation
 Amiga är ett varumärke som tillhör Amiga Corporation
-Amiga son marca registrada de Amiga Corporation
+Amiga es una marca registrada de Amiga Corporation
 ;
 MSG_SETTINGS_WINDOWTITLE (20//)
 MorphUAE - Settings
@@ -622,4 +622,24 @@ MSG_SETTINGS_HARDDISK_TITLE (122//)
 Harddisks
 Hårddiskar
 Discos Duros
+;
+MSG_CYC_KEYB_1 (123//)
+Keyboard 1
+Tangentbord 1
+Teclado 1
+;
+MSG_CYC_KEYB_2 (124//)
+Keyboard 2
+Tangentbord 2
+Teclado 2
+;
+MSG_CYC_KEYB_3 (125//)
+Keyboard 3
+Tangentbord 3
+Teclado 3
+;
+MSG_CYC_RENDER_2 (126//)
+TinyGL
+TinyGL
+TinyGL
 ;
